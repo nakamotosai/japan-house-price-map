@@ -326,6 +326,11 @@ button {
   min-height: 108px;
 }
 
+.metric-card--pending {
+  background: #f8fafc;
+  border: 1px dashed #c8d3e1;
+}
+
 .metric-card--wide {
   grid-column: 1 / -1;
 }

@@ -6,7 +6,7 @@ import { ModeChips } from './components/ModeChips'
 import { StationPanel } from './components/StationPanel'
 import { TokyoMap } from './components/TokyoMap'
 import { TopSearchBar } from './components/TopSearchBar'
-import { useTokyoSeedData } from './hooks/useTokyoSeedData'
+import { useTokyoData } from './hooks/useTokyoData'
 import { MODES } from './data/modes'
 import { searchStations } from './lib/search'
 import type { ModeId } from './types'
@@ -18,7 +18,7 @@ export default function App() {
   const [resetToken, setResetToken] = useState(0)
   const [showIntro, setShowIntro] = useState(false)
   const [legendCollapsed, setLegendCollapsed] = useState(false)
-  const dataState = useTokyoSeedData()
+  const dataState = useTokyoData()
 
   const stations = dataState.status === 'ready' ? dataState.data.stations : []
   const schools = dataState.status === 'ready' ? dataState.data.schools : []

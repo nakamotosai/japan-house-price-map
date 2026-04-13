@@ -1,0 +1,17 @@
+{
+  "generatedAt": "2026-04-13T15:20:02.007421+00:00",
+  "stationDataset": "N02-24",
+  "ridershipDataset": "S12-24",
+  "ridershipYear": 2023,
+  "bounds": {
+    "west": 139.52,
+    "east": 139.95,
+    "south": 35.55,
+    "north": 35.82
+  },
+  "stationCount": 589,
+  "majorLabelCount": 19,
+  "seedOverrideCount": 14,
+  "priceCoverageCount": 14,
+  "ridershipCoverageCount": 588
+}

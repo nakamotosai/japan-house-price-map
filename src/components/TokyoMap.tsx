@@ -101,7 +101,7 @@ export function TokyoMap(props: TokyoMapProps) {
       const markerNode = document.createElement('button')
       const isSelected = station.id === selectedStationId
       const showName = station.labelTier === 'major'
-      const showPrice = activeMode === 'price'
+      const showPrice = activeMode === 'price' && station.metrics.coverage.price
       const compactIconOnly = station.labelTier === 'minor' && !showPrice
 
       markerNode.className = [

@@ -2,7 +2,9 @@ export type ModeId = 'price' | 'land' | 'heat' | 'schools' | 'hazard'
 
 export type ModeCategory = 'station' | 'overlay'
 
-export type RiskLevel = 'low' | 'medium' | 'high'
+export type RiskLevel = 'low' | 'medium' | 'high' | 'unknown'
+
+export type PopulationTrend = '增长' | '稳定' | '收缩' | '待补'
 
 export type ModeDefinition = {
   id: ModeId
@@ -39,11 +41,19 @@ export type Station = {
     heatScore: number
     transferLines: number
     schoolsNearby: number
-    populationTrend: '增长' | '稳定' | '收缩'
+    populationTrend: PopulationTrend
     hazard: {
       flood: RiskLevel
       liquefaction: RiskLevel
       landslide: RiskLevel
+    }
+    coverage: {
+      price: boolean
+      land: boolean
+      ridership: boolean
+      schools: boolean
+      population: boolean
+      hazard: boolean
     }
     note: string
   }
@@ -67,7 +77,7 @@ export type HazardZone = {
   coordinates: [number, number][][]
 }
 
-export type TokyoSeedData = {
+export type TokyoMapData = {
   stations: Station[]
   schools: SchoolPoint[]
   hazards: HazardZone[]

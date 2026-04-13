@@ -205,6 +205,9 @@ function bandColor(value: number, high: number, medium: number, colors: [string,
 }
 
 function riskScore(level: RiskLevel) {
+  if (level === 'unknown') {
+    return 0
+  }
   if (level === 'high') {
     return 3
   }
@@ -216,6 +219,9 @@ function riskScore(level: RiskLevel) {
 
 export function getStationMarkerColor(station: Station, mode: ModeId) {
   if (mode === 'price') {
+    if (!station.metrics.coverage.price) {
+      return '#94a3b8'
+    }
     return bandColor(station.metrics.medianPriceMJPY, 90, 60, [
       '#d9485f',
       '#f08c4a',
@@ -224,6 +230,9 @@ export function getStationMarkerColor(station: Station, mode: ModeId) {
   }
 
   if (mode === 'land') {
+    if (!station.metrics.coverage.land) {
+      return '#94a3b8'
+    }
     return bandColor(station.metrics.landValueManPerSqm, 400, 240, [
       '#8b5cf6',
       '#6366f1',
@@ -232,6 +241,9 @@ export function getStationMarkerColor(station: Station, mode: ModeId) {
   }
 
   if (mode === 'heat') {
+    if (!station.metrics.coverage.ridership) {
+      return '#94a3b8'
+    }
     return bandColor(station.metrics.heatScore, 90, 75, [
       '#ef476f',
       '#f4a261',
@@ -240,6 +252,9 @@ export function getStationMarkerColor(station: Station, mode: ModeId) {
   }
 
   if (mode === 'hazard') {
+    if (!station.metrics.coverage.hazard) {
+      return '#94a3b8'
+    }
     const maxRisk = Math.max(
       riskScore(station.metrics.hazard.flood),
       riskScore(station.metrics.hazard.liquefaction),
@@ -251,6 +266,9 @@ export function getStationMarkerColor(station: Station, mode: ModeId) {
     }
     if (maxRisk === 2) {
       return '#f77f00'
+    }
+    if (maxRisk === 0) {
+      return '#94a3b8'
     }
     return '#2a9d8f'
   }

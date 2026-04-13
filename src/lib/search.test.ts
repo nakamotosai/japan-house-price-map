@@ -26,6 +26,14 @@ const STATIONS: Station[] = [
       schoolsNearby: 4,
       populationTrend: '稳定',
       hazard: { flood: 'low', liquefaction: 'low', landslide: 'low' },
+      coverage: {
+        price: true,
+        land: true,
+        ridership: true,
+        schools: true,
+        population: true,
+        hazard: true,
+      },
       note: 'seed',
     },
   },
@@ -52,6 +60,14 @@ const STATIONS: Station[] = [
       schoolsNearby: 3,
       populationTrend: '增长',
       hazard: { flood: 'low', liquefaction: 'low', landslide: 'low' },
+      coverage: {
+        price: true,
+        land: true,
+        ridership: true,
+        schools: true,
+        population: true,
+        hazard: true,
+      },
       note: 'seed',
     },
   },
@@ -67,6 +83,22 @@ describe('searchStations', () => {
     const results = searchStations('山手线', STATIONS, 3)
     expect(results.length).toBeLessThanOrEqual(3)
     expect(results.some((station) => station.id === 'tokyo')).toBe(true)
+  })
+
+  it('normalizes japanese line text for chinese search keywords', () => {
+    const results = searchStations('东京地铁', [
+      {
+        ...STATIONS[0],
+        id: 'otemachi',
+        name: '大手町',
+        nameJa: '大手町',
+        nameEn: '',
+        operator: '東京地下鉄',
+        lines: ['4号線丸ノ内線'],
+      },
+    ])
+
+    expect(results[0]?.id).toBe('otemachi')
   })
 
   it('returns no result for empty query', () => {

@@ -1,5 +1,12 @@
 import { getHazardMatches, getSchoolMatches } from '../lib/mapLayers'
-import type { HazardZone, ModeDefinition, ModeId, SchoolPoint, Station } from '../types'
+import type {
+  HazardZone,
+  ModeDefinition,
+  ModeId,
+  RiskLevel,
+  SchoolPoint,
+  Station,
+} from '../types'
 
 type StationPanelProps = {
   activeMode: ModeId
@@ -25,14 +32,29 @@ function formatDailyRidership(value: number) {
   return `${value.toLocaleString()} / 日`
 }
 
-function riskLabel(level: 'low' | 'medium' | 'high') {
+function riskLabel(level: RiskLevel) {
   if (level === 'high') {
     return '高'
   }
   if (level === 'medium') {
     return '中'
   }
+  if (level === 'unknown') {
+    return '待补'
+  }
   return '低'
+}
+
+function PendingCard(props: { title: string; body: string }) {
+  const { body, title } = props
+
+  return (
+    <article className="metric-card metric-card--wide metric-card--pending">
+      <span>{title}</span>
+      <strong>待接入</strong>
+      <p>{body}</p>
+    </article>
+  )
 }
 
 function ModeBody(props: {
@@ -46,6 +68,25 @@ function ModeBody(props: {
   const hazardMatches = getHazardMatches(hazards, station.id)
 
   if (activeMode === 'price') {
+    if (!station.metrics.coverage.price) {
+      return (
+        <div className="panel-grid">
+          <PendingCard
+            title="参考总价带"
+            body="这站已经接入官方车站主表和真实客流，但房产价格数据还没覆盖到这里。"
+          />
+          <article className="metric-card">
+            <span>乘降客数</span>
+            <strong>{formatDailyRidership(station.metrics.ridershipDaily)}</strong>
+          </article>
+          <article className="metric-card">
+            <span>换乘能力</span>
+            <strong>{station.metrics.transferLines} 条</strong>
+          </article>
+        </div>
+      )
+    }
+
     return (
       <div className="panel-grid">
         <article className="metric-card">
@@ -66,6 +107,17 @@ function ModeBody(props: {
   }
 
   if (activeMode === 'land') {
+    if (!station.metrics.coverage.land) {
+      return (
+        <div className="panel-grid">
+          <PendingCard
+            title="公示地价"
+            body="这站坐标和热度已经来自官方数据，但公示地价和人口趋势仍待下一轮正式导入。"
+          />
+        </div>
+      )
+    }
+
     return (
       <div className="panel-grid">
         <article className="metric-card">
@@ -85,6 +137,17 @@ function ModeBody(props: {
   }
 
   if (activeMode === 'heat') {
+    if (!station.metrics.coverage.ridership) {
+      return (
+        <div className="panel-grid">
+          <PendingCard
+            title="车站热度"
+            body="这站已接入官方坐标，但当前版本还没拿到可用客流。"
+          />
+        </div>
+      )
+    }
+
     return (
       <div className="panel-grid">
         <article className="metric-card">
@@ -105,11 +168,22 @@ function ModeBody(props: {
   }
 
   if (activeMode === 'schools') {
+    if (!station.metrics.coverage.schools && !schoolMatches.length) {
+      return (
+        <div className="panel-grid">
+          <PendingCard
+            title="学校点图层"
+            body="当前学校图层仍是种子数据，这站附近的正式学校坐标还没有接入。"
+          />
+        </div>
+      )
+    }
+
     return (
       <div className="panel-grid">
         <article className="metric-card">
           <span>周边学校数</span>
-          <strong>{station.metrics.schoolsNearby}</strong>
+          <strong>{station.metrics.coverage.schools ? station.metrics.schoolsNearby : '待补'}</strong>
         </article>
         <article className="metric-card metric-card--wide">
           <span>示例学校点</span>
@@ -118,6 +192,27 @@ function ModeBody(props: {
               schoolMatches.map((school) => <li key={school.id}>{school.name}</li>)
             ) : (
               <li>当前种子数据尚未挂到该站。</li>
+            )}
+          </ul>
+        </article>
+      </div>
+    )
+  }
+
+  if (!station.metrics.coverage.hazard) {
+    return (
+      <div className="panel-grid">
+        <PendingCard
+          title="站点风险"
+          body="灾害面图层还在使用当前种子覆盖层，这站自己的风险标签要等正式导入后再补。"
+        />
+        <article className="metric-card metric-card--wide">
+          <span>相关风险区域</span>
+          <ul className="inline-list">
+            {hazardMatches.length ? (
+              hazardMatches.map((hazard) => <li key={hazard.id}>{hazard.name}</li>)
+            ) : (
+              <li>当前未命中示例风险区。</li>
             )}
           </ul>
         </article>
@@ -174,17 +269,17 @@ export function StationPanel(props: StationPanelProps) {
           <span className="station-panel__eyebrow">东京地图工具</span>
           <h1>
             {status === 'loading'
-              ? '正在装载东京种子数据。'
+              ? '正在装载东京地图数据。'
               : status === 'error'
                 ? '地图骨架已打开，但数据加载失败。'
                 : '打开就是地图，不做多余页面。'}
           </h1>
           <p>
             {status === 'loading'
-              ? '第二轮开始改成运行时读取 public/data，后面替换成正式导入数据时就不用重写前台。'
+              ? '正在读取东京地图数据。现在车站主表和真实客流已经不靠手写 JSON 了。'
               : status === 'error'
                 ? `当前错误：${errorMessage ?? 'unknown_error'}`
-                : '第一轮先证明三件事：车站能做统一锚点、模式切换足够顺、点面数据能低成本挂上地图。'}
+                : '现在已经证明三件事：车站能做统一锚点、模式切换足够顺、官方车站和客流可以稳定挂进这张地图。'}
           </p>
 
           <div className="station-panel__bullet-box">
@@ -209,10 +304,12 @@ export function StationPanel(props: StationPanelProps) {
     <aside className="station-panel">
       <div className="station-panel__header">
         <div>
-          <span className="station-panel__eyebrow">{selectedStation.ward}</span>
+          <span className="station-panel__eyebrow">{selectedStation.ward || '官方车站主表'}</span>
           <h2>{selectedStation.name}</h2>
           <p>
-            {selectedStation.nameJa} / {selectedStation.nameEn}
+            {selectedStation.nameEn
+              ? `${selectedStation.nameJa} / ${selectedStation.nameEn}`
+              : selectedStation.nameJa}
           </p>
         </div>
         <button className="station-panel__close" onClick={onClose} type="button">
@@ -250,9 +347,24 @@ export function StationPanel(props: StationPanelProps) {
           <span>{selectedStation.metrics.district}</span>
         </div>
         <ul className="inline-list">
-          <li>热度 {selectedStation.metrics.heatScore}</li>
-          <li>人口趋势 {selectedStation.metrics.populationTrend}</li>
-          <li>学校 {selectedStation.metrics.schoolsNearby}</li>
+          <li>
+            热度{' '}
+            {selectedStation.metrics.coverage.ridership
+              ? selectedStation.metrics.heatScore
+              : '待补'}
+          </li>
+          <li>
+            人口趋势{' '}
+            {selectedStation.metrics.coverage.population
+              ? selectedStation.metrics.populationTrend
+              : '待补'}
+          </li>
+          <li>
+            学校{' '}
+            {selectedStation.metrics.coverage.schools
+              ? selectedStation.metrics.schoolsNearby
+              : '待补'}
+          </li>
         </ul>
         <p className="station-panel__note">{selectedStation.metrics.note}</p>
       </section>

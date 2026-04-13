@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react'
 import { loadHazards, loadSchools, loadStations } from '../lib/dataLoader'
-import type { TokyoSeedData } from '../types'
+import type { TokyoMapData } from '../types'
 
-type TokyoSeedState =
+type TokyoDataState =
   | { status: 'loading' }
   | { status: 'error'; message: string }
-  | { status: 'ready'; data: TokyoSeedData }
+  | { status: 'ready'; data: TokyoMapData }
 
-export function useTokyoSeedData(): TokyoSeedState {
-  const [state, setState] = useState<TokyoSeedState>({ status: 'loading' })
+export function useTokyoData(): TokyoDataState {
+  const [state, setState] = useState<TokyoDataState>({ status: 'loading' })
 
   useEffect(() => {
     let cancelled = false

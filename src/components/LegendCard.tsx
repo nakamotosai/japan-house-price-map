@@ -49,7 +49,9 @@ export function LegendCard(props: LegendCardProps) {
         ))}
       </div>
 
-      <div className="legend-card__footnote">首版使用种子数据验证地图底座与切换体验。</div>
+      <div className="legend-card__footnote">
+        车站坐标和热度已接官方主表；价格、学校、灾害仍在逐步补齐。
+      </div>
     </section>
   )
 }

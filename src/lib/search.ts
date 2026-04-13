@@ -1,7 +1,22 @@
 import type { Station } from '../types'
 
+const NORMALIZE_MAP: Record<string, string> = {
+  線: '线',
+  鉄: '铁',
+  東: '东',
+  渋: '涩',
+  豊: '丰',
+  浜: '滨',
+  駅: '站',
+}
+
 function normalize(value: string) {
-  return value.trim().toLowerCase()
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '')
+    .replace(/[線鉄東渋豊浜駅]/g, (character) => NORMALIZE_MAP[character] ?? character)
+    .replaceAll('地下铁', '地铁')
 }
 
 function stationHaystack(station: Station) {
@@ -14,7 +29,9 @@ function stationHaystack(station: Station) {
       station.operator,
       station.metrics.district,
       ...station.lines,
-    ].join(' '),
+    ]
+      .filter(Boolean)
+      .join(' '),
   )
 }
 
