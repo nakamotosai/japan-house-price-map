@@ -1,11 +1,15 @@
 import { getHazardMatches, getSchoolMatches } from '../lib/mapLayers'
-import type { ModeDefinition, ModeId, Station } from '../types'
+import type { HazardZone, ModeDefinition, ModeId, SchoolPoint, Station } from '../types'
 
 type StationPanelProps = {
   activeMode: ModeId
+  hazards: HazardZone[]
   modes: Record<ModeId, ModeDefinition>
   onOpenIntro: () => void
+  schools: SchoolPoint[]
   selectedStation: Station | null
+  status?: 'ready' | 'loading' | 'error'
+  errorMessage?: string
 }
 
 function formatMillionYen(value: number) {
@@ -30,10 +34,15 @@ function riskLabel(level: 'low' | 'medium' | 'high') {
   return '低'
 }
 
-function ModeBody(props: { activeMode: ModeId; station: Station }) {
-  const { activeMode, station } = props
-  const schools = getSchoolMatches(station.id)
-  const hazards = getHazardMatches(station.id)
+function ModeBody(props: {
+  activeMode: ModeId
+  hazards: HazardZone[]
+  schools: SchoolPoint[]
+  station: Station
+}) {
+  const { activeMode, hazards, schools, station } = props
+  const schoolMatches = getSchoolMatches(schools, station.id)
+  const hazardMatches = getHazardMatches(hazards, station.id)
 
   if (activeMode === 'price') {
     return (
@@ -104,8 +113,8 @@ function ModeBody(props: { activeMode: ModeId; station: Station }) {
         <article className="metric-card metric-card--wide">
           <span>示例学校点</span>
           <ul className="inline-list">
-            {schools.length ? (
-              schools.map((school) => <li key={school.id}>{school.name}</li>)
+            {schoolMatches.length ? (
+              schoolMatches.map((school) => <li key={school.id}>{school.name}</li>)
             ) : (
               <li>当前种子数据尚未挂到该站。</li>
             )}
@@ -128,8 +137,8 @@ function ModeBody(props: { activeMode: ModeId; station: Station }) {
       <article className="metric-card metric-card--wide">
         <span>相关风险区域</span>
         <ul className="inline-list">
-          {hazards.length ? (
-            hazards.map((hazard) => <li key={hazard.id}>{hazard.name}</li>)
+          {hazardMatches.length ? (
+            hazardMatches.map((hazard) => <li key={hazard.id}>{hazard.name}</li>)
           ) : (
             <li>当前未命中示例风险区。</li>
           )}
@@ -140,7 +149,16 @@ function ModeBody(props: { activeMode: ModeId; station: Station }) {
 }
 
 export function StationPanel(props: StationPanelProps) {
-  const { activeMode, modes, onOpenIntro, selectedStation } = props
+  const {
+    activeMode,
+    errorMessage,
+    hazards,
+    modes,
+    onOpenIntro,
+    schools,
+    selectedStation,
+    status = 'ready',
+  } = props
   const activeModeMeta = modes[activeMode]
 
   if (!selectedStation) {
@@ -148,9 +166,19 @@ export function StationPanel(props: StationPanelProps) {
       <aside className="station-panel">
         <div className="station-panel__empty">
           <span className="station-panel__eyebrow">东京地图工具</span>
-          <h1>打开就是地图，不做多余页面。</h1>
+          <h1>
+            {status === 'loading'
+              ? '正在装载东京种子数据。'
+              : status === 'error'
+                ? '地图骨架已打开，但数据加载失败。'
+                : '打开就是地图，不做多余页面。'}
+          </h1>
           <p>
-            第一轮先证明三件事：车站能做统一锚点、模式切换足够顺、点面数据能低成本挂上地图。
+            {status === 'loading'
+              ? '第二轮开始改成运行时读取 public/data，后面替换成正式导入数据时就不用重写前台。'
+              : status === 'error'
+                ? `当前错误：${errorMessage ?? 'unknown_error'}`
+                : '第一轮先证明三件事：车站能做统一锚点、模式切换足够顺、点面数据能低成本挂上地图。'}
           </p>
 
           <div className="station-panel__bullet-box">
@@ -197,7 +225,12 @@ export function StationPanel(props: StationPanelProps) {
           <strong>{activeModeMeta.panelTitle}</strong>
           <span>{activeModeMeta.label}</span>
         </div>
-        <ModeBody activeMode={activeMode} station={selectedStation} />
+        <ModeBody
+          activeMode={activeMode}
+          hazards={hazards}
+          schools={schools}
+          station={selectedStation}
+        />
       </section>
 
       <section className="station-panel__section">

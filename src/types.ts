@@ -65,3 +65,9 @@ export type HazardZone = {
   stationIds: string[]
   coordinates: [number, number][][]
 }
+
+export type TokyoSeedData = {
+  stations: Station[]
+  schools: SchoolPoint[]
+  hazards: HazardZone[]
+}

@@ -7,10 +7,12 @@ import {
   setModeOverlays,
   TOKYO_MAP_STYLE,
 } from '../lib/mapLayers'
-import type { ModeId, Station } from '../types'
+import type { HazardZone, ModeId, SchoolPoint, Station } from '../types'
 
 type TokyoMapProps = {
   activeMode: ModeId
+  hazards: HazardZone[]
+  schools: SchoolPoint[]
   stations: Station[]
   selectedStationId: string | null
   resetToken: number
@@ -18,7 +20,15 @@ type TokyoMapProps = {
 }
 
 export function TokyoMap(props: TokyoMapProps) {
-  const { activeMode, onSelectStation, resetToken, selectedStationId, stations } = props
+  const {
+    activeMode,
+    hazards,
+    onSelectStation,
+    resetToken,
+    schools,
+    selectedStationId,
+    stations,
+  } = props
   const containerRef = useRef<HTMLDivElement | null>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const markersRef = useRef<maplibregl.Marker[]>([])
@@ -45,8 +55,6 @@ export function TokyoMap(props: TokyoMapProps) {
     map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right')
 
     map.on('load', () => {
-      ensureOverlayLayers(map)
-      setModeOverlays(map, activeMode)
       setMapReady(true)
     })
 
@@ -58,7 +66,16 @@ export function TokyoMap(props: TokyoMapProps) {
       map.remove()
       mapRef.current = null
     }
-  }, [activeMode])
+  }, [])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !mapReady) {
+      return
+    }
+
+    ensureOverlayLayers(map, schools, hazards)
+  }, [hazards, mapReady, schools])
 
   useEffect(() => {
     const map = mapRef.current

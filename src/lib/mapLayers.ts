@@ -1,7 +1,9 @@
 import type { FeatureCollection, Point, Polygon } from 'geojson'
-import type { Map as MapLibreMap, StyleSpecification } from 'maplibre-gl'
-import { HAZARD_ZONES, SCHOOL_POINTS } from '../data/modes'
-import { STATIONS } from '../data/stations'
+import type {
+  GeoJSONSource,
+  Map as MapLibreMap,
+  StyleSpecification,
+} from 'maplibre-gl'
 import type { HazardZone, ModeId, RiskLevel, SchoolPoint, Station } from '../types'
 
 const TOKYO_CENTER: [number, number] = [139.767125, 35.681236]
@@ -63,22 +65,38 @@ function buildHazardFeature(zone: HazardZone) {
   }
 }
 
-export const SCHOOL_FEATURES: FeatureCollection<Point> = {
-  type: 'FeatureCollection',
-  features: SCHOOL_POINTS.map(buildSchoolFeature),
+export function buildSchoolFeatures(points: SchoolPoint[]): FeatureCollection<Point> {
+  return {
+    type: 'FeatureCollection',
+    features: points.map(buildSchoolFeature),
+  }
 }
 
-export const HAZARD_FEATURES: FeatureCollection<Polygon> = {
-  type: 'FeatureCollection',
-  features: HAZARD_ZONES.map(buildHazardFeature),
+export function buildHazardFeatures(zones: HazardZone[]): FeatureCollection<Polygon> {
+  return {
+    type: 'FeatureCollection',
+    features: zones.map(buildHazardFeature),
+  }
 }
 
-export function ensureOverlayLayers(map: MapLibreMap) {
+export function ensureOverlayLayers(
+  map: MapLibreMap,
+  schools: SchoolPoint[],
+  hazards: HazardZone[],
+) {
+  const schoolFeatures = buildSchoolFeatures(schools)
+  const hazardFeatures = buildHazardFeatures(hazards)
+
   if (!map.getSource('schools')) {
     map.addSource('schools', {
       type: 'geojson',
-      data: SCHOOL_FEATURES,
+      data: schoolFeatures,
     })
+  } else {
+    const source = map.getSource('schools') as GeoJSONSource | undefined
+    if (source) {
+      source.setData(schoolFeatures)
+    }
   }
 
   if (!map.getLayer('schools-circle')) {
@@ -101,8 +119,13 @@ export function ensureOverlayLayers(map: MapLibreMap) {
   if (!map.getSource('hazards')) {
     map.addSource('hazards', {
       type: 'geojson',
-      data: HAZARD_FEATURES,
+      data: hazardFeatures,
     })
+  } else {
+    const source = map.getSource('hazards') as GeoJSONSource | undefined
+    if (source) {
+      source.setData(hazardFeatures)
+    }
   }
 
   if (!map.getLayer('hazards-fill')) {
@@ -235,22 +258,18 @@ export function getStationMarkerColor(station: Station, mode: ModeId) {
   return '#334155'
 }
 
-export function getSchoolMatches(stationId: string | null) {
+export function getSchoolMatches(points: SchoolPoint[], stationId: string | null) {
   if (!stationId) {
     return []
   }
 
-  return SCHOOL_POINTS.filter((point) => point.stationIds.includes(stationId))
+  return points.filter((point) => point.stationIds.includes(stationId))
 }
 
-export function getHazardMatches(stationId: string | null) {
+export function getHazardMatches(zones: HazardZone[], stationId: string | null) {
   if (!stationId) {
     return []
   }
 
-  return HAZARD_ZONES.filter((zone) => zone.stationIds.includes(stationId))
-}
-
-export function getStationById(stationId: string | null) {
-  return STATIONS.find((station) => station.id === stationId) ?? null
+  return zones.filter((zone) => zone.stationIds.includes(stationId))
 }

@@ -6,8 +6,8 @@ import { ModeChips } from './components/ModeChips'
 import { StationPanel } from './components/StationPanel'
 import { TokyoMap } from './components/TokyoMap'
 import { TopSearchBar } from './components/TopSearchBar'
+import { useTokyoSeedData } from './hooks/useTokyoSeedData'
 import { MODES } from './data/modes'
-import { STATIONS } from './data/stations'
 import { searchStations } from './lib/search'
 import type { ModeId } from './types'
 
@@ -17,11 +17,16 @@ export default function App() {
   const [query, setQuery] = useState('')
   const [resetToken, setResetToken] = useState(0)
   const [showIntro, setShowIntro] = useState(true)
+  const dataState = useTokyoSeedData()
+
+  const stations = dataState.status === 'ready' ? dataState.data.stations : []
+  const schools = dataState.status === 'ready' ? dataState.data.schools : []
+  const hazards = dataState.status === 'ready' ? dataState.data.hazards : []
 
   const deferredQuery = useDeferredValue(query)
-  const searchResults = searchStations(deferredQuery, STATIONS)
+  const searchResults = searchStations(deferredQuery, stations)
   const selectedStation =
-    STATIONS.find((station) => station.id === selectedStationId) ?? null
+    stations.find((station) => station.id === selectedStationId) ?? null
 
   function handleSelectStation(stationId: string) {
     startTransition(() => {
@@ -40,17 +45,19 @@ export default function App() {
     <div className="app-shell">
       <TokyoMap
         activeMode={activeMode}
+        hazards={hazards}
         onSelectStation={handleSelectStation}
         resetToken={resetToken}
+        schools={schools}
         selectedStationId={selectedStationId}
-        stations={STATIONS}
+        stations={stations}
       />
 
       <LeftRail
         activeModeLabel={MODES[activeMode].shortLabel}
         onOpenIntro={() => setShowIntro(true)}
         onResetView={handleResetView}
-        stationCount={STATIONS.length}
+        stationCount={stations.length}
       />
 
       <TopSearchBar
@@ -64,9 +71,13 @@ export default function App() {
 
       <StationPanel
         activeMode={activeMode}
+        errorMessage={dataState.status === 'error' ? dataState.message : undefined}
+        hazards={hazards}
         modes={MODES}
         onOpenIntro={() => setShowIntro(true)}
+        schools={schools}
         selectedStation={selectedStation}
+        status={dataState.status}
       />
 
       <LegendCard activeMode={MODES[activeMode]} />
