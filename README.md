@@ -12,8 +12,8 @@
 
 ## 当前状态
 
-- 状态：`phase3 official station master 已落地`
-- 当前版本：`单页东京地图 + 官方车站主表 + 官方站别客流 + 首批 5 个模式 + Tailnet 预览 + 地图可读性优化`
+- 状态：`phase3.1 zoom adaptive density 已落地`
+- 当前版本：`单页东京地图 + 官方车站主表 + 官方站别客流 + 缩放驱动的车站密度控制 + 首批 5 个模式 + Tailnet 预览`
 - 数据状态：`车站坐标与热度已接官方数据；价格、地价、学校、灾害仍是部分覆盖`
 - 当前已完成：
   - 东京地图直入
@@ -36,11 +36,18 @@
   - 图例支持自动缩小，避免长期挡住地图
   - 点击地图空白区域可收起站点卡片
   - `scripts/build_tokyo_station_master.py` 可重复生成官方车站底座
+  - 车站显示数量会随缩放级别分层展开，不再默认铺满 500+ 个点
   - 当前生成结果：
     - 东京核心站点：`589`
     - 默认大站标签：`19`
     - 已有价格覆盖站点：`14`
     - 已有真实客流站点：`588`
+    - 默认缩放 `10.4`：
+      - `price` 模式可见站点：`25`
+      - `heat` 模式可见站点：`19`
+    - 中间缩放 `11.2`：可见站点约 `58`
+    - 放大到 `12.2`：可见站点约 `159`
+    - 放大到 `13.0+`：恢复显示全部 `589`
 
 ## 第一轮范围
 
@@ -70,6 +77,7 @@
 - `specs/phase2-runtime-data-and-tailnet-preview-20260413/`：第二轮任务 spec 和 plan
 - `specs/phase2-map-ux-refinement-20260413/`：当前这轮前台交互修正
 - `specs/phase3-official-station-master-20260413/`：官方车站主表与真实客流接入
+- `specs/phase3-zoom-adaptive-station-density-20260414/`：缩放驱动的车站密度控制
 - `src/`：前端源码
 - `public/data/tokyo/stations.seed.json`：当前手写种子覆盖层
 - `public/data/tokyo/stations.json`：前台实际使用的车站数据
@@ -127,6 +135,7 @@ https://vps-jp.tail4b5213.ts.net:8443/
 - 价格、公示地价、学校、灾害仍未全量官方化
 - 当前 `stations.json` 是“官方主表 + 手写覆盖层”合成结果，不是所有模式都已完成正式导入
 - 东京范围当前使用的是“东京核心 bbox”，不是整个东京都行政边界
+- 当前仍使用 DOM marker；如果后面继续上更多设施点或更大范围，可能需要切到图层化渲染
 - 还没有站点详情页、分享页和 AI 解读
 - 当前重点是“地图底座能否持续挂新图层”，不是数据完整度
 
@@ -146,3 +155,6 @@ https://vps-jp.tail4b5213.ts.net:8443/
 - `curl -I http://127.0.0.1:4173/` 返回 `HTTP 200`
 - `curl -I https://vps-jp.tail4b5213.ts.net:8443/` 返回 `HTTP 200`
 - `curl http://127.0.0.1:4173/data/tokyo/stations.meta.json` 返回官方主表元数据
+- 默认缩放可见站点已从“全量 589”降到：
+  - `price` 模式 `25`
+  - `heat` 模式 `19`
