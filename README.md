@@ -78,6 +78,7 @@
 - `specs/phase2-map-ux-refinement-20260413/`：当前这轮前台交互修正
 - `specs/phase3-official-station-master-20260413/`：官方车站主表与真实客流接入
 - `specs/phase3-zoom-adaptive-station-density-20260414/`：缩放驱动的车站密度控制
+- `specs/phase4-product-roadmap-20260414/`：后续批次路线图 spec
 - `src/`：前端源码
 - `public/data/tokyo/stations.seed.json`：当前手写种子覆盖层
 - `public/data/tokyo/stations.json`：前台实际使用的车站数据
@@ -141,10 +142,11 @@ https://vps-jp.tail4b5213.ts.net:8443/
 
 ## 下一轮建议
 
-- 接正式房价/成交价导入链路
-- 接正式公示地价导入链路
-- 把学校和灾害从种子层替换成正式图层
-- 继续优化默认视野、默认大站集合和站名显示阈值
+- 先做 Batch 1：`站点价值核心`
+- 再做 Batch 2：`点图层包`
+- 再做 Batch 3：`区域图层包`
+- 数据层稳定后再做 Batch 4：`产品层`
+- 最后才做 Batch 5：`AI 层`
 
 ## 本轮验收
 
