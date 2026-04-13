@@ -2,15 +2,25 @@
 
 > **For agentic workers:** In Codex, use `superpowers:executing-plans` by default. Use `superpowers:subagent-driven-development` only when independent lanes exist and the user explicitly allows delegation or parallel agent work. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Turn the current Tokyo map foundation into a genuinely useful station-first research tool by executing the next batches in dependency order.
+**Goal:** Turn the current Tokyo map foundation into a genuinely useful station-first research tool by continuously completing the first three layer families before moving on to product and AI work.
 
-**Architecture:** Keep the single-page map shell and station-first interaction unchanged. Advance the project by replacing placeholder data mode-by-mode, while building shared ingestion and rendering bottoms only when multiple upcoming modes clearly depend on them.
+**Architecture:** Keep the single-page map shell and station-first interaction unchanged. The next major milestone is not “finish Batch 1 and pause”, but “finish the first three layer families as one continuous delivery phase”. Internally, still execute them in dependency order so the data bottoms stay clean and reusable.
 
 **Tech Stack:** React, TypeScript, Vite, MapLibre GL JS, Python data builders, official Japanese public datasets and APIs
 
 ---
 
-### Batch 1: 站点价值核心
+### Phase A: 三类核心图层完成包
+
+**Why this is the next real milestone:** 用户要的是能在同一张地图里把前三大类图层都切起来，而不是只把价格层做完就停。
+
+**Phase acceptance gate:**
+- `price / land` 正式化完成
+- `schools / 生活便利度` 正式化完成
+- `hazard / population` 正式化完成
+- README 写清楚三类图层的数据口径和覆盖率
+
+### Phase A / Batch 1: 站点价值核心
 
 **Why this is one batch:** 房产成交价、公示地价和站点聚合是同一条数据链，拆开做会重复改 schema、聚合逻辑和面板字段。
 
@@ -25,7 +35,7 @@
 - 未覆盖站点明确显示未覆盖
 - README 更新覆盖率、更新时间和口径说明
 
-### Batch 2: 点图层包
+### Phase A / Batch 2: 点图层包
 
 **Why this is one batch:** 学校和生活便利度本质上都是大量点位图层，应该共用同一套 schema、渲染和过滤逻辑。
 
@@ -40,7 +50,7 @@
 - 默认视图和放大视图都不爆点
 - 侧边卡片能显示对应点图层的核心摘要
 
-### Batch 3: 区域图层包
+### Phase A / Batch 3: 区域图层包
 
 **Why this is one batch:** 灾害风险和人口趋势都是区域图层，颜色系统、legend、hover、透明度逻辑高度共享。
 
@@ -55,7 +65,7 @@
 - 区域图层样式清晰，不压垮底图
 - 站点卡片能联动区域解释
 
-### Batch 4: 产品层
+### Phase B: 产品层
 
 **Why this is one batch:** 这一批都是用户工作流强化，不是底层数据替换；放在一起做更能形成完整体验。
 
@@ -70,7 +80,7 @@
 - 用户能分享当前视角和模式
 - 方法说明能覆盖主要模式
 
-### Batch 5: AI 层
+### Phase C: AI 层
 
 **Why this is a separate batch:** AI 只能建立在前四批的结构化结果之上，不能抢跑。
 
@@ -86,15 +96,16 @@
 
 ### 执行顺序
 
-- [ ] 先做 Batch 1，不跳批
-- [ ] Batch 1 通过后再开 Batch 2
-- [ ] Batch 2 通过后再开 Batch 3
-- [ ] Batch 3 通过后再开 Batch 4
-- [ ] Batch 4 通过后再开 Batch 5
+- [ ] 先做 Phase A，不跳到产品层
+- [ ] 在 Phase A 内连续做 Batch 1 / 2 / 3
+- [ ] 不把 Batch 1 当成阶段终点
+- [ ] Phase A 全部通过后再开 Phase B
+- [ ] Phase B 通过后再开 Phase C
 
 ### 现在的直接下一步
 
 - [ ] 为 Batch 1 单独开下一轮 task spec
+- [ ] 同时在路线图里预留 Batch 2 / 3 的连续执行窗口，不在 Batch 1 结束后重新定方向
 - [ ] 明确价格聚合口径：
   - 站点半径还是最近站归属
   - 时间窗口按年还是按季度
@@ -102,4 +113,6 @@
 - [ ] 明确公示地价口径：
   - 站点附近取样方式
   - 与成交价的关系说明
+- [ ] 预先梳理学校 / 便利度的点图层候选源
+- [ ] 预先梳理 hazard / population 的区域图层候选源
 - [ ] 先做东京范围，不扩城市
