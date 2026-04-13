@@ -22,7 +22,9 @@ export default function App() {
 
   const stations = dataState.status === 'ready' ? dataState.data.stations : []
   const schools = dataState.status === 'ready' ? dataState.data.schools : []
+  const convenience = dataState.status === 'ready' ? dataState.data.convenience : []
   const hazards = dataState.status === 'ready' ? dataState.data.hazards : []
+  const population = dataState.status === 'ready' ? dataState.data.population : []
 
   const deferredQuery = useDeferredValue(query)
   const searchResults = searchStations(deferredQuery, stations)
@@ -66,8 +68,10 @@ export default function App() {
     <div className="app-shell">
       <TokyoMap
         activeMode={activeMode}
+        convenience={convenience}
         hazards={hazards}
         onSelectStation={handleSelectStation}
+        population={population}
         resetToken={resetToken}
         schools={schools}
         selectedStationId={selectedStationId}
@@ -92,11 +96,13 @@ export default function App() {
 
       <StationPanel
         activeMode={activeMode}
+        convenience={convenience}
         errorMessage={dataState.status === 'error' ? dataState.message : undefined}
         hazards={hazards}
         modes={MODES}
         onClose={() => setSelectedStationId(null)}
         onOpenIntro={() => setShowIntro(true)}
+        population={population}
         schools={schools}
         selectedStation={selectedStation}
         status={dataState.status}

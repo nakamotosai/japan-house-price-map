@@ -2,90 +2,114 @@
 
 以东京车站为锚点的单页地图工具。
 
-当前目标不是做房源列表平台，而是先做一个能快速切换多种研究模式的地图底座，让用户在同一张地图上研究：
-
-- 房产参考价格带
-- 公示地价
-- 车站热度
-- 学校
-- 灾害风险
+目标不是做房源列表平台，而是先做一张可以瞬时切换多种研究模式的东京地图底座，让用户围绕“站点”快速判断区域价格、热度、配套、风险和长期趋势。
 
 ## 当前状态
 
-- 状态：`phase3.1 zoom adaptive density 已落地`
-- 当前版本：`单页东京地图 + 官方车站主表 + 官方站别客流 + 缩放驱动的车站密度控制 + 首批 5 个模式 + Tailnet 预览`
-- 数据状态：`车站坐标与热度已接官方数据；价格、地价、学校、灾害仍是部分覆盖`
+- 状态：`phase5.1 core layers + layer-native station rendering 已落地`
+- 当前版本：`单页东京地图 + 官方车站主表 + 7 模式切换 + 正式点/区域图层 + MapLibre 原生站点渲染 + Tailnet 预览`
 - 当前已完成：
-  - 东京地图直入
-  - Google Maps 风格启发的左侧工具栏与左上搜索框
-  - 官方东京核心车站主表接入
+  - 直接进入东京地图，不做单独首页
+  - Google Maps 风格启发的左侧工具栏与左上搜索栏
+  - 官方东京车站主表接入
   - 官方 `S12-24` 站别客流接入
-  - 车站锚点常驻
-  - 模式切换
-  - 站点搜索
-  - 轻量站点面板
-  - 默认不再自动弹出说明层
-  - 默认不再自动展开站点卡片
-  - 学校点图层
-  - 灾害风险面图层
-  - `public/data/tokyo/` 运行时数据目录
+  - 7 个模式即时切换：
+    - 房产均价
+    - 公示地价
+    - 车站热度
+    - 学校分布
+    - 生活便利度
+    - 灾害风险
+    - 人口趋势
+  - 站点显示数量随缩放级别分层展开
+  - 默认保留大站站名，小站只保留图标
+  - 房产均价模式直接把价格写在站点图标上
+  - 点击地图空白区域可收起站点卡片
+  - 图例会自动收起，避免长期挡住地图
+  - 站点卡片已接入正式字段：
+    - 成交价样本量
+    - 地价样本量
+    - 便利度构成
+    - 人口变化率
+    - 洪水浸水等级
+  - 学校、便利度、灾害、人口图层全部改为 MapLibre `source + layer`
+  - 站点也已改为 MapLibre 原生图层渲染，不再使用旧 DOM marker
   - PM2 常驻预览进程
   - Tailnet HTTPS 预览入口
-  - 大站默认保留站名，小站降为图标级展示
-  - 房产均价模式直接把价格写到 marker 上
-  - 图例支持自动缩小，避免长期挡住地图
-  - 点击地图空白区域可收起站点卡片
-  - `scripts/build_tokyo_station_master.py` 可重复生成官方车站底座
-  - 车站显示数量会随缩放级别分层展开，不再默认铺满 500+ 个点
-  - 当前生成结果：
-    - 东京核心站点：`589`
-    - 默认大站标签：`19`
-    - 已有价格覆盖站点：`14`
-    - 已有真实客流站点：`588`
-    - 默认缩放 `10.4`：
-      - `price` 模式可见站点：`25`
-      - `heat` 模式可见站点：`19`
-    - 中间缩放 `11.2`：可见站点约 `58`
-    - 放大到 `12.2`：可见站点约 `159`
-    - 放大到 `13.0+`：恢复显示全部 `589`
 
-## 第一轮范围
+## 当前数据口径
 
-- 直接进入东京地图
-- Google Maps 风格启发的左侧边栏和左上搜索区
-- 地图始终保留车站锚点
-- 顶部或边缘模式按钮切换图层
-- 轻量站点信息面板
-- 首批模式：
-  - 房产均价
-  - 公示地价
-  - 车站热度
-  - 学校
-  - 灾害风险
+### 车站锚点层
+
+- 车站总数：`589`
+- 官方基础：
+  - `N02-24` 车站主表
+  - `S12-24` 站别客流
+
+### 正式图层覆盖
+
+- 房产均价：
+  - 来源：`国土交通省 不動産情報ライブラリ API`
+  - 口径：`2024 年住宅成交价`
+  - 覆盖站点：`342`
+- 公示地价：
+  - 来源：`L01-25`
+  - 覆盖站点：`459`
+- 学校分布：
+  - 来源：`P29-23`
+  - 站点覆盖：`458`
+  - 点位数：`3284`
+- 生活便利度：
+  - 来源：`P04-20 + P05-22`
+  - 站点覆盖：`502`
+  - 点位数：`22765`
+- 灾害风险：
+  - 来源：`A31a-24_13_20`
+  - 当前口径：`洪水浸水`
+  - 站点覆盖：`505`
+  - 区域数：`64`
+- 人口趋势：
+  - 来源：`500m_mesh_2024_13`
+  - 站点覆盖：`492`
+  - 区域数：`456`
+
+### 当前前台表现
+
+- 默认远视角实测渲染站点：`27`
+- 放大后站点数量会继续增加，不再一上来把 500+ 个站全部铺满
+- 前台验收确认：站点 DOM marker 数量为 `0`
 
 ## 技术路线
 
-- 前端：React + TypeScript + Vite
-- 地图引擎：MapLibre GL JS
-- 底图：日本官方地理院公开瓦片
-- 核心思路：先把车站主索引、图层注册表、模式控制器、站点空间聚合接口形态做出来，再逐步替换各模式的数据源
-- 当前数据入口：`public/data/tokyo/stations.json`、`stations.seed.json`、`stations.meta.json`、`schools.json`、`hazards.json`
+- 前端：`React + TypeScript + Vite`
+- 地图引擎：`MapLibre GL JS`
+- 底图：`地理院タイル`
+- 当前图层模型：
+  - 站点层
+  - 点位层
+  - 区域层
+- 当前运行时数据目录：`public/data/tokyo/`
 
 ## 目录说明
 
-- `specs/phase1-map-foundation-20260413/`：第一轮任务 spec 和 plan
-- `specs/phase2-runtime-data-and-tailnet-preview-20260413/`：第二轮任务 spec 和 plan
-- `specs/phase2-map-ux-refinement-20260413/`：当前这轮前台交互修正
-- `specs/phase3-official-station-master-20260413/`：官方车站主表与真实客流接入
-- `specs/phase3-zoom-adaptive-station-density-20260414/`：缩放驱动的车站密度控制
-- `specs/phase4-product-roadmap-20260414/`：后续批次路线图 spec
+- `specs/phase1-map-foundation-20260413/`：第一轮地图底座 spec / plan
+- `specs/phase2-runtime-data-and-tailnet-preview-20260413/`：运行时数据目录与 Tailnet 预览
+- `specs/phase2-map-ux-refinement-20260413/`：前台交互修正
+- `specs/phase3-official-station-master-20260413/`：官方车站主表与客流接入
+- `specs/phase3-zoom-adaptive-station-density-20260414/`：缩放驱动站点密度
+- `specs/phase4-product-roadmap-20260414/`：产品路线图
+- `specs/phase5-phase-a-core-layers-20260414/`：前三类核心图层正式化
 - `src/`：前端源码
-- `public/data/tokyo/stations.seed.json`：当前手写种子覆盖层
 - `public/data/tokyo/stations.json`：前台实际使用的车站数据
-- `public/data/tokyo/stations.meta.json`：本轮生成元数据
+- `public/data/tokyo/stations.meta.json`：当前数据覆盖元信息
+- `public/data/tokyo/schools.json`：学校点图层
+- `public/data/tokyo/convenience.json`：便利度点图层
+- `public/data/tokyo/hazards.json`：洪水风险面图层
+- `public/data/tokyo/population.json`：人口趋势面图层
+- `scripts/build_tokyo_station_master.py`：重建官方东京车站底座
+- `scripts/build_tokyo_phase_a_layers.py`：生成前三类核心图层正式数据
 - `scripts/start_tailnet_preview.sh`：启动 Tailnet 预览
 - `scripts/stop_tailnet_preview.sh`：停止 Tailnet 预览
-- `scripts/build_tokyo_station_master.py`：下载官方 `N02-24 + S12-24` 并生成东京车站底座
 
 ## 运行方式
 
@@ -94,7 +118,7 @@ npm install
 npm run dev
 ```
 
-如需构建验证：
+构建与验证：
 
 ```bash
 npm test
@@ -102,10 +126,16 @@ npm run lint
 npm run build
 ```
 
-如需重新生成车站底座：
+重建官方车站底座：
 
 ```bash
 python3 scripts/build_tokyo_station_master.py
+```
+
+重建 Phase A 正式图层：
+
+```bash
+REINFOLIB_SUBSCRIPTION_KEY='<your-key>' python3 scripts/build_tokyo_phase_a_layers.py
 ```
 
 ## Tailnet 预览
@@ -128,37 +158,40 @@ python3 scripts/build_tokyo_station_master.py
 https://vps-jp.tail4b5213.ts.net:8443/
 ```
 
-这条地址可在同一 Tailnet 内的 `home-windows.tail4b5213.ts.net` 直接打开。
+同一 Tailnet 内的 `home-windows.tail4b5213.ts.net` 可以直接打开。
 
-## 当前限制
+## 当前边界
 
-- 当前只有车站坐标与热度已经正式官方化
-- 价格、公示地价、学校、灾害仍未全量官方化
-- 当前 `stations.json` 是“官方主表 + 手写覆盖层”合成结果，不是所有模式都已完成正式导入
-- 东京范围当前使用的是“东京核心 bbox”，不是整个东京都行政边界
-- 当前仍使用 DOM marker；如果后面继续上更多设施点或更大范围，可能需要切到图层化渲染
-- 还没有站点详情页、分享页和 AI 解读
-- 当前重点是“地图底座能否持续挂新图层”，不是数据完整度
+- 当前只做东京，不扩到其他城市
+- 站点是核心锚点，不做房源级列表
+- 灾害模式当前只正式接入洪水浸水，不代表全灾种完成
+- 便利度是“医疗 + 公共服务”的第一版官方代理指标，不是完整生活评分体系
+- 还没有站点详情页、分享页和 AI 功能
+- 当前打包体积偏大，后续仍应继续做图层按需加载和数据瘦身
 
-## 下一轮建议
+## 本轮收口验证
 
-- 下一阶段目标不是只做完 Batch 1
-- 下一阶段要连续完成前三类核心图层：
-  - Batch 1：`站点价值核心`
-  - Batch 2：`点图层包`
-  - Batch 3：`区域图层包`
-- 前三类图层完成后再做 Phase B：`产品层`
-- 最后才做 Phase C：`AI 层`
-
-## 本轮验收
-
-- `python3 scripts/build_tokyo_station_master.py` 通过
 - `npm test` 通过
 - `npm run lint` 通过
 - `npm run build` 通过
+- `./scripts/start_tailnet_preview.sh` 通过
 - `curl -I http://127.0.0.1:4173/` 返回 `HTTP 200`
 - `curl -I https://vps-jp.tail4b5213.ts.net:8443/` 返回 `HTTP 200`
-- `curl http://127.0.0.1:4173/data/tokyo/stations.meta.json` 返回官方主表元数据
-- 默认缩放可见站点已从“全量 589”降到：
-  - `price` 模式 `25`
-  - `heat` 模式 `19`
+- Chromium + SwiftShader 前台 smoke 通过以下检查：
+  - 默认远视角渲染站点为 `27`
+  - `学校分布 / 生活便利度 / 灾害风险` 模式切换会正确切换图层可见性
+  - 站点 DOM marker 数量为 `0`
+  - 真实点击站点可打开卡片
+  - 真实点击地图空白区域可收起卡片
+  - 放大后渲染站点数量会增加
+
+## 仓库卫生要求
+
+- 根 `README.md` 是当前状态唯一真相源
+- 每轮实现结束后，必须同步 README
+- 没有验证，不算完成
+- 项目可交付状态应满足：
+  - 代码已验证
+  - 预览入口可用
+  - README 已回写
+  - `git status --short` 为空

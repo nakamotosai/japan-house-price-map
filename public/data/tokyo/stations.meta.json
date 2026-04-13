@@ -1,17 +1,25 @@
 {
-  "generatedAt": "2026-04-13T15:20:02.007421+00:00",
-  "stationDataset": "N02-24",
-  "ridershipDataset": "S12-24",
-  "ridershipYear": 2023,
-  "bounds": {
-    "west": 139.52,
-    "east": 139.95,
-    "south": 35.55,
-    "north": 35.82
-  },
+  "generatedAt": "2026-04-13T17:36:21Z",
   "stationCount": 589,
-  "majorLabelCount": 19,
-  "seedOverrideCount": 14,
-  "priceCoverageCount": 14,
-  "ridershipCoverageCount": 588
+  "priceCoverageCount": 342,
+  "landCoverageCount": 459,
+  "schoolsCoverageCount": 458,
+  "convenienceCoverageCount": 502,
+  "hazardCoverageCount": 505,
+  "populationCoverageCount": 492,
+  "schoolsPointCount": 3284,
+  "conveniencePointCount": 22765,
+  "hazardAreaCount": 64,
+  "populationAreaCount": 456,
+  "sources": {
+    "price": "reinfolib transaction prices 2024 residential",
+    "land": "L01-25",
+    "schools": "P29-23",
+    "convenience": [
+      "P04-20",
+      "P05-22"
+    ],
+    "hazard": "A31a-24_13_20",
+    "population": "500m_mesh_2024_13"
+  }
 }

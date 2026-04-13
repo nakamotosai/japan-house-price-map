@@ -1,6 +1,13 @@
-export type ModeId = 'price' | 'land' | 'heat' | 'schools' | 'hazard'
+export type ModeId =
+  | 'price'
+  | 'land'
+  | 'heat'
+  | 'schools'
+  | 'convenience'
+  | 'hazard'
+  | 'population'
 
-export type ModeCategory = 'station' | 'overlay'
+export type ModeCategory = 'station' | 'point' | 'area'
 
 export type RiskLevel = 'low' | 'medium' | 'high' | 'unknown'
 
@@ -36,12 +43,22 @@ export type Station = {
     district: string
     medianPriceMJPY: number
     medianPriceManPerSqm: number
+    priceSampleCount: number
     landValueManPerSqm: number
+    landSampleCount: number
     ridershipDaily: number
     heatScore: number
     transferLines: number
     schoolsNearby: number
+    convenienceNearby: number
+    convenienceScore: number
+    convenienceBreakdown: {
+      medical: number
+      publicService: number
+    }
     populationTrend: PopulationTrend
+    populationChangeRate: number | null
+    hazardMaxDepthRank: number | null
     hazard: {
       flood: RiskLevel
       liquefaction: RiskLevel
@@ -52,6 +69,7 @@ export type Station = {
       land: boolean
       ridership: boolean
       schools: boolean
+      convenience: boolean
       population: boolean
       hazard: boolean
     }
@@ -59,26 +77,36 @@ export type Station = {
   }
 }
 
-export type SchoolPoint = {
+export type PointLayerFeature = {
   id: string
   name: string
-  category: string
+  categoryId: string
+  categoryLabel: string
   lat: number
   lng: number
-  stationIds: string[]
+  stationId: string | null
+  note: string
 }
 
-export type HazardZone = {
+export type AreaLayerFeature = {
   id: string
   name: string
+  categoryId: string
+  categoryLabel: string
   summary: string
-  riskLevel: RiskLevel
   stationIds: string[]
-  coordinates: [number, number][][]
+  metricValue: number | null
+  metricLabel: string
+  geometry: {
+    type: 'Polygon' | 'MultiPolygon'
+    coordinates: number[][][] | number[][][][]
+  }
 }
 
 export type TokyoMapData = {
   stations: Station[]
-  schools: SchoolPoint[]
-  hazards: HazardZone[]
+  schools: PointLayerFeature[]
+  convenience: PointLayerFeature[]
+  hazards: AreaLayerFeature[]
+  population: AreaLayerFeature[]
 }

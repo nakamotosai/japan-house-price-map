@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
+  getStationPriorityScore,
+  getStationTargetCountForZoom,
   getStationVisibilityBand,
   getVisibilityBandForZoom,
-  shouldShowStationMarker,
+  getVisibleStationIds,
   shouldShowStationName,
   shouldShowStationPrice,
 } from './stationVisibility'
@@ -25,12 +27,22 @@ function createStation(partial: Partial<Station> = {}): Station {
       district: '样本区',
       medianPriceMJPY: 0,
       medianPriceManPerSqm: 0,
+      priceSampleCount: 0,
       landValueManPerSqm: 0,
+      landSampleCount: 0,
       ridershipDaily: 50_000,
       heatScore: 60,
       transferLines: 1,
       schoolsNearby: 0,
+      convenienceNearby: 0,
+      convenienceScore: 0,
+      convenienceBreakdown: {
+        medical: 0,
+        publicService: 0,
+      },
       populationTrend: '待补',
+      populationChangeRate: null,
+      hazardMaxDepthRank: null,
       hazard: {
         flood: 'unknown',
         liquefaction: 'unknown',
@@ -41,6 +53,7 @@ function createStation(partial: Partial<Station> = {}): Station {
         land: false,
         ridership: true,
         schools: false,
+        convenience: false,
         population: false,
         hazard: false,
       },
@@ -59,11 +72,13 @@ function createStation(partial: Partial<Station> = {}): Station {
 }
 
 describe('stationVisibility', () => {
-  it('maps zoom levels to progressively wider visibility bands', () => {
+  it('maps zoom levels to progressively wider visibility bands and target counts', () => {
     expect(getVisibilityBandForZoom(10.4)).toBe(1)
     expect(getVisibilityBandForZoom(11.2)).toBe(2)
     expect(getVisibilityBandForZoom(12.2)).toBe(3)
     expect(getVisibilityBandForZoom(13.0)).toBe(4)
+    expect(getStationTargetCountForZoom(10.4)).toBe(28)
+    expect(getStationTargetCountForZoom(11.2)).toBe(72)
   })
 
   it('treats major stations as the highest priority band', () => {
@@ -71,54 +86,51 @@ describe('stationVisibility', () => {
     expect(getStationVisibilityBand(majorStation)).toBe(1)
   })
 
-  it('keeps price-covered stations visible in price mode at far zoom', () => {
+  it('boosts price-covered stations in price mode', () => {
     const pricedStation = createStation({
       metrics: {
         ...createStation().metrics,
+        medianPriceMJPY: 96,
+        priceSampleCount: 12,
         coverage: {
           price: true,
           land: false,
           ridership: true,
           schools: false,
+          convenience: false,
           population: false,
           hazard: false,
         },
       },
     })
+    const localStation = createStation()
 
-    expect(
-      shouldShowStationMarker({
-        station: pricedStation,
-        mode: 'price',
-        zoom: 10.2,
-        isSelected: false,
-      }),
-    ).toBe(true)
+    expect(getStationPriorityScore(pricedStation, 'price')).toBeGreaterThan(
+      getStationPriorityScore(localStation, 'price'),
+    )
     expect(shouldShowStationPrice({ station: pricedStation, mode: 'price' })).toBe(true)
   })
 
-  it('hides low-priority local stations at the default zoom', () => {
-    const localStation = createStation()
-    expect(
-      shouldShowStationMarker({
-        station: localStation,
-        mode: 'heat',
-        zoom: 10.4,
-        isSelected: false,
+  it('always keeps the selected station visible even if it falls outside the zoom quota', () => {
+    const stations = Array.from({ length: 40 }, (_, index) =>
+      createStation({
+        id: `station-${index}`,
+        name: `站点-${index}`,
+        metrics: {
+          ...createStation().metrics,
+          ridershipDaily: 300_000 - index * 5_000,
+        },
       }),
-    ).toBe(false)
-  })
+    )
 
-  it('always keeps the selected station visible', () => {
-    const localStation = createStation()
-    expect(
-      shouldShowStationMarker({
-        station: localStation,
-        mode: 'heat',
-        zoom: 10.4,
-        isSelected: true,
-      }),
-    ).toBe(true)
+    const visibleIds = getVisibleStationIds({
+      stations,
+      mode: 'heat',
+      zoom: 10.4,
+      selectedStationId: 'station-39',
+    })
+
+    expect(visibleIds.has('station-39')).toBe(true)
   })
 
   it('only shows station names for major stations', () => {

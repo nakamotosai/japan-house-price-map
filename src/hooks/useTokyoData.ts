@@ -1,5 +1,11 @@
 import { useEffect, useState } from 'react'
-import { loadHazards, loadSchools, loadStations } from '../lib/dataLoader'
+import {
+  loadConvenience,
+  loadHazards,
+  loadPopulation,
+  loadSchools,
+  loadStations,
+} from '../lib/dataLoader'
 import type { TokyoMapData } from '../types'
 
 type TokyoDataState =
@@ -15,16 +21,18 @@ export function useTokyoData(): TokyoDataState {
 
     async function run() {
       try {
-        const [stations, schools, hazards] = await Promise.all([
+        const [stations, schools, convenience, hazards, population] = await Promise.all([
           loadStations(),
           loadSchools(),
+          loadConvenience(),
           loadHazards(),
+          loadPopulation(),
         ])
 
         if (!cancelled) {
           setState({
             status: 'ready',
-            data: { stations, schools, hazards },
+            data: { stations, schools, convenience, hazards, population },
           })
         }
       } catch (error) {

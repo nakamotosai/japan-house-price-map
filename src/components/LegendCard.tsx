@@ -9,6 +9,12 @@ type LegendCardProps = {
 
 export function LegendCard(props: LegendCardProps) {
   const { activeMode, collapsed, onCollapse, onExpand } = props
+  const categoryLabel =
+    activeMode.category === 'station'
+      ? '站点锚点模式'
+      : activeMode.category === 'point'
+        ? '设施点模式'
+        : '区域覆盖模式'
 
   if (collapsed) {
     return (
@@ -25,7 +31,7 @@ export function LegendCard(props: LegendCardProps) {
       <div className="legend-card__header">
         <strong>{activeMode.label}</strong>
         <div className="legend-card__header-actions">
-          <span>{activeMode.category === 'station' ? '站点指标模式' : '坐标覆盖模式'}</span>
+          <span>{categoryLabel}</span>
           <button className="legend-card__collapse" onClick={onCollapse} type="button">
             收起
           </button>
@@ -50,7 +56,7 @@ export function LegendCard(props: LegendCardProps) {
       </div>
 
       <div className="legend-card__footnote">
-        车站坐标和热度已接官方主表；价格、学校、灾害仍在逐步补齐。
+        7 个模式共用同一张东京地图底座；切换时只换图层，不换页面。
       </div>
     </section>
   )

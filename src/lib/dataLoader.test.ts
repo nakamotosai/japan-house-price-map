@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { loadHazards, loadSchools, loadStations } from './dataLoader'
+import {
+  loadConvenience,
+  loadHazards,
+  loadPopulation,
+  loadSchools,
+  loadStations,
+} from './dataLoader'
 
 function createFetcher(payload: unknown, ok = true) {
   return async () =>
@@ -16,11 +22,16 @@ describe('dataLoader', () => {
     expect(stations[0]?.id).toBe('tokyo')
   })
 
-  it('loads schools and hazards through the shared JSON loader', async () => {
+  it('loads point and area layers through the shared JSON loader', async () => {
     const schools = await loadSchools(createFetcher([{ id: 'school-1' }]))
+    const convenience = await loadConvenience(createFetcher([{ id: 'facility-1' }]))
     const hazards = await loadHazards(createFetcher([{ id: 'hazard-1' }]))
+    const population = await loadPopulation(createFetcher([{ id: 'mesh-1' }]))
+
     expect(schools[0]?.id).toBe('school-1')
+    expect(convenience[0]?.id).toBe('facility-1')
     expect(hazards[0]?.id).toBe('hazard-1')
+    expect(population[0]?.id).toBe('mesh-1')
   })
 
   it('throws when a resource fails to load', async () => {

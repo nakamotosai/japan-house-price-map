@@ -1,0 +1,2318 @@
+[
+  {
+    "stationNameJa": "荻窪",
+    "sampleCount": 86,
+    "medianPriceMJPY": 93,
+    "medianPriceManPerSqm": 86
+  },
+  {
+    "stationNameJa": "竹の塚",
+    "sampleCount": 82,
+    "medianPriceMJPY": 48,
+    "medianPriceManPerSqm": 49
+  },
+  {
+    "stationNameJa": "西荻窪",
+    "sampleCount": 79,
+    "medianPriceMJPY": 88,
+    "medianPriceManPerSqm": 89
+  },
+  {
+    "stationNameJa": "大泉学園",
+    "sampleCount": 70,
+    "medianPriceMJPY": 66,
+    "medianPriceManPerSqm": 55
+  },
+  {
+    "stationNameJa": "武蔵小金井",
+    "sampleCount": 67,
+    "medianPriceMJPY": 60,
+    "medianPriceManPerSqm": 59
+  },
+  {
+    "stationNameJa": "学芸大学",
+    "sampleCount": 62,
+    "medianPriceMJPY": 145,
+    "medianPriceManPerSqm": 118
+  },
+  {
+    "stationNameJa": "大森(東京)",
+    "sampleCount": 61,
+    "medianPriceMJPY": 76,
+    "medianPriceManPerSqm": 97
+  },
+  {
+    "stationNameJa": "篠崎",
+    "sampleCount": 61,
+    "medianPriceMJPY": 55,
+    "medianPriceManPerSqm": 59
+  },
+  {
+    "stationNameJa": "西馬込",
+    "sampleCount": 61,
+    "medianPriceMJPY": 64,
+    "medianPriceManPerSqm": 74
+  },
+  {
+    "stationNameJa": "保谷",
+    "sampleCount": 60,
+    "medianPriceMJPY": 58,
+    "medianPriceManPerSqm": 49
+  },
+  {
+    "stationNameJa": "新小岩",
+    "sampleCount": 60,
+    "medianPriceMJPY": 49,
+    "medianPriceManPerSqm": 60
+  },
+  {
+    "stationNameJa": "方南町",
+    "sampleCount": 60,
+    "medianPriceMJPY": 72,
+    "medianPriceManPerSqm": 72
+  },
+  {
+    "stationNameJa": "瑞江",
+    "sampleCount": 60,
+    "medianPriceMJPY": 53,
+    "medianPriceManPerSqm": 53
+  },
+  {
+    "stationNameJa": "町屋",
+    "sampleCount": 60,
+    "medianPriceMJPY": 40,
+    "medianPriceManPerSqm": 60
+  },
+  {
+    "stationNameJa": "武蔵関",
+    "sampleCount": 59,
+    "medianPriceMJPY": 73,
+    "medianPriceManPerSqm": 59
+  },
+  {
+    "stationNameJa": "上井草",
+    "sampleCount": 57,
+    "medianPriceMJPY": 65,
+    "medianPriceManPerSqm": 68
+  },
+  {
+    "stationNameJa": "小岩",
+    "sampleCount": 56,
+    "medianPriceMJPY": 58,
+    "medianPriceManPerSqm": 54
+  },
+  {
+    "stationNameJa": "亀有",
+    "sampleCount": 55,
+    "medianPriceMJPY": 55,
+    "medianPriceManPerSqm": 71
+  },
+  {
+    "stationNameJa": "ひばりケ丘(東京)",
+    "sampleCount": 53,
+    "medianPriceMJPY": 49,
+    "medianPriceManPerSqm": 41
+  },
+  {
+    "stationNameJa": "田無",
+    "sampleCount": 53,
+    "medianPriceMJPY": 50,
+    "medianPriceManPerSqm": 45
+  },
+  {
+    "stationNameJa": "大山(東京)",
+    "sampleCount": 52,
+    "medianPriceMJPY": 86,
+    "medianPriceManPerSqm": 84
+  },
+  {
+    "stationNameJa": "鷺の宮",
+    "sampleCount": 52,
+    "medianPriceMJPY": 69,
+    "medianPriceManPerSqm": 74
+  },
+  {
+    "stationNameJa": "練馬春日町",
+    "sampleCount": 51,
+    "medianPriceMJPY": 61,
+    "medianPriceManPerSqm": 67
+  },
+  {
+    "stationNameJa": "野方",
+    "sampleCount": 51,
+    "medianPriceMJPY": 70,
+    "medianPriceManPerSqm": 71
+  },
+  {
+    "stationNameJa": "お花茶屋",
+    "sampleCount": 49,
+    "medianPriceMJPY": 47,
+    "medianPriceManPerSqm": 54
+  },
+  {
+    "stationNameJa": "三鷹",
+    "sampleCount": 49,
+    "medianPriceMJPY": 120,
+    "medianPriceManPerSqm": 80
+  },
+  {
+    "stationNameJa": "小竹向原",
+    "sampleCount": 49,
+    "medianPriceMJPY": 78,
+    "medianPriceManPerSqm": 80
+  },
+  {
+    "stationNameJa": "石神井公園",
+    "sampleCount": 49,
+    "medianPriceMJPY": 82,
+    "medianPriceManPerSqm": 63
+  },
+  {
+    "stationNameJa": "高円寺",
+    "sampleCount": 49,
+    "medianPriceMJPY": 84,
+    "medianPriceManPerSqm": 96
+  },
+  {
+    "stationNameJa": "駒沢大学",
+    "sampleCount": 48,
+    "medianPriceMJPY": 115,
+    "medianPriceManPerSqm": 108
+  },
+  {
+    "stationNameJa": "氷川台",
+    "sampleCount": 47,
+    "medianPriceMJPY": 68,
+    "medianPriceManPerSqm": 72
+  },
+  {
+    "stationNameJa": "祖師ケ谷大蔵",
+    "sampleCount": 47,
+    "medianPriceMJPY": 97,
+    "medianPriceManPerSqm": 85
+  },
+  {
+    "stationNameJa": "糀谷",
+    "sampleCount": 47,
+    "medianPriceMJPY": 69,
+    "medianPriceManPerSqm": 73
+  },
+  {
+    "stationNameJa": "経堂",
+    "sampleCount": 47,
+    "medianPriceMJPY": 84,
+    "medianPriceManPerSqm": 95
+  },
+  {
+    "stationNameJa": "六町",
+    "sampleCount": 46,
+    "medianPriceMJPY": 52,
+    "medianPriceManPerSqm": 60
+  },
+  {
+    "stationNameJa": "武蔵小山",
+    "sampleCount": 46,
+    "medianPriceMJPY": 110,
+    "medianPriceManPerSqm": 119
+  },
+  {
+    "stationNameJa": "西小山",
+    "sampleCount": 46,
+    "medianPriceMJPY": 105,
+    "medianPriceManPerSqm": 126
+  },
+  {
+    "stationNameJa": "馬込",
+    "sampleCount": 46,
+    "medianPriceMJPY": 64,
+    "medianPriceManPerSqm": 86
+  },
+  {
+    "stationNameJa": "京成小岩",
+    "sampleCount": 45,
+    "medianPriceMJPY": 46,
+    "medianPriceManPerSqm": 44
+  },
+  {
+    "stationNameJa": "千歳船橋",
+    "sampleCount": 45,
+    "medianPriceMJPY": 80,
+    "medianPriceManPerSqm": 82
+  },
+  {
+    "stationNameJa": "沼袋",
+    "sampleCount": 45,
+    "medianPriceMJPY": 70,
+    "medianPriceManPerSqm": 81
+  },
+  {
+    "stationNameJa": "綾瀬",
+    "sampleCount": 45,
+    "medianPriceMJPY": 60,
+    "medianPriceManPerSqm": 63
+  },
+  {
+    "stationNameJa": "金町",
+    "sampleCount": 45,
+    "medianPriceMJPY": 47,
+    "medianPriceManPerSqm": 55
+  },
+  {
+    "stationNameJa": "下井草",
+    "sampleCount": 44,
+    "medianPriceMJPY": 70,
+    "medianPriceManPerSqm": 62
+  },
+  {
+    "stationNameJa": "五反野",
+    "sampleCount": 44,
+    "medianPriceMJPY": 48,
+    "medianPriceManPerSqm": 57
+  },
+  {
+    "stationNameJa": "北千住",
+    "sampleCount": 44,
+    "medianPriceMJPY": 60,
+    "medianPriceManPerSqm": 74
+  },
+  {
+    "stationNameJa": "千歳烏山",
+    "sampleCount": 44,
+    "medianPriceMJPY": 78,
+    "medianPriceManPerSqm": 62
+  },
+  {
+    "stationNameJa": "平和台(東京)",
+    "sampleCount": 44,
+    "medianPriceMJPY": 62,
+    "medianPriceManPerSqm": 61
+  },
+  {
+    "stationNameJa": "東中野",
+    "sampleCount": 44,
+    "medianPriceMJPY": 84,
+    "medianPriceManPerSqm": 84
+  },
+  {
+    "stationNameJa": "池上",
+    "sampleCount": 44,
+    "medianPriceMJPY": 72,
+    "medianPriceManPerSqm": 75
+  },
+  {
+    "stationNameJa": "祐天寺",
+    "sampleCount": 44,
+    "medianPriceMJPY": 120,
+    "medianPriceManPerSqm": 130
+  },
+  {
+    "stationNameJa": "阿佐ケ谷",
+    "sampleCount": 44,
+    "medianPriceMJPY": 80,
+    "medianPriceManPerSqm": 92
+  },
+  {
+    "stationNameJa": "上石神井",
+    "sampleCount": 43,
+    "medianPriceMJPY": 68,
+    "medianPriceManPerSqm": 62
+  },
+  {
+    "stationNameJa": "久我山",
+    "sampleCount": 43,
+    "medianPriceMJPY": 84,
+    "medianPriceManPerSqm": 70
+  },
+  {
+    "stationNameJa": "堀切菖蒲園",
+    "sampleCount": 43,
+    "medianPriceMJPY": 46,
+    "medianPriceManPerSqm": 60
+  },
+  {
+    "stationNameJa": "東久留米",
+    "sampleCount": 43,
+    "medianPriceMJPY": 45,
+    "medianPriceManPerSqm": 37
+  },
+  {
+    "stationNameJa": "東伏見",
+    "sampleCount": 43,
+    "medianPriceMJPY": 51,
+    "medianPriceManPerSqm": 45
+  },
+  {
+    "stationNameJa": "東武練馬",
+    "sampleCount": 43,
+    "medianPriceMJPY": 55,
+    "medianPriceManPerSqm": 67
+  },
+  {
+    "stationNameJa": "上板橋",
+    "sampleCount": 42,
+    "medianPriceMJPY": 60,
+    "medianPriceManPerSqm": 61
+  },
+  {
+    "stationNameJa": "千川",
+    "sampleCount": 42,
+    "medianPriceMJPY": 90,
+    "medianPriceManPerSqm": 98
+  },
+  {
+    "stationNameJa": "南阿佐ケ谷",
+    "sampleCount": 42,
+    "medianPriceMJPY": 80,
+    "medianPriceManPerSqm": 80
+  },
+  {
+    "stationNameJa": "大森町",
+    "sampleCount": 42,
+    "medianPriceMJPY": 62,
+    "medianPriceManPerSqm": 67
+  },
+  {
+    "stationNameJa": "梅島",
+    "sampleCount": 42,
+    "medianPriceMJPY": 46,
+    "medianPriceManPerSqm": 48
+  },
+  {
+    "stationNameJa": "用賀",
+    "sampleCount": 42,
+    "medianPriceMJPY": 105,
+    "medianPriceManPerSqm": 100
+  },
+  {
+    "stationNameJa": "西大井",
+    "sampleCount": 42,
+    "medianPriceMJPY": 66,
+    "medianPriceManPerSqm": 87
+  },
+  {
+    "stationNameJa": "一之江",
+    "sampleCount": 41,
+    "medianPriceMJPY": 37,
+    "medianPriceManPerSqm": 42
+  },
+  {
+    "stationNameJa": "吉祥寺",
+    "sampleCount": 41,
+    "medianPriceMJPY": 110,
+    "medianPriceManPerSqm": 81
+  },
+  {
+    "stationNameJa": "大島(東京)",
+    "sampleCount": 41,
+    "medianPriceMJPY": 52,
+    "medianPriceManPerSqm": 68
+  },
+  {
+    "stationNameJa": "幡ケ谷",
+    "sampleCount": 41,
+    "medianPriceMJPY": 90,
+    "medianPriceManPerSqm": 107
+  },
+  {
+    "stationNameJa": "東十条",
+    "sampleCount": 41,
+    "medianPriceMJPY": 55,
+    "medianPriceManPerSqm": 73
+  },
+  {
+    "stationNameJa": "富士見台",
+    "sampleCount": 40,
+    "medianPriceMJPY": 65,
+    "medianPriceManPerSqm": 61
+  },
+  {
+    "stationNameJa": "練馬",
+    "sampleCount": 40,
+    "medianPriceMJPY": 82,
+    "medianPriceManPerSqm": 73
+  },
+  {
+    "stationNameJa": "葛西",
+    "sampleCount": 40,
+    "medianPriceMJPY": 74,
+    "medianPriceManPerSqm": 72
+  },
+  {
+    "stationNameJa": "西巣鴨",
+    "sampleCount": 40,
+    "medianPriceMJPY": 60,
+    "medianPriceManPerSqm": 68
+  },
+  {
+    "stationNameJa": "雑色",
+    "sampleCount": 40,
+    "medianPriceMJPY": 52,
+    "medianPriceManPerSqm": 77
+  },
+  {
+    "stationNameJa": "駒込",
+    "sampleCount": 40,
+    "medianPriceMJPY": 145,
+    "medianPriceManPerSqm": 127
+  },
+  {
+    "stationNameJa": "平和島",
+    "sampleCount": 39,
+    "medianPriceMJPY": 64,
+    "medianPriceManPerSqm": 78
+  },
+  {
+    "stationNameJa": "練馬高野台",
+    "sampleCount": 39,
+    "medianPriceMJPY": 62,
+    "medianPriceManPerSqm": 52
+  },
+  {
+    "stationNameJa": "中村橋",
+    "sampleCount": 38,
+    "medianPriceMJPY": 72,
+    "medianPriceManPerSqm": 82
+  },
+  {
+    "stationNameJa": "赤羽",
+    "sampleCount": 38,
+    "medianPriceMJPY": 56,
+    "medianPriceManPerSqm": 69
+  },
+  {
+    "stationNameJa": "三の輪",
+    "sampleCount": 37,
+    "medianPriceMJPY": 60,
+    "medianPriceManPerSqm": 87
+  },
+  {
+    "stationNameJa": "京成立石",
+    "sampleCount": 37,
+    "medianPriceMJPY": 45,
+    "medianPriceManPerSqm": 48
+  },
+  {
+    "stationNameJa": "仙川",
+    "sampleCount": 37,
+    "medianPriceMJPY": 60,
+    "medianPriceManPerSqm": 54
+  },
+  {
+    "stationNameJa": "十条(東京)",
+    "sampleCount": 37,
+    "medianPriceMJPY": 64,
+    "medianPriceManPerSqm": 87
+  },
+  {
+    "stationNameJa": "大塚(東京)",
+    "sampleCount": 37,
+    "medianPriceMJPY": 85,
+    "medianPriceManPerSqm": 110
+  },
+  {
+    "stationNameJa": "石川台",
+    "sampleCount": 37,
+    "medianPriceMJPY": 80,
+    "medianPriceManPerSqm": 85
+  },
+  {
+    "stationNameJa": "つつじケ丘",
+    "sampleCount": 36,
+    "medianPriceMJPY": 60,
+    "medianPriceManPerSqm": 53
+  },
+  {
+    "stationNameJa": "喜多見",
+    "sampleCount": 36,
+    "medianPriceMJPY": 64,
+    "medianPriceManPerSqm": 46
+  },
+  {
+    "stationNameJa": "新井薬師前",
+    "sampleCount": 36,
+    "medianPriceMJPY": 70,
+    "medianPriceManPerSqm": 84
+  },
+  {
+    "stationNameJa": "東向島",
+    "sampleCount": 36,
+    "medianPriceMJPY": 52,
+    "medianPriceManPerSqm": 63
+  },
+  {
+    "stationNameJa": "東高円寺",
+    "sampleCount": 36,
+    "medianPriceMJPY": 84,
+    "medianPriceManPerSqm": 92
+  },
+  {
+    "stationNameJa": "板橋本町",
+    "sampleCount": 36,
+    "medianPriceMJPY": 56,
+    "medianPriceManPerSqm": 77
+  },
+  {
+    "stationNameJa": "王子神谷",
+    "sampleCount": 36,
+    "medianPriceMJPY": 40,
+    "medianPriceManPerSqm": 53
+  },
+  {
+    "stationNameJa": "要町",
+    "sampleCount": 36,
+    "medianPriceMJPY": 92,
+    "medianPriceManPerSqm": 96
+  },
+  {
+    "stationNameJa": "都立大学",
+    "sampleCount": 36,
+    "medianPriceMJPY": 135,
+    "medianPriceManPerSqm": 133
+  },
+  {
+    "stationNameJa": "ときわ台(東京)",
+    "sampleCount": 35,
+    "medianPriceMJPY": 63,
+    "medianPriceManPerSqm": 63
+  },
+  {
+    "stationNameJa": "尾山台",
+    "sampleCount": 35,
+    "medianPriceMJPY": 150,
+    "medianPriceManPerSqm": 109
+  },
+  {
+    "stationNameJa": "扇大橋",
+    "sampleCount": 35,
+    "medianPriceMJPY": 38,
+    "medianPriceManPerSqm": 39
+  },
+  {
+    "stationNameJa": "椎名町",
+    "sampleCount": 35,
+    "medianPriceMJPY": 83,
+    "medianPriceManPerSqm": 103
+  },
+  {
+    "stationNameJa": "笹塚",
+    "sampleCount": 35,
+    "medianPriceMJPY": 87,
+    "medianPriceManPerSqm": 104
+  },
+  {
+    "stationNameJa": "入谷(東京)",
+    "sampleCount": 34,
+    "medianPriceMJPY": 205,
+    "medianPriceManPerSqm": 179
+  },
+  {
+    "stationNameJa": "新中野",
+    "sampleCount": 34,
+    "medianPriceMJPY": 110,
+    "medianPriceManPerSqm": 101
+  },
+  {
+    "stationNameJa": "桜新町",
+    "sampleCount": 34,
+    "medianPriceMJPY": 125,
+    "medianPriceManPerSqm": 96
+  },
+  {
+    "stationNameJa": "西新井",
+    "sampleCount": 34,
+    "medianPriceMJPY": 44,
+    "medianPriceManPerSqm": 54
+  },
+  {
+    "stationNameJa": "谷在家",
+    "sampleCount": 34,
+    "medianPriceMJPY": 45,
+    "medianPriceManPerSqm": 52
+  },
+  {
+    "stationNameJa": "京成曳舟",
+    "sampleCount": 33,
+    "medianPriceMJPY": 48,
+    "medianPriceManPerSqm": 82
+  },
+  {
+    "stationNameJa": "平井(東京)",
+    "sampleCount": 33,
+    "medianPriceMJPY": 50,
+    "medianPriceManPerSqm": 70
+  },
+  {
+    "stationNameJa": "新高円寺",
+    "sampleCount": 33,
+    "medianPriceMJPY": 70,
+    "medianPriceManPerSqm": 76
+  },
+  {
+    "stationNameJa": "本蓮沼",
+    "sampleCount": 33,
+    "medianPriceMJPY": 55,
+    "medianPriceManPerSqm": 69
+  },
+  {
+    "stationNameJa": "稲城長沼",
+    "sampleCount": 33,
+    "medianPriceMJPY": 48,
+    "medianPriceManPerSqm": 33
+  },
+  {
+    "stationNameJa": "船堀",
+    "sampleCount": 33,
+    "medianPriceMJPY": 62,
+    "medianPriceManPerSqm": 62
+  },
+  {
+    "stationNameJa": "三軒茶屋",
+    "sampleCount": 32,
+    "medianPriceMJPY": 115,
+    "medianPriceManPerSqm": 130
+  },
+  {
+    "stationNameJa": "下赤塚",
+    "sampleCount": 32,
+    "medianPriceMJPY": 52,
+    "medianPriceManPerSqm": 61
+  },
+  {
+    "stationNameJa": "井荻",
+    "sampleCount": 32,
+    "medianPriceMJPY": 76,
+    "medianPriceManPerSqm": 86
+  },
+  {
+    "stationNameJa": "成増",
+    "sampleCount": 32,
+    "medianPriceMJPY": 57,
+    "medianPriceManPerSqm": 53
+  },
+  {
+    "stationNameJa": "中野(東京)",
+    "sampleCount": 31,
+    "medianPriceMJPY": 130,
+    "medianPriceManPerSqm": 120
+  },
+  {
+    "stationNameJa": "千石",
+    "sampleCount": 31,
+    "medianPriceMJPY": 140,
+    "medianPriceManPerSqm": 147
+  },
+  {
+    "stationNameJa": "四ツ木",
+    "sampleCount": 31,
+    "medianPriceMJPY": 48,
+    "medianPriceManPerSqm": 69
+  },
+  {
+    "stationNameJa": "池袋",
+    "sampleCount": 31,
+    "medianPriceMJPY": 260,
+    "medianPriceManPerSqm": 169
+  },
+  {
+    "stationNameJa": "立会川",
+    "sampleCount": 31,
+    "medianPriceMJPY": 90,
+    "medianPriceManPerSqm": 108
+  },
+  {
+    "stationNameJa": "舎人",
+    "sampleCount": 31,
+    "medianPriceMJPY": 44,
+    "medianPriceManPerSqm": 44
+  },
+  {
+    "stationNameJa": "上北沢",
+    "sampleCount": 30,
+    "medianPriceMJPY": 80,
+    "medianPriceManPerSqm": 74
+  },
+  {
+    "stationNameJa": "亀戸",
+    "sampleCount": 30,
+    "medianPriceMJPY": 64,
+    "medianPriceManPerSqm": 97
+  },
+  {
+    "stationNameJa": "千駄木",
+    "sampleCount": 30,
+    "medianPriceMJPY": 115,
+    "medianPriceManPerSqm": 142
+  },
+  {
+    "stationNameJa": "地下鉄赤塚",
+    "sampleCount": 30,
+    "medianPriceMJPY": 66,
+    "medianPriceManPerSqm": 58
+  },
+  {
+    "stationNameJa": "志村坂上",
+    "sampleCount": 30,
+    "medianPriceMJPY": 66,
+    "medianPriceManPerSqm": 81
+  },
+  {
+    "stationNameJa": "王子",
+    "sampleCount": 30,
+    "medianPriceMJPY": 56,
+    "medianPriceManPerSqm": 85
+  },
+  {
+    "stationNameJa": "矢口渡",
+    "sampleCount": 30,
+    "medianPriceMJPY": 61,
+    "medianPriceManPerSqm": 71
+  },
+  {
+    "stationNameJa": "三河島",
+    "sampleCount": 29,
+    "medianPriceMJPY": 70,
+    "medianPriceManPerSqm": 82
+  },
+  {
+    "stationNameJa": "中井",
+    "sampleCount": 29,
+    "medianPriceMJPY": 69,
+    "medianPriceManPerSqm": 84
+  },
+  {
+    "stationNameJa": "北綾瀬",
+    "sampleCount": 29,
+    "medianPriceMJPY": 62,
+    "medianPriceManPerSqm": 51
+  },
+  {
+    "stationNameJa": "南千住",
+    "sampleCount": 29,
+    "medianPriceMJPY": 65,
+    "medianPriceManPerSqm": 64
+  },
+  {
+    "stationNameJa": "恵比寿",
+    "sampleCount": 29,
+    "medianPriceMJPY": 410,
+    "medianPriceManPerSqm": 235
+  },
+  {
+    "stationNameJa": "戸越",
+    "sampleCount": 29,
+    "medianPriceMJPY": 79,
+    "medianPriceManPerSqm": 92
+  },
+  {
+    "stationNameJa": "押上",
+    "sampleCount": 29,
+    "medianPriceMJPY": 150,
+    "medianPriceManPerSqm": 136
+  },
+  {
+    "stationNameJa": "武蔵境",
+    "sampleCount": 29,
+    "medianPriceMJPY": 97,
+    "medianPriceManPerSqm": 57
+  },
+  {
+    "stationNameJa": "浅草(東武都営メトロ)",
+    "sampleCount": 29,
+    "medianPriceMJPY": 210,
+    "medianPriceManPerSqm": 230
+  },
+  {
+    "stationNameJa": "田端",
+    "sampleCount": 29,
+    "medianPriceMJPY": 88,
+    "medianPriceManPerSqm": 113
+  },
+  {
+    "stationNameJa": "両国",
+    "sampleCount": 28,
+    "medianPriceMJPY": 140,
+    "medianPriceManPerSqm": 175
+  },
+  {
+    "stationNameJa": "新江古田",
+    "sampleCount": 28,
+    "medianPriceMJPY": 74,
+    "medianPriceManPerSqm": 73
+  },
+  {
+    "stationNameJa": "春日(東京)",
+    "sampleCount": 28,
+    "medianPriceMJPY": 170,
+    "medianPriceManPerSqm": 186
+  },
+  {
+    "stationNameJa": "三鷹台",
+    "sampleCount": 27,
+    "medianPriceMJPY": 77,
+    "medianPriceManPerSqm": 70
+  },
+  {
+    "stationNameJa": "西武柳沢",
+    "sampleCount": 27,
+    "medianPriceMJPY": 49,
+    "medianPriceManPerSqm": 43
+  },
+  {
+    "stationNameJa": "中板橋",
+    "sampleCount": 26,
+    "medianPriceMJPY": 65,
+    "medianPriceManPerSqm": 67
+  },
+  {
+    "stationNameJa": "曳舟",
+    "sampleCount": 26,
+    "medianPriceMJPY": 72,
+    "medianPriceManPerSqm": 93
+  },
+  {
+    "stationNameJa": "東小金井",
+    "sampleCount": 26,
+    "medianPriceMJPY": 64,
+    "medianPriceManPerSqm": 58
+  },
+  {
+    "stationNameJa": "田園調布",
+    "sampleCount": 26,
+    "medianPriceMJPY": 160,
+    "medianPriceManPerSqm": 106
+  },
+  {
+    "stationNameJa": "久が原",
+    "sampleCount": 25,
+    "medianPriceMJPY": 110,
+    "medianPriceManPerSqm": 79
+  },
+  {
+    "stationNameJa": "代田橋",
+    "sampleCount": 25,
+    "medianPriceMJPY": 86,
+    "medianPriceManPerSqm": 77
+  },
+  {
+    "stationNameJa": "八広",
+    "sampleCount": 25,
+    "medianPriceMJPY": 53,
+    "medianPriceManPerSqm": 78
+  },
+  {
+    "stationNameJa": "大岡山",
+    "sampleCount": 25,
+    "medianPriceMJPY": 99,
+    "medianPriceManPerSqm": 103
+  },
+  {
+    "stationNameJa": "永福町",
+    "sampleCount": 25,
+    "medianPriceMJPY": 100,
+    "medianPriceManPerSqm": 88
+  },
+  {
+    "stationNameJa": "狛江",
+    "sampleCount": 25,
+    "medianPriceMJPY": 70,
+    "medianPriceManPerSqm": 59
+  },
+  {
+    "stationNameJa": "荏原中延",
+    "sampleCount": 25,
+    "medianPriceMJPY": 72,
+    "medianPriceManPerSqm": 91
+  },
+  {
+    "stationNameJa": "西調布",
+    "sampleCount": 25,
+    "medianPriceMJPY": 53,
+    "medianPriceManPerSqm": 48
+  },
+  {
+    "stationNameJa": "都立家政",
+    "sampleCount": 25,
+    "medianPriceMJPY": 60,
+    "medianPriceManPerSqm": 64
+  },
+  {
+    "stationNameJa": "雑司が谷(東京メトロ)",
+    "sampleCount": 25,
+    "medianPriceMJPY": 110,
+    "medianPriceManPerSqm": 111
+  },
+  {
+    "stationNameJa": "高井戸",
+    "sampleCount": 25,
+    "medianPriceMJPY": 87,
+    "medianPriceManPerSqm": 84
+  },
+  {
+    "stationNameJa": "不動前",
+    "sampleCount": 24,
+    "medianPriceMJPY": 125,
+    "medianPriceManPerSqm": 139
+  },
+  {
+    "stationNameJa": "京成高砂",
+    "sampleCount": 24,
+    "medianPriceMJPY": 45,
+    "medianPriceManPerSqm": 46
+  },
+  {
+    "stationNameJa": "国領",
+    "sampleCount": 24,
+    "medianPriceMJPY": 58,
+    "medianPriceManPerSqm": 55
+  },
+  {
+    "stationNameJa": "富士見ケ丘",
+    "sampleCount": 24,
+    "medianPriceMJPY": 78,
+    "medianPriceManPerSqm": 77
+  },
+  {
+    "stationNameJa": "洗足池",
+    "sampleCount": 24,
+    "medianPriceMJPY": 84,
+    "medianPriceManPerSqm": 77
+  },
+  {
+    "stationNameJa": "等々力",
+    "sampleCount": 24,
+    "medianPriceMJPY": 125,
+    "medianPriceManPerSqm": 113
+  },
+  {
+    "stationNameJa": "茗荷谷",
+    "sampleCount": 24,
+    "medianPriceMJPY": 120,
+    "medianPriceManPerSqm": 150
+  },
+  {
+    "stationNameJa": "東長崎",
+    "sampleCount": 23,
+    "medianPriceMJPY": 86,
+    "medianPriceManPerSqm": 87
+  },
+  {
+    "stationNameJa": "桜台(東京)",
+    "sampleCount": 23,
+    "medianPriceMJPY": 90,
+    "medianPriceManPerSqm": 68
+  },
+  {
+    "stationNameJa": "穴守稲荷",
+    "sampleCount": 23,
+    "medianPriceMJPY": 52,
+    "medianPriceManPerSqm": 73
+  },
+  {
+    "stationNameJa": "赤羽岩淵",
+    "sampleCount": 23,
+    "medianPriceMJPY": 58,
+    "medianPriceManPerSqm": 63
+  },
+  {
+    "stationNameJa": "雪が谷大塚",
+    "sampleCount": 23,
+    "medianPriceMJPY": 94,
+    "medianPriceManPerSqm": 75
+  },
+  {
+    "stationNameJa": "鶯谷",
+    "sampleCount": 23,
+    "medianPriceMJPY": 85,
+    "medianPriceManPerSqm": 144
+  },
+  {
+    "stationNameJa": "上中里",
+    "sampleCount": 22,
+    "medianPriceMJPY": 54,
+    "medianPriceManPerSqm": 96
+  },
+  {
+    "stationNameJa": "上野毛",
+    "sampleCount": 22,
+    "medianPriceMJPY": 105,
+    "medianPriceManPerSqm": 92
+  },
+  {
+    "stationNameJa": "下高井戸",
+    "sampleCount": 22,
+    "medianPriceMJPY": 115,
+    "medianPriceManPerSqm": 104
+  },
+  {
+    "stationNameJa": "光が丘",
+    "sampleCount": 22,
+    "medianPriceMJPY": 64,
+    "medianPriceManPerSqm": 59
+  },
+  {
+    "stationNameJa": "大井町",
+    "sampleCount": 22,
+    "medianPriceMJPY": 110,
+    "medianPriceManPerSqm": 112
+  },
+  {
+    "stationNameJa": "新大塚",
+    "sampleCount": 22,
+    "medianPriceMJPY": 120,
+    "medianPriceManPerSqm": 118
+  },
+  {
+    "stationNameJa": "新御徒町",
+    "sampleCount": 22,
+    "medianPriceMJPY": 225,
+    "medianPriceManPerSqm": 239
+  },
+  {
+    "stationNameJa": "新柴又",
+    "sampleCount": 22,
+    "medianPriceMJPY": 46,
+    "medianPriceManPerSqm": 55
+  },
+  {
+    "stationNameJa": "森下(東京)",
+    "sampleCount": 22,
+    "medianPriceMJPY": 150,
+    "medianPriceManPerSqm": 149
+  },
+  {
+    "stationNameJa": "浅草(つくばEXP)",
+    "sampleCount": 22,
+    "medianPriceMJPY": 100,
+    "medianPriceManPerSqm": 152
+  },
+  {
+    "stationNameJa": "浜田山",
+    "sampleCount": 22,
+    "medianPriceMJPY": 98,
+    "medianPriceManPerSqm": 65
+  },
+  {
+    "stationNameJa": "荏原町",
+    "sampleCount": 22,
+    "medianPriceMJPY": 75,
+    "medianPriceManPerSqm": 101
+  },
+  {
+    "stationNameJa": "蒲田",
+    "sampleCount": 22,
+    "medianPriceMJPY": 105,
+    "medianPriceManPerSqm": 89
+  },
+  {
+    "stationNameJa": "西大島",
+    "sampleCount": 22,
+    "medianPriceMJPY": 65,
+    "medianPriceManPerSqm": 85
+  },
+  {
+    "stationNameJa": "西新宿五丁目",
+    "sampleCount": 22,
+    "medianPriceMJPY": 92,
+    "medianPriceManPerSqm": 101
+  },
+  {
+    "stationNameJa": "赤土小学校前",
+    "sampleCount": 22,
+    "medianPriceMJPY": 49,
+    "medianPriceManPerSqm": 61
+  },
+  {
+    "stationNameJa": "青砥",
+    "sampleCount": 22,
+    "medianPriceMJPY": 44,
+    "medianPriceManPerSqm": 53
+  },
+  {
+    "stationNameJa": "中野新橋",
+    "sampleCount": 21,
+    "medianPriceMJPY": 160,
+    "medianPriceManPerSqm": 112
+  },
+  {
+    "stationNameJa": "奥沢",
+    "sampleCount": 21,
+    "medianPriceMJPY": 130,
+    "medianPriceManPerSqm": 108
+  },
+  {
+    "stationNameJa": "小台",
+    "sampleCount": 21,
+    "medianPriceMJPY": 31,
+    "medianPriceManPerSqm": 40
+  },
+  {
+    "stationNameJa": "新板橋",
+    "sampleCount": 21,
+    "medianPriceMJPY": 52,
+    "medianPriceManPerSqm": 69
+  },
+  {
+    "stationNameJa": "桜上水",
+    "sampleCount": 21,
+    "medianPriceMJPY": 72,
+    "medianPriceManPerSqm": 64
+  },
+  {
+    "stationNameJa": "洗足",
+    "sampleCount": 21,
+    "medianPriceMJPY": 160,
+    "medianPriceManPerSqm": 97
+  },
+  {
+    "stationNameJa": "浅草橋",
+    "sampleCount": 21,
+    "medianPriceMJPY": 250,
+    "medianPriceManPerSqm": 224
+  },
+  {
+    "stationNameJa": "自由が丘(東京)",
+    "sampleCount": 21,
+    "medianPriceMJPY": 190,
+    "medianPriceManPerSqm": 150
+  },
+  {
+    "stationNameJa": "西葛西",
+    "sampleCount": 21,
+    "medianPriceMJPY": 95,
+    "medianPriceManPerSqm": 70
+  },
+  {
+    "stationNameJa": "中野坂上",
+    "sampleCount": 20,
+    "medianPriceMJPY": 102,
+    "medianPriceManPerSqm": 119
+  },
+  {
+    "stationNameJa": "北池袋",
+    "sampleCount": 20,
+    "medianPriceMJPY": 72,
+    "medianPriceManPerSqm": 66
+  },
+  {
+    "stationNameJa": "四谷三丁目",
+    "sampleCount": 20,
+    "medianPriceMJPY": 160,
+    "medianPriceManPerSqm": 129
+  },
+  {
+    "stationNameJa": "大師前",
+    "sampleCount": 20,
+    "medianPriceMJPY": 45,
+    "medianPriceManPerSqm": 39
+  },
+  {
+    "stationNameJa": "大鳥居",
+    "sampleCount": 20,
+    "medianPriceMJPY": 50,
+    "medianPriceManPerSqm": 73
+  },
+  {
+    "stationNameJa": "御嶽山",
+    "sampleCount": 20,
+    "medianPriceMJPY": 88,
+    "medianPriceManPerSqm": 89
+  },
+  {
+    "stationNameJa": "新馬場",
+    "sampleCount": 20,
+    "medianPriceMJPY": 81,
+    "medianPriceManPerSqm": 101
+  },
+  {
+    "stationNameJa": "早稲田(メトロ)",
+    "sampleCount": 20,
+    "medianPriceMJPY": 125,
+    "medianPriceManPerSqm": 122
+  },
+  {
+    "stationNameJa": "沼部",
+    "sampleCount": 20,
+    "medianPriceMJPY": 72,
+    "medianPriceManPerSqm": 90
+  },
+  {
+    "stationNameJa": "渋谷",
+    "sampleCount": 20,
+    "medianPriceMJPY": 375,
+    "medianPriceManPerSqm": 464
+  },
+  {
+    "stationNameJa": "矢野口",
+    "sampleCount": 20,
+    "medianPriceMJPY": 48,
+    "medianPriceManPerSqm": 39
+  },
+  {
+    "stationNameJa": "落合南長崎",
+    "sampleCount": 20,
+    "medianPriceMJPY": 73,
+    "medianPriceManPerSqm": 107
+  },
+  {
+    "stationNameJa": "西高島平",
+    "sampleCount": 20,
+    "medianPriceMJPY": 54,
+    "medianPriceManPerSqm": 52
+  },
+  {
+    "stationNameJa": "調布",
+    "sampleCount": 20,
+    "medianPriceMJPY": 68,
+    "medianPriceManPerSqm": 72
+  },
+  {
+    "stationNameJa": "千住大橋",
+    "sampleCount": 19,
+    "medianPriceMJPY": 62,
+    "medianPriceManPerSqm": 57
+  },
+  {
+    "stationNameJa": "巣鴨",
+    "sampleCount": 19,
+    "medianPriceMJPY": 120,
+    "medianPriceManPerSqm": 113
+  },
+  {
+    "stationNameJa": "布田",
+    "sampleCount": 19,
+    "medianPriceMJPY": 69,
+    "medianPriceManPerSqm": 60
+  },
+  {
+    "stationNameJa": "志茂",
+    "sampleCount": 19,
+    "medianPriceMJPY": 60,
+    "medianPriceManPerSqm": 59
+  },
+  {
+    "stationNameJa": "成城学園前",
+    "sampleCount": 19,
+    "medianPriceMJPY": 190,
+    "medianPriceManPerSqm": 97
+  },
+  {
+    "stationNameJa": "旗の台",
+    "sampleCount": 19,
+    "medianPriceMJPY": 87,
+    "medianPriceManPerSqm": 109
+  },
+  {
+    "stationNameJa": "木場",
+    "sampleCount": 19,
+    "medianPriceMJPY": 98,
+    "medianPriceManPerSqm": 109
+  },
+  {
+    "stationNameJa": "柴又",
+    "sampleCount": 19,
+    "medianPriceMJPY": 49,
+    "medianPriceManPerSqm": 64
+  },
+  {
+    "stationNameJa": "江古田",
+    "sampleCount": 19,
+    "medianPriceMJPY": 90,
+    "medianPriceManPerSqm": 79
+  },
+  {
+    "stationNameJa": "江戸川",
+    "sampleCount": 19,
+    "medianPriceMJPY": 50,
+    "medianPriceManPerSqm": 52
+  },
+  {
+    "stationNameJa": "見沼代親水公園",
+    "sampleCount": 19,
+    "medianPriceMJPY": 44,
+    "medianPriceManPerSqm": 46
+  },
+  {
+    "stationNameJa": "錦糸町",
+    "sampleCount": 19,
+    "medianPriceMJPY": 180,
+    "medianPriceManPerSqm": 192
+  },
+  {
+    "stationNameJa": "青井",
+    "sampleCount": 19,
+    "medianPriceMJPY": 39,
+    "medianPriceManPerSqm": 46
+  },
+  {
+    "stationNameJa": "高田馬場",
+    "sampleCount": 19,
+    "medianPriceMJPY": 200,
+    "medianPriceManPerSqm": 136
+  },
+  {
+    "stationNameJa": "下北沢",
+    "sampleCount": 18,
+    "medianPriceMJPY": 235,
+    "medianPriceManPerSqm": 123
+  },
+  {
+    "stationNameJa": "下神明",
+    "sampleCount": 18,
+    "medianPriceMJPY": 57,
+    "medianPriceManPerSqm": 89
+  },
+  {
+    "stationNameJa": "九品仏",
+    "sampleCount": 18,
+    "medianPriceMJPY": 135,
+    "medianPriceManPerSqm": 114
+  },
+  {
+    "stationNameJa": "京急蒲田",
+    "sampleCount": 18,
+    "medianPriceMJPY": 70,
+    "medianPriceManPerSqm": 79
+  },
+  {
+    "stationNameJa": "代々木上原",
+    "sampleCount": 18,
+    "medianPriceMJPY": 410,
+    "medianPriceManPerSqm": 200
+  },
+  {
+    "stationNameJa": "志村三丁目",
+    "sampleCount": 18,
+    "medianPriceMJPY": 58,
+    "medianPriceManPerSqm": 72
+  },
+  {
+    "stationNameJa": "本郷三丁目",
+    "sampleCount": 18,
+    "medianPriceMJPY": 200,
+    "medianPriceManPerSqm": 169
+  },
+  {
+    "stationNameJa": "松原(東京)",
+    "sampleCount": 18,
+    "medianPriceMJPY": 120,
+    "medianPriceManPerSqm": 100
+  },
+  {
+    "stationNameJa": "池尻大橋",
+    "sampleCount": 18,
+    "medianPriceMJPY": 275,
+    "medianPriceManPerSqm": 214
+  },
+  {
+    "stationNameJa": "西永福",
+    "sampleCount": 18,
+    "medianPriceMJPY": 91,
+    "medianPriceManPerSqm": 64
+  },
+  {
+    "stationNameJa": "門前仲町",
+    "sampleCount": 18,
+    "medianPriceMJPY": 250,
+    "medianPriceManPerSqm": 245
+  },
+  {
+    "stationNameJa": "下板橋",
+    "sampleCount": 17,
+    "medianPriceMJPY": 170,
+    "medianPriceManPerSqm": 92
+  },
+  {
+    "stationNameJa": "中目黒",
+    "sampleCount": 17,
+    "medianPriceMJPY": 190,
+    "medianPriceManPerSqm": 200
+  },
+  {
+    "stationNameJa": "地下鉄成増",
+    "sampleCount": 17,
+    "medianPriceMJPY": 79,
+    "medianPriceManPerSqm": 71
+  },
+  {
+    "stationNameJa": "柴崎",
+    "sampleCount": 17,
+    "medianPriceMJPY": 60,
+    "medianPriceManPerSqm": 50
+  },
+  {
+    "stationNameJa": "梅屋敷(東京)",
+    "sampleCount": 17,
+    "medianPriceMJPY": 55,
+    "medianPriceManPerSqm": 60
+  },
+  {
+    "stationNameJa": "蓮沼",
+    "sampleCount": 17,
+    "medianPriceMJPY": 70,
+    "medianPriceManPerSqm": 109
+  },
+  {
+    "stationNameJa": "表参道",
+    "sampleCount": 17,
+    "medianPriceMJPY": 540,
+    "medianPriceManPerSqm": 265
+  },
+  {
+    "stationNameJa": "豊島園",
+    "sampleCount": 17,
+    "medianPriceMJPY": 88,
+    "medianPriceManPerSqm": 66
+  },
+  {
+    "stationNameJa": "鐘ケ淵",
+    "sampleCount": 17,
+    "medianPriceMJPY": 38,
+    "medianPriceManPerSqm": 75
+  },
+  {
+    "stationNameJa": "井の頭公園",
+    "sampleCount": 16,
+    "medianPriceMJPY": 92,
+    "medianPriceManPerSqm": 71
+  },
+  {
+    "stationNameJa": "月島",
+    "sampleCount": 16,
+    "medianPriceMJPY": 104,
+    "medianPriceManPerSqm": 217
+  },
+  {
+    "stationNameJa": "武蔵新田",
+    "sampleCount": 16,
+    "medianPriceMJPY": 64,
+    "medianPriceManPerSqm": 98
+  },
+  {
+    "stationNameJa": "江北(東京)",
+    "sampleCount": 16,
+    "medianPriceMJPY": 38,
+    "medianPriceManPerSqm": 45
+  },
+  {
+    "stationNameJa": "清澄白河",
+    "sampleCount": 16,
+    "medianPriceMJPY": 110,
+    "medianPriceManPerSqm": 124
+  },
+  {
+    "stationNameJa": "目黒",
+    "sampleCount": 16,
+    "medianPriceMJPY": 110,
+    "medianPriceManPerSqm": 151
+  },
+  {
+    "stationNameJa": "中延",
+    "sampleCount": 15,
+    "medianPriceMJPY": 74,
+    "medianPriceManPerSqm": 93
+  },
+  {
+    "stationNameJa": "中野富士見町",
+    "sampleCount": 15,
+    "medianPriceMJPY": 98,
+    "medianPriceManPerSqm": 109
+  },
+  {
+    "stationNameJa": "八幡山",
+    "sampleCount": 15,
+    "medianPriceMJPY": 67,
+    "medianPriceManPerSqm": 71
+  },
+  {
+    "stationNameJa": "大久保(東京)",
+    "sampleCount": 15,
+    "medianPriceMJPY": 170,
+    "medianPriceManPerSqm": 114
+  },
+  {
+    "stationNameJa": "広尾",
+    "sampleCount": 15,
+    "medianPriceMJPY": 170,
+    "medianPriceManPerSqm": 262
+  },
+  {
+    "stationNameJa": "新小金井",
+    "sampleCount": 15,
+    "medianPriceMJPY": 48,
+    "medianPriceManPerSqm": 45
+  },
+  {
+    "stationNameJa": "本所吾妻橋",
+    "sampleCount": 15,
+    "medianPriceMJPY": 160,
+    "medianPriceManPerSqm": 127
+  },
+  {
+    "stationNameJa": "東あずま",
+    "sampleCount": 15,
+    "medianPriceMJPY": 46,
+    "medianPriceManPerSqm": 74
+  },
+  {
+    "stationNameJa": "白山(東京)",
+    "sampleCount": 15,
+    "medianPriceMJPY": 93,
+    "medianPriceManPerSqm": 127
+  },
+  {
+    "stationNameJa": "目白",
+    "sampleCount": 15,
+    "medianPriceMJPY": 130,
+    "medianPriceManPerSqm": 111
+  },
+  {
+    "stationNameJa": "緑が丘(東京)",
+    "sampleCount": 15,
+    "medianPriceMJPY": 85,
+    "medianPriceManPerSqm": 105
+  },
+  {
+    "stationNameJa": "落合",
+    "sampleCount": 15,
+    "medianPriceMJPY": 77,
+    "medianPriceManPerSqm": 98
+  },
+  {
+    "stationNameJa": "蓮根",
+    "sampleCount": 15,
+    "medianPriceMJPY": 58,
+    "medianPriceManPerSqm": 58
+  },
+  {
+    "stationNameJa": "下丸子",
+    "sampleCount": 14,
+    "medianPriceMJPY": 59,
+    "medianPriceManPerSqm": 79
+  },
+  {
+    "stationNameJa": "世田谷代田",
+    "sampleCount": 14,
+    "medianPriceMJPY": 145,
+    "medianPriceManPerSqm": 98
+  },
+  {
+    "stationNameJa": "北参道",
+    "sampleCount": 14,
+    "medianPriceMJPY": 350,
+    "medianPriceManPerSqm": 259
+  },
+  {
+    "stationNameJa": "南砂町",
+    "sampleCount": 14,
+    "medianPriceMJPY": 60,
+    "medianPriceManPerSqm": 69
+  },
+  {
+    "stationNameJa": "和泉多摩川",
+    "sampleCount": 14,
+    "medianPriceMJPY": 56,
+    "medianPriceManPerSqm": 44
+  },
+  {
+    "stationNameJa": "小村井",
+    "sampleCount": 14,
+    "medianPriceMJPY": 48,
+    "medianPriceManPerSqm": 64
+  },
+  {
+    "stationNameJa": "板橋",
+    "sampleCount": 14,
+    "medianPriceMJPY": 40,
+    "medianPriceManPerSqm": 77
+  },
+  {
+    "stationNameJa": "板橋区役所前",
+    "sampleCount": 14,
+    "medianPriceMJPY": 62,
+    "medianPriceManPerSqm": 71
+  },
+  {
+    "stationNameJa": "梅ケ丘",
+    "sampleCount": 14,
+    "medianPriceMJPY": 98,
+    "medianPriceManPerSqm": 102
+  },
+  {
+    "stationNameJa": "江戸川橋",
+    "sampleCount": 14,
+    "medianPriceMJPY": 200,
+    "medianPriceManPerSqm": 171
+  },
+  {
+    "stationNameJa": "神楽坂",
+    "sampleCount": 14,
+    "medianPriceMJPY": 215,
+    "medianPriceManPerSqm": 163
+  },
+  {
+    "stationNameJa": "菊川(東京)",
+    "sampleCount": 14,
+    "medianPriceMJPY": 160,
+    "medianPriceManPerSqm": 143
+  },
+  {
+    "stationNameJa": "青物横丁",
+    "sampleCount": 14,
+    "medianPriceMJPY": 105,
+    "medianPriceManPerSqm": 96
+  },
+  {
+    "stationNameJa": "麻布十番",
+    "sampleCount": 14,
+    "medianPriceMJPY": 705,
+    "medianPriceManPerSqm": 346
+  },
+  {
+    "stationNameJa": "京王多摩川",
+    "sampleCount": 13,
+    "medianPriceMJPY": 57,
+    "medianPriceManPerSqm": 42
+  },
+  {
+    "stationNameJa": "住吉(東京)",
+    "sampleCount": 13,
+    "medianPriceMJPY": 110,
+    "medianPriceManPerSqm": 100
+  },
+  {
+    "stationNameJa": "六郷土手",
+    "sampleCount": 13,
+    "medianPriceMJPY": 37,
+    "medianPriceManPerSqm": 56
+  },
+  {
+    "stationNameJa": "初台",
+    "sampleCount": 13,
+    "medianPriceMJPY": 180,
+    "medianPriceManPerSqm": 136
+  },
+  {
+    "stationNameJa": "四ツ谷",
+    "sampleCount": 13,
+    "medianPriceMJPY": 140,
+    "medianPriceManPerSqm": 153
+  },
+  {
+    "stationNameJa": "大崎",
+    "sampleCount": 13,
+    "medianPriceMJPY": 100,
+    "medianPriceManPerSqm": 114
+  },
+  {
+    "stationNameJa": "新三河島",
+    "sampleCount": 13,
+    "medianPriceMJPY": 120,
+    "medianPriceManPerSqm": 115
+  },
+  {
+    "stationNameJa": "池の上",
+    "sampleCount": 13,
+    "medianPriceMJPY": 120,
+    "medianPriceManPerSqm": 128
+  },
+  {
+    "stationNameJa": "白金高輪",
+    "sampleCount": 13,
+    "medianPriceMJPY": 190,
+    "medianPriceManPerSqm": 174
+  },
+  {
+    "stationNameJa": "秋葉原",
+    "sampleCount": 13,
+    "medianPriceMJPY": 240,
+    "medianPriceManPerSqm": 271
+  },
+  {
+    "stationNameJa": "芦花公園",
+    "sampleCount": 13,
+    "medianPriceMJPY": 90,
+    "medianPriceManPerSqm": 80
+  },
+  {
+    "stationNameJa": "西台",
+    "sampleCount": 13,
+    "medianPriceMJPY": 43,
+    "medianPriceManPerSqm": 56
+  },
+  {
+    "stationNameJa": "西日暮里",
+    "sampleCount": 13,
+    "medianPriceMJPY": 150,
+    "medianPriceManPerSqm": 162
+  },
+  {
+    "stationNameJa": "上町",
+    "sampleCount": 12,
+    "medianPriceMJPY": 88,
+    "medianPriceManPerSqm": 129
+  },
+  {
+    "stationNameJa": "二子玉川",
+    "sampleCount": 12,
+    "medianPriceMJPY": 300,
+    "medianPriceManPerSqm": 115
+  },
+  {
+    "stationNameJa": "仲御徒町",
+    "sampleCount": 12,
+    "medianPriceMJPY": 165,
+    "medianPriceManPerSqm": 223
+  },
+  {
+    "stationNameJa": "戸越銀座",
+    "sampleCount": 12,
+    "medianPriceMJPY": 102,
+    "medianPriceManPerSqm": 159
+  },
+  {
+    "stationNameJa": "日暮里",
+    "sampleCount": 12,
+    "medianPriceMJPY": 120,
+    "medianPriceManPerSqm": 138
+  },
+  {
+    "stationNameJa": "本駒込",
+    "sampleCount": 12,
+    "medianPriceMJPY": 125,
+    "medianPriceManPerSqm": 151
+  },
+  {
+    "stationNameJa": "松陰神社前",
+    "sampleCount": 12,
+    "medianPriceMJPY": 84,
+    "medianPriceManPerSqm": 82
+  },
+  {
+    "stationNameJa": "梶原",
+    "sampleCount": 12,
+    "medianPriceMJPY": 50,
+    "medianPriceManPerSqm": 73
+  },
+  {
+    "stationNameJa": "湯島",
+    "sampleCount": 12,
+    "medianPriceMJPY": 135,
+    "medianPriceManPerSqm": 195
+  },
+  {
+    "stationNameJa": "牛込柳町",
+    "sampleCount": 12,
+    "medianPriceMJPY": 120,
+    "medianPriceManPerSqm": 137
+  },
+  {
+    "stationNameJa": "稲城",
+    "sampleCount": 12,
+    "medianPriceMJPY": 51,
+    "medianPriceManPerSqm": 41
+  },
+  {
+    "stationNameJa": "若松河田",
+    "sampleCount": 12,
+    "medianPriceMJPY": 104,
+    "medianPriceManPerSqm": 151
+  },
+  {
+    "stationNameJa": "西ケ原",
+    "sampleCount": 12,
+    "medianPriceMJPY": 89,
+    "medianPriceManPerSqm": 84
+  },
+  {
+    "stationNameJa": "高島平",
+    "sampleCount": 12,
+    "medianPriceMJPY": 68,
+    "medianPriceManPerSqm": 68
+  },
+  {
+    "stationNameJa": "千鳥町",
+    "sampleCount": 11,
+    "medianPriceMJPY": 97,
+    "medianPriceManPerSqm": 71
+  },
+  {
+    "stationNameJa": "尾久",
+    "sampleCount": 11,
+    "medianPriceMJPY": 52,
+    "medianPriceManPerSqm": 68
+  },
+  {
+    "stationNameJa": "東陽町",
+    "sampleCount": 11,
+    "medianPriceMJPY": 230,
+    "medianPriceManPerSqm": 144
+  },
+  {
+    "stationNameJa": "白金台",
+    "sampleCount": 11,
+    "medianPriceMJPY": 250,
+    "medianPriceManPerSqm": 243
+  },
+  {
+    "stationNameJa": "稲荷町(東京)",
+    "sampleCount": 11,
+    "medianPriceMJPY": 160,
+    "medianPriceManPerSqm": 223
+  },
+  {
+    "stationNameJa": "若林(東京)",
+    "sampleCount": 11,
+    "medianPriceMJPY": 150,
+    "medianPriceManPerSqm": 84
+  },
+  {
+    "stationNameJa": "西新井大師西",
+    "sampleCount": 11,
+    "medianPriceMJPY": 47,
+    "medianPriceManPerSqm": 39
+  },
+  {
+    "stationNameJa": "長原(東京)",
+    "sampleCount": 11,
+    "medianPriceMJPY": 80,
+    "medianPriceManPerSqm": 83
+  },
+  {
+    "stationNameJa": "鵜の木",
+    "sampleCount": 11,
+    "medianPriceMJPY": 67,
+    "medianPriceManPerSqm": 74
+  },
+  {
+    "stationNameJa": "六本木",
+    "sampleCount": 10,
+    "medianPriceMJPY": 860,
+    "medianPriceManPerSqm": 425
+  },
+  {
+    "stationNameJa": "北赤羽",
+    "sampleCount": 10,
+    "medianPriceMJPY": 74,
+    "medianPriceManPerSqm": 86
+  },
+  {
+    "stationNameJa": "参宮橋",
+    "sampleCount": 10,
+    "medianPriceMJPY": 200,
+    "medianPriceManPerSqm": 206
+  },
+  {
+    "stationNameJa": "外苑前",
+    "sampleCount": 10,
+    "medianPriceMJPY": 260,
+    "medianPriceManPerSqm": 274
+  },
+  {
+    "stationNameJa": "多摩川",
+    "sampleCount": 10,
+    "medianPriceMJPY": 92,
+    "medianPriceManPerSqm": 92
+  },
+  {
+    "stationNameJa": "戸越公園",
+    "sampleCount": 10,
+    "medianPriceMJPY": 140,
+    "medianPriceManPerSqm": 122
+  },
+  {
+    "stationNameJa": "曙橋",
+    "sampleCount": 10,
+    "medianPriceMJPY": 280,
+    "medianPriceManPerSqm": 155
+  },
+  {
+    "stationNameJa": "末広町(東京)",
+    "sampleCount": 10,
+    "medianPriceMJPY": 425,
+    "medianPriceManPerSqm": 496
+  },
+  {
+    "stationNameJa": "東大前",
+    "sampleCount": 10,
+    "medianPriceMJPY": 175,
+    "medianPriceManPerSqm": 162
+  },
+  {
+    "stationNameJa": "東新宿",
+    "sampleCount": 10,
+    "medianPriceMJPY": 82,
+    "medianPriceManPerSqm": 153
+  },
+  {
+    "stationNameJa": "舎人公園",
+    "sampleCount": 10,
+    "medianPriceMJPY": 43,
+    "medianPriceManPerSqm": 49
+  },
+  {
+    "stationNameJa": "花小金井",
+    "sampleCount": 10,
+    "medianPriceMJPY": 56,
+    "medianPriceManPerSqm": 46
+  },
+  {
+    "stationNameJa": "護国寺",
+    "sampleCount": 10,
+    "medianPriceMJPY": 135,
+    "medianPriceManPerSqm": 118
+  },
+  {
+    "stationNameJa": "下落合(東京)",
+    "sampleCount": 9,
+    "medianPriceMJPY": 88,
+    "medianPriceManPerSqm": 107
+  },
+  {
+    "stationNameJa": "八丁堀(東京)",
+    "sampleCount": 9,
+    "medianPriceMJPY": 820,
+    "medianPriceManPerSqm": 469
+  },
+  {
+    "stationNameJa": "新富町(東京)",
+    "sampleCount": 9,
+    "medianPriceMJPY": 470,
+    "medianPriceManPerSqm": 522
+  },
+  {
+    "stationNameJa": "新桜台",
+    "sampleCount": 9,
+    "medianPriceMJPY": 72,
+    "medianPriceManPerSqm": 76
+  },
+  {
+    "stationNameJa": "東松原",
+    "sampleCount": 9,
+    "medianPriceMJPY": 79,
+    "medianPriceManPerSqm": 79
+  },
+  {
+    "stationNameJa": "清瀬",
+    "sampleCount": 9,
+    "medianPriceMJPY": 40,
+    "medianPriceManPerSqm": 37
+  },
+  {
+    "stationNameJa": "豪徳寺",
+    "sampleCount": 9,
+    "medianPriceMJPY": 120,
+    "medianPriceManPerSqm": 104
+  },
+  {
+    "stationNameJa": "赤坂(東京)",
+    "sampleCount": 9,
+    "medianPriceMJPY": 690,
+    "medianPriceManPerSqm": 552
+  },
+  {
+    "stationNameJa": "駒場東大前",
+    "sampleCount": 9,
+    "medianPriceMJPY": 120,
+    "medianPriceManPerSqm": 112
+  },
+  {
+    "stationNameJa": "乃木坂",
+    "sampleCount": 8,
+    "medianPriceMJPY": 475,
+    "medianPriceManPerSqm": 292
+  },
+  {
+    "stationNameJa": "後楽園",
+    "sampleCount": 8,
+    "medianPriceMJPY": 140,
+    "medianPriceManPerSqm": 143
+  },
+  {
+    "stationNameJa": "新大久保",
+    "sampleCount": 8,
+    "medianPriceMJPY": 220,
+    "medianPriceManPerSqm": 169
+  },
+  {
+    "stationNameJa": "明大前",
+    "sampleCount": 8,
+    "medianPriceMJPY": 155,
+    "medianPriceManPerSqm": 95
+  },
+  {
+    "stationNameJa": "神保町",
+    "sampleCount": 8,
+    "medianPriceMJPY": 200,
+    "medianPriceManPerSqm": 405
+  },
+  {
+    "stationNameJa": "蔵前",
+    "sampleCount": 8,
+    "medianPriceMJPY": 125,
+    "medianPriceManPerSqm": 132
+  },
+  {
+    "stationNameJa": "とうきょうスカイツリー",
+    "sampleCount": 7,
+    "medianPriceMJPY": 95,
+    "medianPriceManPerSqm": 143
+  },
+  {
+    "stationNameJa": "三田(東京)",
+    "sampleCount": 7,
+    "medianPriceMJPY": 490,
+    "medianPriceManPerSqm": 750
+  },
+  {
+    "stationNameJa": "世田谷",
+    "sampleCount": 7,
+    "medianPriceMJPY": 83,
+    "medianPriceManPerSqm": 95
+  },
+  {
+    "stationNameJa": "五反田",
+    "sampleCount": 7,
+    "medianPriceMJPY": 430,
+    "medianPriceManPerSqm": 250
+  },
+  {
+    "stationNameJa": "人形町",
+    "sampleCount": 7,
+    "medianPriceMJPY": 260,
+    "medianPriceManPerSqm": 306
+  },
+  {
+    "stationNameJa": "北千束",
+    "sampleCount": 7,
+    "medianPriceMJPY": 140,
+    "medianPriceManPerSqm": 129
+  },
+  {
+    "stationNameJa": "千駄ケ谷",
+    "sampleCount": 7,
+    "medianPriceMJPY": 140,
+    "medianPriceManPerSqm": 200
+  },
+  {
+    "stationNameJa": "大森海岸",
+    "sampleCount": 7,
+    "medianPriceMJPY": 190,
+    "medianPriceManPerSqm": 141
+  },
+  {
+    "stationNameJa": "新代田",
+    "sampleCount": 7,
+    "medianPriceMJPY": 90,
+    "medianPriceManPerSqm": 89
+  },
+  {
+    "stationNameJa": "新橋",
+    "sampleCount": 7,
+    "medianPriceMJPY": 1600,
+    "medianPriceManPerSqm": 1778
+  },
+  {
+    "stationNameJa": "東北沢",
+    "sampleCount": 7,
+    "medianPriceMJPY": 110,
+    "medianPriceManPerSqm": 148
+  },
+  {
+    "stationNameJa": "浜町",
+    "sampleCount": 7,
+    "medianPriceMJPY": 190,
+    "medianPriceManPerSqm": 244
+  },
+  {
+    "stationNameJa": "浮間舟渡",
+    "sampleCount": 7,
+    "medianPriceMJPY": 92,
+    "medianPriceManPerSqm": 61
+  },
+  {
+    "stationNameJa": "熊野前",
+    "sampleCount": 7,
+    "medianPriceMJPY": 58,
+    "medianPriceManPerSqm": 55
+  },
+  {
+    "stationNameJa": "牛田(東京)",
+    "sampleCount": 7,
+    "medianPriceMJPY": 47,
+    "medianPriceManPerSqm": 74
+  },
+  {
+    "stationNameJa": "牛込神楽坂",
+    "sampleCount": 7,
+    "medianPriceMJPY": 220,
+    "medianPriceManPerSqm": 149
+  },
+  {
+    "stationNameJa": "荒川区役所前",
+    "sampleCount": 7,
+    "medianPriceMJPY": 59,
+    "medianPriceManPerSqm": 80
+  },
+  {
+    "stationNameJa": "西太子堂",
+    "sampleCount": 7,
+    "medianPriceMJPY": 93,
+    "medianPriceManPerSqm": 114
+  },
+  {
+    "stationNameJa": "高輪台",
+    "sampleCount": 7,
+    "medianPriceMJPY": 190,
+    "medianPriceManPerSqm": 122
+  },
+  {
+    "stationNameJa": "高野(東京)",
+    "sampleCount": 7,
+    "medianPriceMJPY": 47,
+    "medianPriceManPerSqm": 48
+  },
+  {
+    "stationNameJa": "鮫洲",
+    "sampleCount": 7,
+    "medianPriceMJPY": 69,
+    "medianPriceManPerSqm": 99
+  },
+  {
+    "stationNameJa": "品川",
+    "sampleCount": 6,
+    "medianPriceMJPY": 665,
+    "medianPriceManPerSqm": 274
+  },
+  {
+    "stationNameJa": "大門(東京)",
+    "sampleCount": 6,
+    "medianPriceMJPY": 135,
+    "medianPriceManPerSqm": 281
+  },
+  {
+    "stationNameJa": "天空橋",
+    "sampleCount": 6,
+    "medianPriceMJPY": 31,
+    "medianPriceManPerSqm": 49
+  },
+  {
+    "stationNameJa": "小伝馬町",
+    "sampleCount": 6,
+    "medianPriceMJPY": 665,
+    "medianPriceManPerSqm": 370
+  },
+  {
+    "stationNameJa": "市ケ谷",
+    "sampleCount": 6,
+    "medianPriceMJPY": 450,
+    "medianPriceManPerSqm": 337
+  },
+  {
+    "stationNameJa": "御茶の水",
+    "sampleCount": 6,
+    "medianPriceMJPY": 780,
+    "medianPriceManPerSqm": 447
+  },
+  {
+    "stationNameJa": "新高島平",
+    "sampleCount": 6,
+    "medianPriceMJPY": 57,
+    "medianPriceManPerSqm": 57
+  },
+  {
+    "stationNameJa": "明治神宮前",
+    "sampleCount": 6,
+    "medianPriceMJPY": 610,
+    "medianPriceManPerSqm": 550
+  },
+  {
+    "stationNameJa": "東池袋",
+    "sampleCount": 6,
+    "medianPriceMJPY": 50,
+    "medianPriceManPerSqm": 103
+  },
+  {
+    "stationNameJa": "水天宮前",
+    "sampleCount": 6,
+    "medianPriceMJPY": 265,
+    "medianPriceManPerSqm": 326
+  },
+  {
+    "stationNameJa": "滝野川一丁目",
+    "sampleCount": 6,
+    "medianPriceMJPY": 59,
+    "medianPriceManPerSqm": 79
+  },
+  {
+    "stationNameJa": "潮見",
+    "sampleCount": 6,
+    "medianPriceMJPY": 72,
+    "medianPriceManPerSqm": 101
+  },
+  {
+    "stationNameJa": "茅場町",
+    "sampleCount": 6,
+    "medianPriceMJPY": 345,
+    "medianPriceManPerSqm": 456
+  },
+  {
+    "stationNameJa": "飛田給",
+    "sampleCount": 6,
+    "medianPriceMJPY": 53,
+    "medianPriceManPerSqm": 37
+  },
+  {
+    "stationNameJa": "京王よみうりランド",
+    "sampleCount": 5,
+    "medianPriceMJPY": 45,
+    "medianPriceManPerSqm": 32
+  },
+  {
+    "stationNameJa": "代々木",
+    "sampleCount": 5,
+    "medianPriceMJPY": 400,
+    "medianPriceManPerSqm": 204
+  },
+  {
+    "stationNameJa": "小菅",
+    "sampleCount": 5,
+    "medianPriceMJPY": 59,
+    "medianPriceManPerSqm": 56
+  },
+  {
+    "stationNameJa": "新宿",
+    "sampleCount": 5,
+    "medianPriceMJPY": 240,
+    "medianPriceManPerSqm": 192
+  },
+  {
+    "stationNameJa": "東大島",
+    "sampleCount": 5,
+    "medianPriceMJPY": 54,
+    "medianPriceManPerSqm": 78
+  },
+  {
+    "stationNameJa": "神泉",
+    "sampleCount": 5,
+    "medianPriceMJPY": 850,
+    "medianPriceManPerSqm": 280
+  },
+  {
+    "stationNameJa": "築地",
+    "sampleCount": 5,
+    "medianPriceMJPY": 380,
+    "medianPriceManPerSqm": 422
+  },
+  {
+    "stationNameJa": "西ケ原四丁目",
+    "sampleCount": 5,
+    "medianPriceMJPY": 45,
+    "medianPriceManPerSqm": 50
+  },
+  {
+    "stationNameJa": "飯田橋",
+    "sampleCount": 5,
+    "medianPriceMJPY": 340,
+    "medianPriceManPerSqm": 283
+  }
+]

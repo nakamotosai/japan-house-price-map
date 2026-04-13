@@ -1,4 +1,4 @@
-import type { HazardZone, SchoolPoint, Station } from '../types'
+import type { AreaLayerFeature, PointLayerFeature, Station } from '../types'
 
 type FetchLike = typeof fetch
 
@@ -17,9 +17,17 @@ export async function loadStations(fetcher?: FetchLike) {
 }
 
 export async function loadSchools(fetcher?: FetchLike) {
-  return readJson<SchoolPoint[]>('/data/tokyo/schools.json', fetcher)
+  return readJson<PointLayerFeature[]>('/data/tokyo/schools.json', fetcher)
+}
+
+export async function loadConvenience(fetcher?: FetchLike) {
+  return readJson<PointLayerFeature[]>('/data/tokyo/convenience.json', fetcher)
 }
 
 export async function loadHazards(fetcher?: FetchLike) {
-  return readJson<HazardZone[]>('/data/tokyo/hazards.json', fetcher)
+  return readJson<AreaLayerFeature[]>('/data/tokyo/hazards.json', fetcher)
+}
+
+export async function loadPopulation(fetcher?: FetchLike) {
+  return readJson<AreaLayerFeature[]>('/data/tokyo/population.json', fetcher)
 }
