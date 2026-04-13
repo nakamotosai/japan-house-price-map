@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import maplibregl from 'maplibre-gl'
 import {
   ensureOverlayLayers,
+  formatMarkerPrice,
   getStationMarkerColor,
   getTokyoCenter,
   setModeOverlays,
@@ -16,7 +17,7 @@ type TokyoMapProps = {
   stations: Station[]
   selectedStationId: string | null
   resetToken: number
-  onSelectStation: (stationId: string) => void
+  onSelectStation: (stationId: string | null) => void
 }
 
 export function TokyoMap(props: TokyoMapProps) {
@@ -33,6 +34,7 @@ export function TokyoMap(props: TokyoMapProps) {
   const mapRef = useRef<maplibregl.Map | null>(null)
   const markersRef = useRef<maplibregl.Marker[]>([])
   const [mapReady, setMapReady] = useState(false)
+  const onSelectStationEvent = useEffectEvent(onSelectStation)
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) {
@@ -54,6 +56,12 @@ export function TokyoMap(props: TokyoMapProps) {
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right')
     map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right')
 
+    const handleBlankMapClick = () => {
+      onSelectStationEvent(null)
+    }
+
+    map.on('click', handleBlankMapClick)
+
     map.on('load', () => {
       setMapReady(true)
     })
@@ -61,6 +69,7 @@ export function TokyoMap(props: TokyoMapProps) {
     mapRef.current = map
 
     return () => {
+      map.off('click', handleBlankMapClick)
       markersRef.current.forEach((marker) => marker.remove())
       markersRef.current = []
       map.remove()
@@ -91,15 +100,35 @@ export function TokyoMap(props: TokyoMapProps) {
     for (const station of stations) {
       const markerNode = document.createElement('button')
       const isSelected = station.id === selectedStationId
-      markerNode.className = `station-marker ${isSelected ? 'station-marker--selected' : ''}`
+      const showName = station.labelTier === 'major'
+      const showPrice = activeMode === 'price'
+      const compactIconOnly = station.labelTier === 'minor' && !showPrice
+
+      markerNode.className = [
+        'station-marker',
+        showName ? 'station-marker--major' : 'station-marker--minor',
+        showPrice ? 'station-marker--price' : '',
+        compactIconOnly ? 'station-marker--icon-only' : '',
+        isSelected ? 'station-marker--selected' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')
       markerNode.style.backgroundColor = getStationMarkerColor(station, activeMode)
       markerNode.type = 'button'
       markerNode.setAttribute('aria-label', `查看 ${station.name}`)
-      markerNode.innerHTML = `
-        <span class="station-marker__dot"></span>
-        <span class="station-marker__label">${station.name}</span>
-      `
-      markerNode.addEventListener('click', () => onSelectStation(station.id))
+      markerNode.innerHTML = compactIconOnly
+        ? '<span class="station-marker__dot"></span>'
+        : `
+          <span class="station-marker__dot"></span>
+          <span class="station-marker__content">
+            ${showName ? `<span class="station-marker__name">${station.name}</span>` : ''}
+            ${showPrice ? `<span class="station-marker__price">${formatMarkerPrice(station.metrics.medianPriceMJPY)}</span>` : ''}
+          </span>
+        `
+      markerNode.addEventListener('click', (event) => {
+        event.stopPropagation()
+        onSelectStationEvent(station.id)
+      })
 
       const marker = new maplibregl.Marker({ element: markerNode, anchor: 'bottom' })
         .setLngLat([station.lng, station.lat])

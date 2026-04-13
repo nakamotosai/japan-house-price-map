@@ -9,6 +9,7 @@
     "operator": "JR 东日本 / 东京Metro",
     "lines": ["JR 山手线", "丸之内线", "京叶线"],
     "ward": "千代田区",
+    "labelTier": "major",
     "summary": "核心商务站，价格高，通达性强，适合做全局锚点。",
     "metrics": {
       "district": "丸之内",
@@ -34,6 +35,7 @@
     "operator": "JR 东日本 / 小田急 / 京王 / 东京Metro",
     "lines": ["JR 山手线", "中央线", "丸之内线", "都营新宿线"],
     "ward": "新宿区",
+    "labelTier": "major",
     "summary": "世界级换乘站，热度极高，房价高但分化也大。",
     "metrics": {
       "district": "新宿站西口",
@@ -59,6 +61,7 @@
     "operator": "JR 东日本 / 东京Metro / 东急",
     "lines": ["JR 山手线", "银座线", "半藏门线", "东急东横线"],
     "ward": "涩谷区",
+    "labelTier": "major",
     "summary": "再开发强势站，年轻化和商业热度都很高。",
     "metrics": {
       "district": "涩谷核心区",
@@ -84,6 +87,7 @@
     "operator": "JR 东日本 / 东京Metro / 西武 / 东武",
     "lines": ["JR 山手线", "丸之内线", "有乐町线", "副都心线"],
     "ward": "丰岛区",
+    "labelTier": "major",
     "summary": "大枢纽但价格低于涩谷与新宿，性价比更强。",
     "metrics": {
       "district": "池袋东口",
@@ -109,6 +113,7 @@
     "operator": "JR 东日本 / 东京Metro",
     "lines": ["JR 山手线", "银座线", "日比谷线"],
     "ward": "台东区",
+    "labelTier": "major",
     "summary": "北东东京的重要门户，价格中高，文化设施密度强。",
     "metrics": {
       "district": "上野公园口",
@@ -125,6 +130,58 @@
     }
   },
   {
+    "id": "akihabara",
+    "name": "秋叶原",
+    "nameJa": "秋葉原",
+    "nameEn": "Akihabara",
+    "lat": 35.698353,
+    "lng": 139.773114,
+    "operator": "JR 东日本 / 东京Metro / 筑波快线",
+    "lines": ["JR 山手线", "京滨东北线", "总武线", "日比谷线"],
+    "ward": "千代田区",
+    "labelTier": "major",
+    "summary": "电子街和换乘流量叠加，属于东侧高认知大站。",
+    "metrics": {
+      "district": "秋叶原",
+      "medianPriceMJPY": 72,
+      "medianPriceManPerSqm": 136,
+      "landValueManPerSqm": 310,
+      "ridershipDaily": 610000,
+      "heatScore": 86,
+      "transferLines": 4,
+      "schoolsNearby": 4,
+      "populationTrend": "稳定",
+      "hazard": { "flood": "medium", "liquefaction": "medium", "landslide": "low" },
+      "note": "认知度高，适合放进默认大站标注组。"
+    }
+  },
+  {
+    "id": "shimbashi",
+    "name": "新桥",
+    "nameJa": "新橋",
+    "nameEn": "Shimbashi",
+    "lat": 35.666295,
+    "lng": 139.75868,
+    "operator": "JR 东日本 / 东京Metro / 都营 / 百合海鸥号",
+    "lines": ["JR 山手线", "银座线", "都营浅草线", "百合海鸥号"],
+    "ward": "港区",
+    "labelTier": "major",
+    "summary": "东京核心通勤站，商务属性强，默认应列入大站显示。",
+    "metrics": {
+      "district": "新桥",
+      "medianPriceMJPY": 84,
+      "medianPriceManPerSqm": 158,
+      "landValueManPerSqm": 390,
+      "ridershipDaily": 1050000,
+      "heatScore": 90,
+      "transferLines": 4,
+      "schoolsNearby": 3,
+      "populationTrend": "稳定",
+      "hazard": { "flood": "low", "liquefaction": "low", "landslide": "low" },
+      "note": "更偏商务和通勤，但也是默认应显示站名的核心山手线大站。"
+    }
+  },
+  {
     "id": "shinagawa",
     "name": "品川",
     "nameJa": "品川",
@@ -134,6 +191,7 @@
     "operator": "JR 东日本 / 京急",
     "lines": ["JR 山手线", "东海道线", "京急本线"],
     "ward": "港区",
+    "labelTier": "major",
     "summary": "商务与新干线门户站，热度和价格都偏高。",
     "metrics": {
       "district": "高轮口",
@@ -159,6 +217,7 @@
     "operator": "JR 东日本 / 京王",
     "lines": ["中央线", "京王井之头线"],
     "ward": "武藏野市",
+    "labelTier": "minor",
     "summary": "自住心智极强的热门站，生活便利度高。",
     "metrics": {
       "district": "吉祥寺南町",
@@ -184,6 +243,7 @@
     "operator": "东京Metro / 百合海鸥号",
     "lines": ["有乐町线", "百合海鸥号"],
     "ward": "江东区",
+    "labelTier": "minor",
     "summary": "湾岸代表站，价格不低，但风险维度必须一起看。",
     "metrics": {
       "district": "丰洲",
@@ -209,6 +269,7 @@
     "operator": "东京Metro / 都营 / 京成 / 东武",
     "lines": ["半藏门线", "都营浅草线", "京成押上线", "东武晴空塔线"],
     "ward": "墨田区",
+    "labelTier": "minor",
     "summary": "晴空塔带动的热门站，但低洼地风险不可忽略。",
     "metrics": {
       "district": "押上",
@@ -234,6 +295,7 @@
     "operator": "JR 东日本 / 东京Metro",
     "lines": ["中央线", "东西线"],
     "ward": "中野区",
+    "labelTier": "minor",
     "summary": "中西东京通勤友好站，价格相对平衡。",
     "metrics": {
       "district": "中野",
@@ -259,6 +321,7 @@
     "operator": "JR 东日本 / 东京Metro / 东武 / 筑波快线",
     "lines": ["常磐线", "日比谷线", "千代田线", "东武伊势崎线"],
     "ward": "足立区",
+    "labelTier": "minor",
     "summary": "高通达、相对便宜，是预算型研究的代表站。",
     "metrics": {
       "district": "北千住",
@@ -284,6 +347,7 @@
     "operator": "JR 东日本 / 东京Metro / 东急 / 都营",
     "lines": ["JR 山手线", "南北线", "都营三田线", "东急目黑线"],
     "ward": "品川区",
+    "labelTier": "minor",
     "summary": "成熟住宅商务混合站，价格高但舒适度也高。",
     "metrics": {
       "district": "目黑",

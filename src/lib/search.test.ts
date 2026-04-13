@@ -13,6 +13,7 @@ const STATIONS: Station[] = [
     operator: 'JR 东日本',
     lines: ['JR 山手线'],
     ward: '千代田区',
+    labelTier: 'major',
     summary: '核心站点',
     metrics: {
       district: '丸之内',
@@ -38,6 +39,7 @@ const STATIONS: Station[] = [
     operator: 'JR 东日本',
     lines: ['JR 山手线'],
     ward: '涩谷区',
+    labelTier: 'major',
     summary: '商业热度高',
     metrics: {
       district: '涩谷核心区',

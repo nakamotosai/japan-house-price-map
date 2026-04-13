@@ -258,6 +258,15 @@ export function getStationMarkerColor(station: Station, mode: ModeId) {
   return '#334155'
 }
 
+export function formatMarkerPrice(value: number) {
+  if (value >= 100) {
+    const yi = (value / 100).toFixed(2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1')
+    return `${yi}亿`
+  }
+
+  return `${value}00万`
+}
+
 export function getSchoolMatches(points: SchoolPoint[], stationId: string | null) {
   if (!stationId) {
     return []

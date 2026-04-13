@@ -12,8 +12,8 @@
 
 ## 当前状态
 
-- 状态：`phase2 runtime data + tailnet preview 已落地`
-- 当前版本：`单页东京地图 + MapLibre 开源地图底座 + 首批 5 个模式 + 运行时 JSON 数据目录 + Tailnet 预览`
+- 状态：`phase2.1 UX refinement 已落地`
+- 当前版本：`单页东京地图 + MapLibre 开源地图底座 + 首批 5 个模式 + 运行时 JSON 数据目录 + Tailnet 预览 + 地图可读性优化`
 - 数据状态：`当前仍是种子数据，但已经从打包时写死改成 public/data 运行时加载`
 - 当前已完成：
   - 东京地图直入
@@ -22,11 +22,17 @@
   - 模式切换
   - 站点搜索
   - 轻量站点面板
+  - 默认不再自动弹出说明层
+  - 默认不再自动展开站点卡片
   - 学校点图层
   - 灾害风险面图层
   - `public/data/tokyo/` 运行时数据目录
   - PM2 常驻预览进程
   - Tailnet HTTPS 预览入口
+  - 大站默认保留站名，小站降为图标级展示
+  - 房产均价模式直接把价格写到 marker 上
+  - 图例支持自动缩小，避免长期挡住地图
+  - 点击地图空白区域可收起站点卡片
 
 ## 第一轮范围
 
@@ -54,6 +60,7 @@
 
 - `specs/phase1-map-foundation-20260413/`：第一轮任务 spec 和 plan
 - `specs/phase2-runtime-data-and-tailnet-preview-20260413/`：第二轮任务 spec 和 plan
+- `specs/phase2-map-ux-refinement-20260413/`：当前这轮前台交互修正
 - `src/`：前端源码
 - `public/data/tokyo/`：当前东京种子数据目录
 - `scripts/start_tailnet_preview.sh`：启动 Tailnet 预览
@@ -102,6 +109,13 @@ https://vps-jp.tail4b5213.ts.net:8443/
 - 还没有正式的官方数据抓取 / 清洗流水线，当前只是运行时 JSON 加载
 - 还没有站点详情页、分享页和 AI 解读
 - 当前重点是“地图底座能否持续挂新图层”，不是数据完整度
+
+## 下一轮建议
+
+- 接东京正式 `车站主表`
+- 把 MLIT / 国土数值信息做成导入脚本
+- 用真实数据替换当前种子价格、学校、风险图层
+- 补一版站点排序 / 默认视野 / 默认大站集合逻辑
 
 ## 本轮验收
 

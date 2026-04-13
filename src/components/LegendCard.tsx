@@ -2,16 +2,34 @@ import type { ModeDefinition } from '../types'
 
 type LegendCardProps = {
   activeMode: ModeDefinition
+  collapsed: boolean
+  onCollapse: () => void
+  onExpand: () => void
 }
 
 export function LegendCard(props: LegendCardProps) {
-  const { activeMode } = props
+  const { activeMode, collapsed, onCollapse, onExpand } = props
+
+  if (collapsed) {
+    return (
+      <button className="legend-card legend-card--collapsed" onClick={onExpand} type="button">
+        <span className="legend-card__mini-dot" style={{ backgroundColor: activeMode.legend[0]?.color }} />
+        <strong>{activeMode.label}</strong>
+        <span>展开图例</span>
+      </button>
+    )
+  }
 
   return (
     <section className="legend-card">
       <div className="legend-card__header">
         <strong>{activeMode.label}</strong>
-        <span>{activeMode.category === 'station' ? '站点指标模式' : '坐标覆盖模式'}</span>
+        <div className="legend-card__header-actions">
+          <span>{activeMode.category === 'station' ? '站点指标模式' : '坐标覆盖模式'}</span>
+          <button className="legend-card__collapse" onClick={onCollapse} type="button">
+            收起
+          </button>
+        </div>
       </div>
 
       <p className="legend-card__description">{activeMode.description}</p>

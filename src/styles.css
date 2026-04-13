@@ -219,6 +219,13 @@ button {
   z-index: 32;
 }
 
+.station-panel__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
 .station-panel__header h2,
 .station-panel__empty h1 {
   margin: 6px 0 4px;
@@ -275,6 +282,15 @@ button {
 
 .station-panel__section {
   margin-top: 18px;
+}
+
+.station-panel__close {
+  border: 0;
+  background: #eef2f7;
+  color: #31405e;
+  border-radius: 14px;
+  padding: 10px 12px;
+  white-space: nowrap;
 }
 
 .station-panel__section-head {
@@ -355,11 +371,41 @@ button {
   z-index: 32;
 }
 
+.legend-card--collapsed {
+  width: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  padding: 12px 14px;
+}
+
+.legend-card__mini-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  flex: none;
+}
+
 .legend-card__header {
   display: flex;
   justify-content: space-between;
   gap: 12px;
   align-items: baseline;
+}
+
+.legend-card__header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.legend-card__collapse {
+  border: 0;
+  background: #eef2f7;
+  color: #31405e;
+  border-radius: 999px;
+  padding: 6px 10px;
 }
 
 .legend-card__header span,
@@ -454,6 +500,44 @@ button {
   border-radius: 999px;
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18);
   color: #ffffff;
+}
+
+.station-marker__content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.station-marker__name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.station-marker__price {
+  font-size: 0.76rem;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.station-marker--price.station-marker--minor {
+  padding: 6px 9px;
+}
+
+.station-marker--icon-only {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  justify-content: center;
+  border-radius: 999px;
+}
+
+.station-marker--icon-only .station-marker__dot {
+  width: 8px;
+  height: 8px;
 }
 
 .station-marker--selected {

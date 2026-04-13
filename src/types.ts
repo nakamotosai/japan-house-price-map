@@ -28,6 +28,7 @@ export type Station = {
   operator: string
   lines: string[]
   ward: string
+  labelTier: 'major' | 'minor'
   summary: string
   metrics: {
     district: string

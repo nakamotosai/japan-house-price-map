@@ -5,6 +5,7 @@ type StationPanelProps = {
   activeMode: ModeId
   hazards: HazardZone[]
   modes: Record<ModeId, ModeDefinition>
+  onClose: () => void
   onOpenIntro: () => void
   schools: SchoolPoint[]
   selectedStation: Station | null
@@ -154,6 +155,7 @@ export function StationPanel(props: StationPanelProps) {
     errorMessage,
     hazards,
     modes,
+    onClose,
     onOpenIntro,
     schools,
     selectedStation,
@@ -162,6 +164,10 @@ export function StationPanel(props: StationPanelProps) {
   const activeModeMeta = modes[activeMode]
 
   if (!selectedStation) {
+    if (status === 'ready') {
+      return null
+    }
+
     return (
       <aside className="station-panel">
         <div className="station-panel__empty">
@@ -202,11 +208,16 @@ export function StationPanel(props: StationPanelProps) {
   return (
     <aside className="station-panel">
       <div className="station-panel__header">
-        <span className="station-panel__eyebrow">{selectedStation.ward}</span>
-        <h2>{selectedStation.name}</h2>
-        <p>
-          {selectedStation.nameJa} / {selectedStation.nameEn}
-        </p>
+        <div>
+          <span className="station-panel__eyebrow">{selectedStation.ward}</span>
+          <h2>{selectedStation.name}</h2>
+          <p>
+            {selectedStation.nameJa} / {selectedStation.nameEn}
+          </p>
+        </div>
+        <button className="station-panel__close" onClick={onClose} type="button">
+          收起
+        </button>
       </div>
 
       <div className="station-panel__summary">

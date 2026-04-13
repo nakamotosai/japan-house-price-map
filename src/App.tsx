@@ -1,4 +1,4 @@
-import { startTransition, useDeferredValue, useState } from 'react'
+import { startTransition, useDeferredValue, useEffect, useState } from 'react'
 import { IntroOverlay } from './components/IntroOverlay'
 import { LeftRail } from './components/LeftRail'
 import { LegendCard } from './components/LegendCard'
@@ -13,10 +13,11 @@ import type { ModeId } from './types'
 
 export default function App() {
   const [activeMode, setActiveMode] = useState<ModeId>('price')
-  const [selectedStationId, setSelectedStationId] = useState<string | null>('tokyo')
+  const [selectedStationId, setSelectedStationId] = useState<string | null>(null)
   const [query, setQuery] = useState('')
   const [resetToken, setResetToken] = useState(0)
-  const [showIntro, setShowIntro] = useState(true)
+  const [showIntro, setShowIntro] = useState(false)
+  const [legendCollapsed, setLegendCollapsed] = useState(false)
   const dataState = useTokyoSeedData()
 
   const stations = dataState.status === 'ready' ? dataState.data.stations : []
@@ -28,17 +29,37 @@ export default function App() {
   const selectedStation =
     stations.find((station) => station.id === selectedStationId) ?? null
 
-  function handleSelectStation(stationId: string) {
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setLegendCollapsed(true)
+    }, 3800)
+
+    return () => {
+      window.clearTimeout(timer)
+    }
+  }, [activeMode])
+
+  function handleSelectStation(stationId: string | null) {
     startTransition(() => {
       setSelectedStationId(stationId)
     })
-    setQuery('')
+
+    if (stationId === null) {
+      setQuery('')
+    } else {
+      setQuery('')
+    }
   }
 
   function handleResetView() {
     setSelectedStationId(null)
     setQuery('')
     setResetToken((value) => value + 1)
+  }
+
+  function handleChangeMode(mode: ModeId) {
+    setActiveMode(mode)
+    setLegendCollapsed(false)
   }
 
   return (
@@ -67,20 +88,26 @@ export default function App() {
         results={searchResults}
       />
 
-      <ModeChips activeMode={activeMode} modes={MODES} onChangeMode={setActiveMode} />
+      <ModeChips activeMode={activeMode} modes={MODES} onChangeMode={handleChangeMode} />
 
       <StationPanel
         activeMode={activeMode}
         errorMessage={dataState.status === 'error' ? dataState.message : undefined}
         hazards={hazards}
         modes={MODES}
+        onClose={() => setSelectedStationId(null)}
         onOpenIntro={() => setShowIntro(true)}
         schools={schools}
         selectedStation={selectedStation}
         status={dataState.status}
       />
 
-      <LegendCard activeMode={MODES[activeMode]} />
+      <LegendCard
+        activeMode={MODES[activeMode]}
+        collapsed={legendCollapsed}
+        onCollapse={() => setLegendCollapsed(true)}
+        onExpand={() => setLegendCollapsed(false)}
+      />
 
       <IntroOverlay open={showIntro} onClose={() => setShowIntro(false)} />
     </div>
