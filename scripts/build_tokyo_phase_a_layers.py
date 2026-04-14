@@ -103,11 +103,16 @@ WATER_DEPTH_LABELS = {
     6: "20m+",
 }
 
-RUNTIME_POINT_CHUNK_LON = 0.035
-RUNTIME_POINT_CHUNK_LAT = 0.025
+RUNTIME_POINT_DETAIL_CHUNK_LON = 0.035
+RUNTIME_POINT_DETAIL_CHUNK_LAT = 0.025
+RUNTIME_POINT_OVERVIEW_CHUNK_LON = 0.11
+RUNTIME_POINT_OVERVIEW_CHUNK_LAT = 0.08
+POINT_OVERVIEW_AGG_LON = 0.05
+POINT_OVERVIEW_AGG_LAT = 0.04
 RUNTIME_AREA_CHUNK_LON = 0.07
 RUNTIME_AREA_CHUNK_LAT = 0.05
 AREA_DETAIL_ZOOM_THRESHOLD = 12.3
+POINT_DETAIL_ZOOM_THRESHOLD = 12.8
 
 
 def parse_args() -> argparse.Namespace:
@@ -964,6 +969,74 @@ def point_chunk_key(lng: float, lat: float, *, step_lon: float, step_lat: float)
     return chunk_x, chunk_y
 
 
+def mean_point_coordinates(points: list[dict[str, Any]]) -> tuple[float, float]:
+    lng = sum(float(point["lng"]) for point in points) / len(points)
+    lat = sum(float(point["lat"]) for point in points) / len(points)
+    return lat, lng
+
+
+def build_point_overview_features(
+    points: list[dict[str, Any]],
+    *,
+    mode_id: str,
+) -> list[dict[str, Any]]:
+    grouped: dict[tuple[int, int], list[dict[str, Any]]] = defaultdict(list)
+    for point in points:
+        grouped[
+            point_chunk_key(
+                point["lng"],
+                point["lat"],
+                step_lon=POINT_OVERVIEW_AGG_LON,
+                step_lat=POINT_OVERVIEW_AGG_LAT,
+            )
+        ].append(point)
+
+    label_base = "学校" if mode_id == "schools" else "设施"
+    overview_points: list[dict[str, Any]] = []
+
+    for chunk_key, members in sorted(grouped.items()):
+        chunk_x, chunk_y = chunk_key
+        lat, lng = mean_point_coordinates(members)
+        category_counts = Counter(member["categoryLabel"] for member in members)
+        dominant_category_id, dominant_category_count = Counter(
+            member["categoryId"] for member in members
+        ).most_common(1)[0]
+        dominant_category_label = next(
+            member["categoryLabel"]
+            for member in members
+            if member["categoryId"] == dominant_category_id
+        )
+        top_categories = category_counts.most_common(2)
+        category_summary = " / ".join(
+            f"{label} {count}" for label, count in top_categories
+        )
+
+        overview_points.append(
+            {
+                "id": f"{mode_id}-overview-{chunk_x:02d}-{chunk_y:02d}",
+                "name": f"{len(members)} 个{label_base}聚合",
+                "categoryId": dominant_category_id,
+                "categoryLabel": dominant_category_label,
+                "lat": round(lat, 6),
+                "lng": round(lng, 6),
+                "stationId": None,
+                "note": f"低缩放总览层：{category_summary}",
+                "count": len(members),
+                "level": "overview",
+            }
+        )
+
+    return overview_points
+
+
+def point_runtime_copy(point: dict[str, Any], *, level: str) -> dict[str, Any]:
+    return {
+        **point,
+        "count": int(point.get("count", 1)),
+        "level": level,
+    }
+
+
 def geometry_point_count(geometry: dict[str, Any]) -> int:
     geometry_type = geometry["type"]
     if geometry_type == "Polygon":
@@ -1166,6 +1239,9 @@ def build_point_chunk_manifest(
     points: list[dict[str, Any]],
     *,
     mode_id: str,
+    level: str,
+    step_lon: float,
+    step_lat: float,
 ) -> dict[str, Any]:
     chunk_map: dict[tuple[int, int], list[dict[str, Any]]] = defaultdict(list)
     for point in points:
@@ -1173,19 +1249,19 @@ def build_point_chunk_manifest(
             point_chunk_key(
                 point["lng"],
                 point["lat"],
-                step_lon=RUNTIME_POINT_CHUNK_LON,
-                step_lat=RUNTIME_POINT_CHUNK_LAT,
+                step_lon=step_lon,
+                step_lat=step_lat,
             )
         ].append(point)
 
     chunks: list[dict[str, Any]] = []
-    chunk_dir = RUNTIME_DIR / mode_id / "chunks"
+    chunk_dir = RUNTIME_DIR / mode_id / level / "chunks"
     for chunk_key in sorted(chunk_map):
         chunk_x, chunk_y = chunk_key
         chunk_id = f"{chunk_x:02d}-{chunk_y:02d}"
         chunk_path = chunk_dir / f"{chunk_id}.json"
         payload = sorted(
-            chunk_map[chunk_key],
+            [point_runtime_copy(item, level=level) for item in chunk_map[chunk_key]],
             key=lambda item: (item["categoryId"], item["name"]),
         )
         write_json(chunk_path, payload, indent=None)
@@ -1196,20 +1272,22 @@ def build_point_chunk_manifest(
                 "bounds": chunk_bounds_for_key(
                     chunk_x,
                     chunk_y,
-                    step_lon=RUNTIME_POINT_CHUNK_LON,
-                    step_lat=RUNTIME_POINT_CHUNK_LAT,
+                    step_lon=step_lon,
+                    step_lat=step_lat,
                 ),
                 "featureCount": len(payload),
             }
         )
 
-    manifest_path = RUNTIME_DIR / mode_id / "manifest.json"
+    manifest_path = RUNTIME_DIR / mode_id / f"{level}.manifest.json"
     manifest = {
         "generatedAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "modeId": mode_id,
         "kind": "point",
+        "level": level,
         "chunkCount": len(chunks),
         "featureCount": len(points),
+        "weightedFeatureCount": sum(int(point.get("count", 1)) for point in points),
         "chunks": chunks,
     }
     write_json(manifest_path, manifest, indent=None)
@@ -1340,8 +1418,39 @@ def write_runtime_payloads(
     for shard in station_payloads["detailShards"]:
         write_json(RUNTIME_DIR / shard["path"], shard["payload"], indent=None)
 
-    schools_manifest = build_point_chunk_manifest(schools, mode_id="schools")
-    convenience_manifest = build_point_chunk_manifest(convenience, mode_id="convenience")
+    school_overview_points = build_point_overview_features(schools, mode_id="schools")
+    convenience_overview_points = build_point_overview_features(
+        convenience,
+        mode_id="convenience",
+    )
+    schools_overview_manifest = build_point_chunk_manifest(
+        school_overview_points,
+        mode_id="schools",
+        level="overview",
+        step_lon=RUNTIME_POINT_OVERVIEW_CHUNK_LON,
+        step_lat=RUNTIME_POINT_OVERVIEW_CHUNK_LAT,
+    )
+    schools_detail_manifest = build_point_chunk_manifest(
+        schools,
+        mode_id="schools",
+        level="detail",
+        step_lon=RUNTIME_POINT_DETAIL_CHUNK_LON,
+        step_lat=RUNTIME_POINT_DETAIL_CHUNK_LAT,
+    )
+    convenience_overview_manifest = build_point_chunk_manifest(
+        convenience_overview_points,
+        mode_id="convenience",
+        level="overview",
+        step_lon=RUNTIME_POINT_OVERVIEW_CHUNK_LON,
+        step_lat=RUNTIME_POINT_OVERVIEW_CHUNK_LAT,
+    )
+    convenience_detail_manifest = build_point_chunk_manifest(
+        convenience,
+        mode_id="convenience",
+        level="detail",
+        step_lon=RUNTIME_POINT_DETAIL_CHUNK_LON,
+        step_lat=RUNTIME_POINT_DETAIL_CHUNK_LAT,
+    )
     hazard_overview_manifest = build_area_chunk_manifest(
         hazards,
         mode_id="hazard",
@@ -1378,25 +1487,36 @@ def write_runtime_payloads(
             "basePath": "/data/tokyo/runtime/stations.base.json",
             "detailsManifestPath": "/data/tokyo/runtime/stations/details/manifest.json",
         },
+        "metadataPath": "/data/tokyo/stations.meta.json",
         "modes": {
             "schools": {
                 "kind": "point",
                 "manifests": [
                     {
-                        "path": "/data/tokyo/runtime/schools/manifest.json",
+                        "path": "/data/tokyo/runtime/schools/overview.manifest.json",
                         "minZoom": 9,
+                        "maxZoom": POINT_DETAIL_ZOOM_THRESHOLD,
+                    },
+                    {
+                        "path": "/data/tokyo/runtime/schools/detail.manifest.json",
+                        "minZoom": POINT_DETAIL_ZOOM_THRESHOLD,
                         "maxZoom": 16.5,
-                    }
+                    },
                 ],
             },
             "convenience": {
                 "kind": "point",
                 "manifests": [
                     {
-                        "path": "/data/tokyo/runtime/convenience/manifest.json",
+                        "path": "/data/tokyo/runtime/convenience/overview.manifest.json",
                         "minZoom": 9,
+                        "maxZoom": POINT_DETAIL_ZOOM_THRESHOLD,
+                    },
+                    {
+                        "path": "/data/tokyo/runtime/convenience/detail.manifest.json",
+                        "minZoom": POINT_DETAIL_ZOOM_THRESHOLD,
                         "maxZoom": 16.5,
-                    }
+                    },
                 ],
             },
             "hazard": {
@@ -1431,12 +1551,16 @@ def write_runtime_payloads(
             },
         },
         "summary": {
-            "schoolsChunks": schools_manifest["chunkCount"],
-            "convenienceChunks": convenience_manifest["chunkCount"],
+            "schoolsOverviewChunks": schools_overview_manifest["chunkCount"],
+            "schoolsDetailChunks": schools_detail_manifest["chunkCount"],
+            "convenienceOverviewChunks": convenience_overview_manifest["chunkCount"],
+            "convenienceDetailChunks": convenience_detail_manifest["chunkCount"],
             "hazardOverviewChunks": hazard_overview_manifest["chunkCount"],
             "hazardDetailChunks": hazard_detail_manifest["chunkCount"],
             "populationOverviewChunks": population_overview_manifest["chunkCount"],
             "populationDetailChunks": population_detail_manifest["chunkCount"],
+            "schoolsOverviewFeatures": schools_overview_manifest["featureCount"],
+            "convenienceOverviewFeatures": convenience_overview_manifest["featureCount"],
             "hazardOverviewGeometryPoints": hazard_overview_manifest["geometryPointCount"],
             "hazardDetailGeometryPoints": hazard_detail_manifest["geometryPointCount"],
         },

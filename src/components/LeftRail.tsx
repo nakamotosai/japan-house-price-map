@@ -1,12 +1,21 @@
 type LeftRailProps = {
   stationCount: number
   activeModeLabel: string
+  releaseLabel: string
+  updatedLabel: string
   onResetView: () => void
   onOpenIntro: () => void
 }
 
 export function LeftRail(props: LeftRailProps) {
-  const { stationCount, activeModeLabel, onResetView, onOpenIntro } = props
+  const {
+    stationCount,
+    activeModeLabel,
+    releaseLabel,
+    updatedLabel,
+    onResetView,
+    onOpenIntro,
+  } = props
 
   return (
     <aside className="left-rail">
@@ -27,6 +36,13 @@ export function LeftRail(props: LeftRailProps) {
       <button className="left-rail__button" onClick={onOpenIntro} type="button">
         <span className="left-rail__value">i</span>
         <span className="left-rail__label">说明</span>
+      </button>
+
+      <div className="left-rail__spacer" />
+
+      <button className="left-rail__button left-rail__button--release" onClick={onOpenIntro} type="button">
+        <span className="left-rail__value">{releaseLabel}</span>
+        <span className="left-rail__label">{updatedLabel}</span>
       </button>
     </aside>
   )

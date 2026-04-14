@@ -4,8 +4,10 @@ import type {
   AsyncStatus,
   ModeDefinition,
   ModeId,
+  OverlayRuntimeInfo,
   PointLayerFeature,
   RiskLevel,
+  RuntimeLayerLevel,
   Station,
   StationBase,
 } from '../types'
@@ -21,6 +23,7 @@ type StationPanelProps = {
   onClose: () => void
   onOpenIntro: () => void
   overlayErrorMessage?: string
+  overlayInfo: OverlayRuntimeInfo | null
   overlayStatus: AsyncStatus
   population: AreaLayerFeature[]
   schools: PointLayerFeature[]
@@ -112,11 +115,19 @@ function LoadingBody(props: {
   detailErrorMessage?: string
   detailStatus: AsyncStatus
   overlayErrorMessage?: string
+  overlayLevel?: RuntimeLayerLevel | null
   overlayStatus: AsyncStatus
   station: StationBase
 }) {
-  const { activeMode, detailErrorMessage, detailStatus, overlayErrorMessage, overlayStatus, station } =
-    props
+  const {
+    activeMode,
+    detailErrorMessage,
+    detailStatus,
+    overlayErrorMessage,
+    overlayLevel,
+    overlayStatus,
+    station,
+  } = props
 
   const detailBody =
     detailStatus === 'loading'
@@ -126,11 +137,13 @@ function LoadingBody(props: {
         : '正在准备站点详情。'
 
   const overlayBody =
-    overlayStatus === 'loading'
-      ? '当前视口图层正在补数据，面板会沿用已经到位的结果。'
-      : overlayStatus === 'error'
-        ? `当前模式图层加载失败：${overlayErrorMessage ?? 'unknown_error'}`
-        : '当前模式图层会跟着地图视口按需加载。'
+    activeMode === 'price' || activeMode === 'land' || activeMode === 'heat'
+      ? '当前模式直接基于站点底座渲染，不需要额外图层补载。'
+      : overlayStatus === 'loading'
+        ? '当前视口图层正在补数据，面板会沿用已经到位的结果。'
+        : overlayStatus === 'error'
+          ? `当前模式图层加载失败：${overlayErrorMessage ?? 'unknown_error'}`
+          : `当前模式图层会跟着地图视口按需加载，当前是${overlayLevel === 'overview' ? '总览层' : '细节层'}。`
 
   return (
     <div className="panel-grid">
@@ -170,11 +183,12 @@ function ModeBody(props: {
   activeMode: ModeId
   convenience: PointLayerFeature[]
   hazards: AreaLayerFeature[]
+  overlayLevel?: RuntimeLayerLevel | null
   population: AreaLayerFeature[]
   schools: PointLayerFeature[]
   station: Station
 }) {
-  const { activeMode, convenience, hazards, population, schools, station } = props
+  const { activeMode, convenience, hazards, overlayLevel, population, schools, station } = props
   const schoolMatches = getPointMatches(schools, station.id)
   const convenienceMatches = getPointMatches(convenience, station.id)
   const hazardMatches = getAreaMatches(hazards, station.id)
@@ -307,11 +321,17 @@ function ModeBody(props: {
           <strong>{station.metrics.coverage.schools ? '已覆盖' : '较弱'}</strong>
         </article>
         <article className="metric-card metric-card--wide">
-          <span>示例学校</span>
-          <PreviewList
-            emptyText="当前 1.5km 归属范围内没有学校点。"
-            items={schoolMatches.slice(0, 6).map((school) => `${school.name} · ${school.categoryLabel}`)}
-          />
+          <span>{overlayLevel === 'overview' ? '当前视图说明' : '示例学校'}</span>
+          {overlayLevel === 'overview' ? (
+            <p>当前是低缩放总览层，站点周边学校数已经计入摘要；放大后再显示原始学校样本。</p>
+          ) : (
+            <PreviewList
+              emptyText="当前 1.5km 归属范围内没有学校点。"
+              items={schoolMatches
+                .slice(0, 6)
+                .map((school) => `${school.name} · ${school.categoryLabel}`)}
+            />
+          )}
         </article>
       </div>
     )
@@ -348,13 +368,21 @@ function ModeBody(props: {
           <strong>{station.metrics.convenienceBreakdown.publicService}</strong>
         </article>
         <article className="metric-card metric-card--wide">
-          <span>示例设施</span>
-          <PreviewList
-            emptyText="当前没有命中设施点。"
-            items={convenienceMatches
-              .slice(0, 6)
-              .map((item) => `${item.name} · ${item.categoryLabel}`)}
-          />
+          <span>{overlayLevel === 'overview' ? '当前视图说明' : '示例设施'}</span>
+          {overlayLevel === 'overview' ? (
+            <p>当前是低缩放总览层，先看设施聚合热区；放大后再显示原始医疗与公共服务点。</p>
+          ) : (
+            <PreviewList
+              emptyText="当前没有命中设施点。"
+              items={convenienceMatches
+                .slice(0, 6)
+                .map((item) => `${item.name} · ${item.categoryLabel}`)}
+            />
+          )}
+        </article>
+        <article className="metric-card metric-card--wide">
+          <span>口径边界</span>
+          <p>当前便利度只用医疗机构和公共服务做第一版代理分，不代表完整生活评分。</p>
         </article>
       </div>
     )
@@ -372,12 +400,12 @@ function ModeBody(props: {
           <strong>{depthRankLabel(station.metrics.hazardMaxDepthRank)}</strong>
         </article>
         <article className="metric-card">
-          <span>液化</span>
-          <strong>{riskLabel(station.metrics.hazard.liquefaction)}</strong>
+          <span>当前灾种</span>
+          <strong>洪水浸水</strong>
         </article>
         <article className="metric-card">
-          <span>土砂</span>
-          <strong>{riskLabel(station.metrics.hazard.landslide)}</strong>
+          <span>口径边界</span>
+          <strong>暂不含液化/土砂</strong>
         </article>
         <article className="metric-card metric-card--wide">
           <span>命中风险区域</span>
@@ -465,6 +493,7 @@ export function StationPanel(props: StationPanelProps) {
     onClose,
     onOpenIntro,
     overlayErrorMessage,
+    overlayInfo,
     overlayStatus,
     population,
     schools,
@@ -556,6 +585,7 @@ export function StationPanel(props: StationPanelProps) {
             activeMode={activeMode}
             convenience={convenience}
             hazards={hazards}
+            overlayLevel={overlayInfo?.level}
             population={population}
             schools={schools}
             station={selectedStation}
@@ -566,6 +596,7 @@ export function StationPanel(props: StationPanelProps) {
             detailErrorMessage={detailErrorMessage}
             detailStatus={detailStatus}
             overlayErrorMessage={overlayErrorMessage}
+            overlayLevel={overlayInfo?.level}
             overlayStatus={overlayStatus}
             station={selectedStationBase}
           />
@@ -582,7 +613,7 @@ export function StationPanel(props: StationPanelProps) {
           <p className="station-panel__note">{selectedStation.metrics.note}</p>
         ) : (
           <p className="station-panel__note">
-            这块会在站点详情 shard 到位后补样本量、便利度构成、人口变化率和说明文字。
+            当前站点详情正在按点击补载，不影响地图切模式和视口加载。
           </p>
         )}
       </section>

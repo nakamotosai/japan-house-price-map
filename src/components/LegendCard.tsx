@@ -1,27 +1,55 @@
-import type { ModeDefinition } from '../types'
+import type { AsyncStatus, ModeDefinition, OverlayRuntimeInfo } from '../types'
 
 type LegendCardProps = {
   activeMode: ModeDefinition
   collapsed: boolean
+  overlayInfo: OverlayRuntimeInfo | null
+  overlayStatus: AsyncStatus
   onCollapse: () => void
   onExpand: () => void
 }
 
 export function LegendCard(props: LegendCardProps) {
-  const { activeMode, collapsed, onCollapse, onExpand } = props
+  const {
+    activeMode,
+    collapsed,
+    overlayInfo,
+    overlayStatus,
+    onCollapse,
+    onExpand,
+  } = props
   const categoryLabel =
     activeMode.category === 'station'
       ? '站点锚点模式'
       : activeMode.category === 'point'
         ? '设施点模式'
         : '区域覆盖模式'
+  const layerLabel = overlayInfo?.level === 'overview' ? '总览层' : '细节层'
+  const runtimeFootnote =
+    activeMode.category === 'station'
+      ? '7 个模式共用同一张东京地图底座；切换时只换图层，不换页面。'
+      : overlayStatus === 'loading'
+        ? `当前视口正在补 ${activeMode.label}${layerLabel} 数据。`
+        : overlayStatus === 'error'
+          ? `当前视口 ${activeMode.label} 数据加载异常。`
+          : overlayInfo
+            ? `当前视图使用 ${layerLabel}，命中 ${overlayInfo.matchedChunkCount} 个 chunk。`
+            : `${activeMode.label} 会跟着视口按需加载。`
+  const collapsedHint =
+    activeMode.category === 'station'
+      ? '展开图例'
+      : overlayStatus === 'loading'
+        ? '加载中'
+        : overlayInfo
+          ? layerLabel
+          : '按需加载'
 
   if (collapsed) {
     return (
       <button className="legend-card legend-card--collapsed" onClick={onExpand} type="button">
         <span className="legend-card__mini-dot" style={{ backgroundColor: activeMode.legend[0]?.color }} />
         <strong>{activeMode.label}</strong>
-        <span>展开图例</span>
+        <span>{collapsedHint}</span>
       </button>
     )
   }
@@ -55,9 +83,7 @@ export function LegendCard(props: LegendCardProps) {
         ))}
       </div>
 
-      <div className="legend-card__footnote">
-        7 个模式共用同一张东京地图底座；切换时只换图层，不换页面。
-      </div>
+      <div className="legend-card__footnote">{runtimeFootnote}</div>
     </section>
   )
 }

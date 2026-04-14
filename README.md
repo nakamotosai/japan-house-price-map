@@ -2,17 +2,15 @@
 
 以东京车站为锚点的单页地图工具。
 
-目标不是做房源列表平台，而是先把“坐标对准地图 + 多模式秒切换 + 站点优先交互”这套底座做扎实。用户打开后直接进入东京地图，通过站点来判断价格、热度、配套、风险和长期趋势。
+目标不是做房源列表平台，而是把“开源地图底座 + 车站锚点 + 多模式秒切换 + 按视口加载”这套能力先在东京做扎实。用户打开后直接进入东京地图，不做额外首页。
 
 ## 当前状态
 
-- 状态：`phase5.2 viewport streaming + clarity 已落地`
-- 当前版本：`单页东京地图 + 官方车站主表 + 7 模式切换 + runtime chunk 数据流 + 站点视口优先渲染 + Tailnet 预览`
-- 当前已完成：
-  - 直接进入东京地图，不做单独首页
-  - Google Maps 风格启发的左侧边栏与左上搜索栏
-  - 官方东京车站主表接入
-  - 官方 `S12-24` 站别客流接入
+- 状态：`Tokyo V1 已收口`
+- 当前版本：`单页东京地图 + 7 模式 + point/area runtime streaming + 页面内数据说明 + 固定验收脚本 + Tailnet 预览`
+- 当前可用能力：
+  - 直接进入东京地图，不做独立首页
+  - Google Maps 风格启发的左侧边栏、左上搜索栏和顶部模式按钮
   - 7 个模式即时切换：
     - 房产均价
     - 公示地价
@@ -21,30 +19,13 @@
     - 生活便利度
     - 灾害风险
     - 人口趋势
-  - 站点继续使用 MapLibre 原生 `source + layer`，不再使用 DOM marker
-  - 点击地图空白区域可收起站点卡片
-  - 站点详情改成点击后按 shard 补载，不再把全部详情一次塞进首屏
-  - 点图层与区域图层改成 `manifest + chunk` 运行时结构
-  - 前端改成按模式、按视口加载 runtime chunk
-  - 运行时带 chunk cache，过期请求带 `AbortController`
-  - 站点显示逻辑改成：
-    - 当前视口优先
-    - `anchor dot / name label / metric badge` 三层预算
-    - 屏幕空间去重
-  - 学校 / 便利度在低缩放只保留 cluster，不显示原始单点
-  - 默认东京视角收紧到核心区，减少首屏噪音和无效加载
-  - PM2 常驻预览进程
-  - Tailnet HTTPS 预览入口
-
-## 当前唯一任务
-
-把东京地图底座从 `phase5.1` 的“整包加载 + 全东京统一显示”升级成 `phase5.2` 的“runtime chunk + 视口优先显示”，并把前三个批次和收口流程一次做完。
-
-## 当前唯一实施计划
-
-- 批次 1：把前端切到 `runtime/index.json + stations.base + details shard + mode manifest/chunk`
-- 批次 2：把站点显示改成当前视口优先、三层预算、屏幕空间去重
-- 批次 3：细化点图层 / 区域图层的低缩放表达，并完成真实预览、README、git 收口
+  - 车站继续作为核心锚点，不做房源级列表
+  - 站点详情继续按点击补载 shard，而不是首屏整包塞进来
+  - `schools / convenience / hazard / population` 全部走 runtime manifest
+  - `schools / convenience` 已补低缩放 `overview` 聚合层
+  - 页面内说明弹窗已回写真实口径、来源、年份、覆盖范围和当前边界
+  - UI 可见 `Tokyo V1` 和数据更新时间
+  - 固定 Tailnet HTTPS 预览入口可直接从 Windows 访问
 
 ## 当前数据口径
 
@@ -59,125 +40,107 @@
 
 - 房产均价：
   - 来源：`国土交通省 不動産情報ライブラリ API`
-  - 口径：`2024 年住宅成交价`
+  - 口径：`2024 年住宅成交总价中位数`
   - 覆盖站点：`342`
 - 公示地价：
   - 来源：`L01-25`
+  - 口径：`2025 年公示地价`
   - 覆盖站点：`459`
+- 车站热度：
+  - 来源：`S12-24 + 官方车站主表`
+  - 口径：`站别客流 + 换乘线路强度`
+  - 覆盖站点：`589`
 - 学校分布：
   - 来源：`P29-23`
-  - 站点覆盖：`458`
-  - 点位数：`3284`
+  - 覆盖站点：`458`
+  - 原始点位：`3284`
+  - 低缩放总览：`13` 个 chunk / `44` 个聚合点
 - 生活便利度：
   - 来源：`P04-20 + P05-22`
-  - 站点覆盖：`502`
-  - 点位数：`22765`
+  - 口径：`医疗 + 公共服务代理指标`
+  - 覆盖站点：`502`
+  - 原始点位：`22765`
+  - 低缩放总览：`13` 个 chunk / `46` 个聚合点
 - 灾害风险：
   - 来源：`A31a-24_13_20`
-  - 当前口径：`洪水浸水`
-  - 站点覆盖：`505`
+  - 当前正式口径：`洪水浸水`
+  - 覆盖站点：`505`
   - 区域数：`64`
 - 人口趋势：
   - 来源：`500m_mesh_2024_13`
-  - 站点覆盖：`492`
+  - 口径：`2020 -> 2040 推计人口变化率`
+  - 覆盖站点：`492`
   - 区域数：`456`
 
 ## 运行时数据结构
 
-当前前台实际走的是 `public/data/tokyo/runtime/`，不是旧的整包 JSON。
+当前前台实际走的是 `public/data/tokyo/runtime/`。
 
 - `runtime/index.json`
   - 运行时总入口
-  - 记录 `stations.basePath`、`stations.detailsManifestPath`、各模式 manifest 路径
+  - 记录 `stations.basePath`、`detailsManifestPath`、`metadataPath`、各模式 manifest
 - `runtime/stations.base.json`
-  - 地图首屏、搜索、站点排序必须字段
+  - 首屏地图、搜索、站点排序必须字段
 - `runtime/stations/details/manifest.json`
   - `stationId -> shardId`
 - `runtime/stations/details/shard-xx.json`
   - 点击站点后再补载的完整详情
-- `runtime/schools/manifest.json + chunks`
-- `runtime/convenience/manifest.json + chunks`
+- `runtime/schools/overview.manifest.json + chunks`
+- `runtime/schools/detail.manifest.json + chunks`
+- `runtime/convenience/overview.manifest.json + chunks`
+- `runtime/convenience/detail.manifest.json + chunks`
 - `runtime/hazard/overview.manifest.json + chunks`
 - `runtime/hazard/detail.manifest.json + chunks`
 - `runtime/population/overview.manifest.json + chunks`
 - `runtime/population/detail.manifest.json + chunks`
 
-当前 runtime 体积已经从之前约 `51M` 降到约 `21M`。
+当前运行时摘要：
+
+- `schoolsOverviewChunks`: `13`
+- `schoolsDetailChunks`: `92`
+- `convenienceOverviewChunks`: `13`
+- `convenienceDetailChunks`: `93`
+- `hazardOverviewChunks`: `16`
+- `hazardDetailChunks`: `16`
+- `populationOverviewChunks`: `26`
+- `populationDetailChunks`: `26`
 
 ## 当前前台行为
 
-### 默认房产均价模式
-
-- 默认东京核心视角：`zoom 11.55`
-- 前台探针实测：
-  - 站点圆点：`41`
-  - 站名：`10`
-  - 价格 badge：`10`
-- 默认首屏 runtime 请求只有 `3` 个：
-  - `runtime/index.json`
-  - `stations.base.json`
-  - `stations/details/manifest.json`
-
-### 模式切换
-
-- `price / land / heat`
-  - 以站点为主
-  - 默认优先显示当前视口内、分数更高、互相不打架的站点
+- 默认进入东京核心视角：`zoom 11.55`
+- 默认房产均价模式继续优先显示大站和核心价格 badge
 - `schools / convenience`
-  - 低缩放只保留 cluster
-  - 放大后才显示原始单点
+  - 低缩放先用 `overview`
+  - 放大到 `12.8+` 才切 `detail`
 - `hazard / population`
-  - 低缩放优先走 `overview`
-  - 高缩放再切 `detail`
+  - 低缩放先用 `overview`
+  - 放大到 `12.3+` 才切 `detail`
+- 说明按钮继续做成透明弹窗，不做独立说明页
+- 点击空白区域可以收起站点卡片
+- 图例继续自动收起，但会显示当前层级和视口命中状态
+- 左侧边栏底部可看到 `Tokyo V1` 与数据更新时间简写
 
-### 详情卡
+## 运行与构建
 
-- 搜索和地图点击都基于 `stations.base.json`
-- 选中站点后才补 `details/shard-xx.json`
-- 点击空白区域可以收起卡片
-
-## 技术路线
-
-- 前端：`React + TypeScript + Vite`
-- 地图引擎：`MapLibre GL JS`
-- 底图：`地理院タイル`
-- 数据运输：
-  - 纯静态站点
-  - `manifest + chunk`
-  - 不引入后端
-  - 不上 PostGIS / TileServer
-
-## 目录说明
-
-- `specs/phase1-map-foundation-20260413/`
-- `specs/phase2-runtime-data-and-tailnet-preview-20260413/`
-- `specs/phase2-map-ux-refinement-20260413/`
-- `specs/phase3-official-station-master-20260413/`
-- `specs/phase3-zoom-adaptive-station-density-20260414/`
-- `specs/phase4-product-roadmap-20260414/`
-- `specs/phase5-phase-a-core-layers-20260414/`
-- `specs/phase5-viewport-streaming-and-clarity-20260414/`
-- `src/`
-- `public/data/tokyo/runtime/`
-- `public/data/tokyo/stations.meta.json`
-- `scripts/build_tokyo_station_master.py`
-- `scripts/build_tokyo_phase_a_layers.py`
-- `scripts/start_tailnet_preview.sh`
-- `scripts/stop_tailnet_preview.sh`
-
-## 运行方式
+开发：
 
 ```bash
 npm install
 npm run dev
 ```
 
-构建与验证：
+验证：
 
 ```bash
 npm test
 npm run lint
 npm run build
+```
+
+固定前台验收：
+
+```bash
+npm run acceptance:tokyo-v1
 ```
 
 重建官方车站底座：
@@ -186,10 +149,17 @@ npm run build
 python3 scripts/build_tokyo_station_master.py
 ```
 
-重建 phase A 正式图层与 runtime chunk：
+重建东京正式图层与 runtime：
 
 ```bash
 REINFOLIB_SUBSCRIPTION_KEY='<your-key>' python3 scripts/build_tokyo_phase_a_layers.py
+```
+
+README 收口校验：
+
+```bash
+python3 scripts/readme_closeout_guard.py /home/ubuntu/codex/日本房价地图
+python3 scripts/readme_closeout_guard.py /home/ubuntu/codex/日本房价地图 --expect-clean
 ```
 
 ## Tailnet 预览
@@ -214,39 +184,53 @@ https://vps-jp.tail4b5213.ts.net:8443/
 
 同一 Tailnet 内的 `home-windows.tail4b5213.ts.net` 可以直接打开。
 
-## 当前边界
+## Tokyo V1 维护 SOP
 
-- 当前只做东京，不扩到其他城市
-- 站点是核心锚点，不做房源级列表
-- 灾害模式当前只正式接入洪水浸水，不代表全灾种完成
-- 便利度是“医疗 + 公共服务”的第一版官方代理指标，不是完整生活评分体系
-- 还没有站点详情页、分享页和 AI 功能
-- 这版虽然已经切到 runtime chunk，但默认东京核心视角仍然覆盖东京大部分正式数据 bbox：
-  - `schools` 首次切换仍会命中 `83` 个 chunk
-  - `convenience` 首次切换仍会命中 `84` 个 chunk
-- 也就是说，这版已经完成“按模式 + 按视口 + 按详情点击补载”的静态 chunk 底座，但如果要把低缩放点模式继续压瘦，下一步仍需要：
-  - 预聚合的低缩放 cluster 数据
-  - 或真正的矢量瓦片 pipeline
+当东京数据、图层或前端交互有改动时，按下面顺序收口：
+
+1. 先更新数据或前端实现。
+2. 如涉及正式数据，重跑：
+   - `python3 scripts/build_tokyo_phase_a_layers.py --skip-station-master`
+3. 跑项目验证：
+   - `npm test`
+   - `npm run lint`
+   - `npm run build`
+4. 跑固定前台验收：
+   - `npm run acceptance:tokyo-v1`
+5. 重启真实预览：
+   - `./scripts/start_tailnet_preview.sh`
+6. 对真实入口探活：
+   - `curl -I http://127.0.0.1:4173/`
+   - `curl -I https://vps-jp.tail4b5213.ts.net:8443/`
+7. 回写根 `README.md`
+8. 提交、推送，并确保 `git status --short` 为空
 
 ## 本轮收口验证
 
 - `npm test` 通过
 - `npm run lint` 通过
 - `npm run build` 通过
-- `./scripts/start_tailnet_preview.sh` 通过
+- `npm run acceptance:tokyo-v1` 通过
+  - 最新验收产物：
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T074124Z/desktop-price-default.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T074124Z/mobile-price-default.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T074124Z/report.json`
+  - 验收报告确认：
+    - `schools` 只请求 `overview.manifest.json + overview chunks`
+    - `convenience` 只请求 `overview.manifest.json + overview chunks`
+    - `hazard` 只请求 `overview.manifest.json + overview chunks`
+    - 点击空白区域可以收起站点卡片
 - `curl -I http://127.0.0.1:4173/` 返回 `HTTP 200`
 - `curl -I https://vps-jp.tail4b5213.ts.net:8443/` 返回 `HTTP 200`
-- Chromium + SwiftShader 前台 smoke 通过以下检查：
-  - 默认房产均价模式实测 `41` 个站点圆点、`10` 个站名、`10` 个价格 badge
-  - 首屏 runtime 请求压到 `3` 个
-  - `学校分布` 只请求 schools manifest + chunk
-  - `生活便利度` 只请求 convenience manifest + chunk
-  - `灾害风险` 只请求 hazard overview manifest + chunk
-  - 真实点击站点可以打开卡片
-  - 真实点击地图空白区域可以收起卡片
-- 前台截图产物：
-  - `price-default.png`
-  - `station-open.png`
+
+## 当前边界
+
+- 当前只做东京，不扩到其他城市
+- 站点是核心锚点，不做房源级列表
+- 灾害模式当前只正式接入洪水浸水，不代表全灾种完成
+- 便利度模式当前只是“医疗 + 公共服务”的第一版官方代理指标
+- 还没有站点详情页、分享页和 AI 功能
+- 当前前台验收使用 `Chromium + SwiftShader`，用于无头环境下验证 MapLibre 页面可用
 
 ## 仓库卫生要求
 

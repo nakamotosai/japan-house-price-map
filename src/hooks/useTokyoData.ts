@@ -7,6 +7,7 @@ import {
   loadStationBases,
   loadStationDetailManifest,
   loadStationDetailShard,
+  loadTokyoStationsMeta,
 } from '../lib/dataLoader'
 import type {
   AreaLayerFeature,
@@ -15,6 +16,7 @@ import type {
   ChunkManifest,
   MapViewport,
   ModeId,
+  OverlayRuntimeInfo,
   PointLayerFeature,
   RuntimeIndex,
   RuntimeModeManifestRef,
@@ -23,6 +25,7 @@ import type {
   StationDetailManifest,
   StationDetailShard,
   TokyoOverlayData,
+  TokyoStationsMeta,
 } from '../types'
 
 const EMPTY_OVERLAYS: TokyoOverlayData = {
@@ -52,8 +55,11 @@ type TokyoDataState =
   | {
       status: 'loading'
       stationBases: StationBase[]
+      metadata: TokyoStationsMeta | null
       overlays: TokyoOverlayData
       overlayStatus: AsyncStatus
+      overlayInfo: OverlayRuntimeInfo | null
+      runtimeGeneratedAt: string | null
       stationDetailStatus: AsyncStatus
       selectedStationDetail: Station | null
     }
@@ -61,16 +67,22 @@ type TokyoDataState =
       status: 'error'
       message: string
       stationBases: StationBase[]
+      metadata: TokyoStationsMeta | null
       overlays: TokyoOverlayData
       overlayStatus: AsyncStatus
+      overlayInfo: OverlayRuntimeInfo | null
+      runtimeGeneratedAt: string | null
       stationDetailStatus: AsyncStatus
       selectedStationDetail: Station | null
     }
   | {
       status: 'ready'
       stationBases: StationBase[]
+      metadata: TokyoStationsMeta | null
       overlays: TokyoOverlayData
       overlayStatus: AsyncStatus
+      overlayInfo: OverlayRuntimeInfo | null
+      runtimeGeneratedAt: string | null
       stationDetailStatus: AsyncStatus
       selectedStationDetail: Station | null
       overlayErrorMessage?: string
@@ -216,9 +228,12 @@ export function useTokyoData(args: UseTokyoDataArgs): TokyoDataState {
   const [status, setStatus] = useState<'loading' | 'error' | 'ready'>('loading')
   const [message, setMessage] = useState<string | undefined>()
   const [stationBases, setStationBases] = useState<StationBase[]>([])
+  const [metadata, setMetadata] = useState<TokyoStationsMeta | null>(null)
   const [overlays, setOverlays] = useState<TokyoOverlayData>(EMPTY_OVERLAYS)
   const [overlayStatus, setOverlayStatus] = useState<AsyncStatus>('idle')
+  const [overlayInfo, setOverlayInfo] = useState<OverlayRuntimeInfo | null>(null)
   const [overlayErrorMessage, setOverlayErrorMessage] = useState<string | undefined>()
+  const [runtimeGeneratedAt, setRuntimeGeneratedAt] = useState<string | null>(null)
   const [stationDetailStatus, setStationDetailStatus] = useState<AsyncStatus>('idle')
   const [stationDetailErrorMessage, setStationDetailErrorMessage] = useState<string | undefined>()
   const [selectedStationDetail, setSelectedStationDetail] = useState<Station | null>(null)
@@ -241,10 +256,15 @@ export function useTokyoData(args: UseTokyoDataArgs): TokyoDataState {
     async function run() {
       try {
         const runtimeIndex = await loadRuntimeIndex(undefined, controller.signal)
-        const [bases, detailManifest] = await Promise.all([
+        const [bases, detailManifest, stationsMeta] = await Promise.all([
           loadStationBases(runtimeIndex.stations.basePath, undefined, controller.signal),
           loadStationDetailManifest(
             runtimeIndex.stations.detailsManifestPath,
+            undefined,
+            controller.signal,
+          ),
+          loadTokyoStationsMeta(
+            runtimeIndex.metadataPath ?? '/data/tokyo/stations.meta.json',
             undefined,
             controller.signal,
           ),
@@ -253,6 +273,8 @@ export function useTokyoData(args: UseTokyoDataArgs): TokyoDataState {
         runtimeIndexRef.current = runtimeIndex
         detailManifestRef.current = detailManifest
         setStationBases(bases)
+        setMetadata(stationsMeta)
+        setRuntimeGeneratedAt(runtimeIndex.generatedAt)
         setStatus('ready')
         setMessage(undefined)
       } catch (error) {
@@ -380,13 +402,26 @@ export function useTokyoData(args: UseTokyoDataArgs): TokyoDataState {
           activeManifestRef.path,
           matchedChunkIds,
         )
+        const nextOverlayInfo: OverlayRuntimeInfo = {
+          mode: overlayMode,
+          level: manifest.level ?? 'detail',
+          manifestPath: activeManifestRef.path,
+          matchedChunkCount: matchedChunks.length,
+          featureCount: matchedChunks.reduce(
+            (sum, chunk) => sum + chunk.featureCount,
+            0,
+          ),
+        }
 
         if (lastOverlayKeyRef.current[overlayMode] === nextOverlayKey) {
+          setOverlayInfo(nextOverlayInfo)
+          setOverlayStatus('ready')
           return
         }
 
         setOverlayStatus('loading')
         setOverlayErrorMessage(undefined)
+        setOverlayInfo(nextOverlayInfo)
 
         const payloads = await Promise.all(
           matchedChunks.map((chunk) =>
@@ -405,6 +440,7 @@ export function useTokyoData(args: UseTokyoDataArgs): TokyoDataState {
 
         const mergedPayload = payloads.flat()
         lastOverlayKeyRef.current[overlayMode] = nextOverlayKey
+        setOverlayInfo(nextOverlayInfo)
 
         setOverlays((current) => {
           const next = cloneOverlays(current)
@@ -441,12 +477,25 @@ export function useTokyoData(args: UseTokyoDataArgs): TokyoDataState {
   }, [activeMode, status, viewport])
 
   return useMemo(() => {
+    const effectiveOverlayStatus = OVERLAY_MODE_IDS.has(activeMode)
+      ? overlayStatus
+      : 'idle'
+    const effectiveOverlayInfo = OVERLAY_MODE_IDS.has(activeMode)
+      ? overlayInfo
+      : null
+    const effectiveOverlayErrorMessage = OVERLAY_MODE_IDS.has(activeMode)
+      ? overlayErrorMessage
+      : undefined
+
     if (status === 'loading') {
       return {
         status,
         stationBases,
+        metadata,
         overlays,
-        overlayStatus,
+        overlayStatus: effectiveOverlayStatus,
+        overlayInfo: effectiveOverlayInfo,
+        runtimeGeneratedAt,
         stationDetailStatus: selectedStationId ? stationDetailStatus : 'idle',
         selectedStationDetail: selectedStationId ? selectedStationDetail : null,
       }
@@ -457,8 +506,11 @@ export function useTokyoData(args: UseTokyoDataArgs): TokyoDataState {
         status,
         message: message ?? 'unknown_error',
         stationBases,
+        metadata,
         overlays,
-        overlayStatus,
+        overlayStatus: effectiveOverlayStatus,
+        overlayInfo: effectiveOverlayInfo,
+        runtimeGeneratedAt,
         stationDetailStatus: selectedStationId ? stationDetailStatus : 'idle',
         selectedStationDetail: selectedStationId ? selectedStationDetail : null,
       }
@@ -467,20 +519,27 @@ export function useTokyoData(args: UseTokyoDataArgs): TokyoDataState {
     return {
       status,
       stationBases,
+      metadata,
       overlays,
-      overlayStatus,
+      overlayStatus: effectiveOverlayStatus,
+      overlayInfo: effectiveOverlayInfo,
+      runtimeGeneratedAt,
       stationDetailStatus: selectedStationId ? stationDetailStatus : 'idle',
       selectedStationDetail: selectedStationId ? selectedStationDetail : null,
-      overlayErrorMessage,
+      overlayErrorMessage: effectiveOverlayErrorMessage,
       stationDetailErrorMessage: selectedStationId
         ? stationDetailErrorMessage
         : undefined,
     }
   }, [
+    activeMode,
     message,
+    metadata,
     overlayErrorMessage,
+    overlayInfo,
     overlays,
     overlayStatus,
+    runtimeGeneratedAt,
     selectedStationDetail,
     stationBases,
     stationDetailErrorMessage,

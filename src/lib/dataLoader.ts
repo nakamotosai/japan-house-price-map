@@ -6,6 +6,7 @@ import type {
   StationBase,
   StationDetailManifest,
   StationDetailShard,
+  TokyoStationsMeta,
 } from '../types'
 
 type FetchLike = (input: string, init?: RequestInit) => Promise<Response>
@@ -50,6 +51,14 @@ export async function loadStationDetailShard(
   signal?: AbortSignal,
 ) {
   return readJson<StationDetailShard>(path, fetcher, signal)
+}
+
+export async function loadTokyoStationsMeta(
+  path: string,
+  fetcher?: FetchLike,
+  signal?: AbortSignal,
+) {
+  return readJson<TokyoStationsMeta>(path, fetcher, signal)
 }
 
 export async function loadChunkManifest(

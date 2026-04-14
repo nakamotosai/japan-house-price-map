@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-14T01:49:48Z",
+  "generatedAt": "2026-04-14T07:20:08Z",
   "stationCount": 589,
   "priceCoverageCount": 342,
   "landCoverageCount": 459,
@@ -23,12 +23,16 @@
     "population": "500m_mesh_2024_13"
   },
   "runtime": {
-    "schoolsChunks": 92,
-    "convenienceChunks": 93,
+    "schoolsOverviewChunks": 13,
+    "schoolsDetailChunks": 92,
+    "convenienceOverviewChunks": 13,
+    "convenienceDetailChunks": 93,
     "hazardOverviewChunks": 16,
     "hazardDetailChunks": 16,
     "populationOverviewChunks": 26,
     "populationDetailChunks": 26,
+    "schoolsOverviewFeatures": 44,
+    "convenienceOverviewFeatures": 46,
     "hazardOverviewGeometryPoints": 63632,
     "hazardDetailGeometryPoints": 148611
   }

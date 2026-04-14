@@ -14,6 +14,7 @@ export type RiskLevel = 'low' | 'medium' | 'high' | 'unknown'
 export type PopulationTrend = '增长' | '稳定' | '收缩' | '待补'
 
 export type AsyncStatus = 'idle' | 'loading' | 'ready' | 'error'
+export type RuntimeLayerLevel = 'overview' | 'detail'
 
 export type Bounds = {
   west: number
@@ -113,6 +114,8 @@ export type PointLayerFeature = {
   lng: number
   stationId: string | null
   note: string
+  count?: number
+  level?: RuntimeLayerLevel
 }
 
 export type AreaLayerFeature = {
@@ -149,10 +152,13 @@ export type RuntimeModeIndex = {
 }
 
 export type RuntimeIndex = {
+  generatedAt: string
+  stationCount: number
   stations: {
     basePath: string
     detailsManifestPath: string
   }
+  metadataPath?: string
   modes: Partial<
     Record<'schools' | 'convenience' | 'hazard' | 'population', RuntimeModeIndex>
   >
@@ -170,9 +176,10 @@ export type ChunkManifest = {
   generatedAt: string
   modeId: string
   kind: 'point' | 'area'
-  level?: 'overview' | 'detail'
+  level?: RuntimeLayerLevel
   chunkCount: number
   featureCount: number
+  weightedFeatureCount?: number
   geometryPointCount?: number
   chunks: ChunkManifestItem[]
 }
@@ -184,3 +191,35 @@ export type StationDetailManifest = {
 }
 
 export type StationDetailShard = Record<string, Station>
+
+export type TokyoStationsMeta = {
+  generatedAt: string
+  stationCount: number
+  priceCoverageCount: number
+  landCoverageCount: number
+  schoolsCoverageCount: number
+  convenienceCoverageCount: number
+  hazardCoverageCount: number
+  populationCoverageCount: number
+  schoolsPointCount: number
+  conveniencePointCount: number
+  hazardAreaCount: number
+  populationAreaCount: number
+  sources: {
+    price: string
+    land: string
+    schools: string
+    convenience: string[]
+    hazard: string
+    population: string
+  }
+  runtime: Record<string, number>
+}
+
+export type OverlayRuntimeInfo = {
+  mode: 'schools' | 'convenience' | 'hazard' | 'population'
+  level: RuntimeLayerLevel
+  manifestPath: string
+  matchedChunkCount: number
+  featureCount: number
+}

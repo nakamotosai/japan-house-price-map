@@ -92,6 +92,10 @@ button {
   cursor: default;
 }
 
+.left-rail__button--release {
+  min-height: 58px;
+}
+
 .left-rail__value {
   font-size: 1rem;
   font-weight: 700;
@@ -102,6 +106,10 @@ button {
   font-size: 0.78rem;
   color: #61708c;
   margin-top: 6px;
+}
+
+.left-rail__spacer {
+  flex: 1;
 }
 
 .search-shell {
@@ -457,10 +465,12 @@ button {
 
 .intro-overlay__card {
   width: min(720px, 100%);
+  max-height: min(84vh, 920px);
   padding: 24px;
   border-radius: 30px;
   background: rgba(255, 255, 255, 0.96);
   box-shadow: 0 28px 56px rgba(15, 23, 42, 0.18);
+  overflow: auto;
 }
 
 .intro-overlay__head {
@@ -471,11 +481,33 @@ button {
 }
 
 .intro-overlay__head h2 {
-  margin: 6px 0 0;
+  margin: 6px 0 4px;
 }
 
-.intro-overlay__body p {
+.intro-overlay__head p,
+.intro-overlay__body p,
+.intro-overlay__mode-grid span {
   color: #5f6d87;
+  margin: 0;
+}
+
+.intro-overlay__stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.intro-overlay__stats article,
+.intro-overlay__mode-grid article {
+  padding: 16px;
+  border-radius: 18px;
+  background: #f4f7fb;
+}
+
+.intro-overlay__stats strong,
+.intro-overlay__mode-grid strong {
+  display: block;
+  margin-bottom: 6px;
 }
 
 .intro-overlay__grid {
@@ -494,6 +526,18 @@ button {
 .intro-overlay__grid strong {
   display: block;
   margin-bottom: 6px;
+}
+
+.intro-overlay__mode-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.intro-overlay__mode-grid article {
+  display: grid;
+  gap: 6px;
 }
 
 .station-marker {
@@ -614,7 +658,9 @@ button {
 
   .panel-grid,
   .station-panel__summary,
-  .intro-overlay__grid {
+  .intro-overlay__grid,
+  .intro-overlay__stats,
+  .intro-overlay__mode-grid {
     grid-template-columns: 1fr;
   }
 }

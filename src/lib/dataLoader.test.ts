@@ -7,6 +7,7 @@ import {
   loadStationBases,
   loadStationDetailManifest,
   loadStationDetailShard,
+  loadTokyoStationsMeta,
 } from './dataLoader'
 
 function createFetcher(payload: unknown, ok = true) {
@@ -23,13 +24,17 @@ describe('dataLoader', () => {
   it('loads runtime index from the expected resource path', async () => {
     const runtimeIndex = await loadRuntimeIndex(
       createFetcher({
+        generatedAt: '2026-04-14T01:49:48Z',
+        stationCount: 589,
         stations: { basePath: '/data/tokyo/runtime/stations.base.json', detailsManifestPath: '/details.json' },
+        metadataPath: '/data/tokyo/stations.meta.json',
         modes: {},
         summary: {},
       }),
     )
 
     expect(runtimeIndex.stations.basePath).toBe('/data/tokyo/runtime/stations.base.json')
+    expect(runtimeIndex.metadataPath).toBe('/data/tokyo/stations.meta.json')
   })
 
   it('loads station and chunk resources through the shared JSON reader', async () => {
@@ -45,12 +50,16 @@ describe('dataLoader', () => {
       '/data/tokyo/runtime/stations/details/shard-00.json',
       createFetcher({ tokyo: { id: 'tokyo' } }),
     )
+    const stationsMeta = await loadTokyoStationsMeta(
+      '/data/tokyo/stations.meta.json',
+      createFetcher({ stationCount: 589, sources: { price: 'price', land: 'land', schools: 'schools', convenience: ['medical'], hazard: 'hazard', population: 'population' }, runtime: {} }),
+    )
     const chunkManifest = await loadChunkManifest(
-      '/data/tokyo/runtime/schools/manifest.json',
-      createFetcher({ chunks: [{ id: '00-00' }] }),
+      '/data/tokyo/runtime/schools/detail.manifest.json',
+      createFetcher({ chunks: [{ id: '00-00' }], level: 'detail' }),
     )
     const pointChunk = await loadPointChunk(
-      '/data/tokyo/runtime/schools/chunks/00-00.json',
+      '/data/tokyo/runtime/schools/detail/chunks/00-00.json',
       createFetcher([{ id: 'school-1' }]),
     )
     const areaChunk = await loadAreaChunk(
@@ -61,6 +70,7 @@ describe('dataLoader', () => {
     expect(stationBases[0]?.id).toBe('tokyo')
     expect(detailManifest.stationToShard.tokyo).toBe('shard-00')
     expect(detailShard.tokyo?.id).toBe('tokyo')
+    expect(stationsMeta.stationCount).toBe(589)
     expect(chunkManifest.chunks[0]?.id).toBe('00-00')
     expect(pointChunk[0]?.id).toBe('school-1')
     expect(areaChunk[0]?.id).toBe('hazard-1')

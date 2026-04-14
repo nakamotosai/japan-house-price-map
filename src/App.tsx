@@ -7,7 +7,9 @@ import { StationPanel } from './components/StationPanel'
 import { TokyoMap } from './components/TokyoMap'
 import { TopSearchBar } from './components/TopSearchBar'
 import { MODES } from './data/modes'
+import { TOKYO_SITE_RELEASE } from './data/siteMeta'
 import { useTokyoData } from './hooks/useTokyoData'
+import { formatShortDateLabel } from './lib/format'
 import { searchStations } from './lib/search'
 import type { MapViewport, ModeId, TokyoOverlayData } from './types'
 
@@ -29,6 +31,7 @@ export default function App() {
   const dataState = useTokyoData({ activeMode, viewport, selectedStationId })
 
   const stationBases = dataState.stationBases
+  const metadata = dataState.metadata
   const overlays = dataState.status === 'ready' ? dataState.overlays : EMPTY_OVERLAYS
   const deferredQuery = useDeferredValue(query)
   const searchResults = searchStations(deferredQuery, stationBases)
@@ -36,6 +39,9 @@ export default function App() {
     stationBases.find((station) => station.id === selectedStationId) ?? null
   const selectedStationDetail =
     dataState.status === 'ready' ? dataState.selectedStationDetail : null
+  const updatedLabel = formatShortDateLabel(
+    dataState.runtimeGeneratedAt ?? metadata?.generatedAt,
+  )
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -84,7 +90,9 @@ export default function App() {
         activeModeLabel={MODES[activeMode].shortLabel}
         onOpenIntro={() => setShowIntro(true)}
         onResetView={handleResetView}
+        releaseLabel={TOKYO_SITE_RELEASE.shortVersionLabel}
         stationCount={stationBases.length}
+        updatedLabel={updatedLabel}
       />
 
       <TopSearchBar
@@ -108,6 +116,7 @@ export default function App() {
         modes={MODES}
         onClose={() => setSelectedStationId(null)}
         onOpenIntro={() => setShowIntro(true)}
+        overlayInfo={dataState.overlayInfo}
         overlayErrorMessage={
           dataState.status === 'ready' ? dataState.overlayErrorMessage : undefined
         }
@@ -122,11 +131,18 @@ export default function App() {
       <LegendCard
         activeMode={MODES[activeMode]}
         collapsed={legendCollapsed}
+        overlayInfo={dataState.overlayInfo}
+        overlayStatus={dataState.overlayStatus}
         onCollapse={() => setLegendCollapsed(true)}
         onExpand={() => setLegendCollapsed(false)}
       />
 
-      <IntroOverlay open={showIntro} onClose={() => setShowIntro(false)} />
+      <IntroOverlay
+        metadata={metadata}
+        open={showIntro}
+        runtimeGeneratedAt={dataState.runtimeGeneratedAt}
+        onClose={() => setShowIntro(false)}
+      />
     </div>
   )
 }

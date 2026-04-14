@@ -299,6 +299,8 @@ function buildPointFeatureCollection(
         categoryLabel: point.categoryLabel,
         stationId: point.stationId,
         note: point.note,
+        pointWeight: point.count ?? 1,
+        pointLevel: point.level ?? 'detail',
       },
     })),
   }
@@ -342,11 +344,17 @@ export function ensureMapDataLayers(map: MapLibreMap) {
     cluster: true,
     clusterMaxZoom: 13,
     clusterRadius: 40,
+    clusterProperties: {
+      weightedCount: ['+', ['get', 'pointWeight']],
+    },
   })
   ensureGeoJsonSource(map, CONVENIENCE_SOURCE_ID, {
     cluster: true,
     clusterMaxZoom: 13,
     clusterRadius: 42,
+    clusterProperties: {
+      weightedCount: ['+', ['get', 'pointWeight']],
+    },
   })
   ensureGeoJsonSource(map, STATION_SOURCE_ID)
 
@@ -458,7 +466,17 @@ export function ensureMapDataLayers(map: MapLibreMap) {
       filter: ['has', 'point_count'],
       paint: {
         'circle-color': '#2563eb',
-        'circle-radius': ['step', ['get', 'point_count'], 16, 20, 20, 60, 26],
+        'circle-radius': [
+          'step',
+          ['coalesce', ['get', 'weightedCount'], ['get', 'point_count']],
+          16,
+          20,
+          20,
+          60,
+          26,
+          140,
+          30,
+        ],
         'circle-stroke-color': '#ffffff',
         'circle-stroke-width': 2,
       },
@@ -475,7 +493,7 @@ export function ensureMapDataLayers(map: MapLibreMap) {
       source: SCHOOL_SOURCE_ID,
       filter: ['has', 'point_count'],
       layout: {
-        'text-field': ['get', 'point_count_abbreviated'],
+        'text-field': ['to-string', ['coalesce', ['get', 'weightedCount'], ['get', 'point_count']]],
         'text-size': 12,
         'text-font': ['Noto Sans Regular'],
         visibility: 'none',
@@ -491,7 +509,7 @@ export function ensureMapDataLayers(map: MapLibreMap) {
       id: 'schools-unclustered',
       type: 'circle',
       source: SCHOOL_SOURCE_ID,
-      minzoom: 13,
+      minzoom: 9,
       filter: ['!', ['has', 'point_count']],
       paint: {
         'circle-color': [
@@ -509,7 +527,17 @@ export function ensureMapDataLayers(map: MapLibreMap) {
           '#f97316',
           '#64748b',
         ],
-        'circle-radius': 4.5,
+        'circle-radius': [
+          'step',
+          ['coalesce', ['get', 'pointWeight'], 1],
+          4.5,
+          10,
+          7,
+          25,
+          9,
+          60,
+          11,
+        ],
         'circle-stroke-color': '#ffffff',
         'circle-stroke-width': 1.4,
       },
@@ -527,7 +555,17 @@ export function ensureMapDataLayers(map: MapLibreMap) {
       filter: ['has', 'point_count'],
       paint: {
         'circle-color': '#0f766e',
-        'circle-radius': ['step', ['get', 'point_count'], 15, 30, 20, 80, 26],
+        'circle-radius': [
+          'step',
+          ['coalesce', ['get', 'weightedCount'], ['get', 'point_count']],
+          15,
+          30,
+          20,
+          80,
+          26,
+          180,
+          30,
+        ],
         'circle-stroke-color': '#ffffff',
         'circle-stroke-width': 2,
       },
@@ -544,7 +582,7 @@ export function ensureMapDataLayers(map: MapLibreMap) {
       source: CONVENIENCE_SOURCE_ID,
       filter: ['has', 'point_count'],
       layout: {
-        'text-field': ['get', 'point_count_abbreviated'],
+        'text-field': ['to-string', ['coalesce', ['get', 'weightedCount'], ['get', 'point_count']]],
         'text-size': 12,
         'text-font': ['Noto Sans Regular'],
         visibility: 'none',
@@ -560,7 +598,7 @@ export function ensureMapDataLayers(map: MapLibreMap) {
       id: 'convenience-unclustered',
       type: 'circle',
       source: CONVENIENCE_SOURCE_ID,
-      minzoom: 13,
+      minzoom: 9,
       filter: ['!', ['has', 'point_count']],
       paint: {
         'circle-color': [
@@ -576,7 +614,17 @@ export function ensureMapDataLayers(map: MapLibreMap) {
           '#22c55e',
           '#0f766e',
         ],
-        'circle-radius': 3.8,
+        'circle-radius': [
+          'step',
+          ['coalesce', ['get', 'pointWeight'], 1],
+          3.8,
+          10,
+          6,
+          25,
+          8,
+          80,
+          10,
+        ],
         'circle-stroke-color': '#ffffff',
         'circle-stroke-width': 1.2,
       },
