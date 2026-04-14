@@ -7,7 +7,7 @@
 ## 当前状态
 
 - 状态：`Tokyo V1.6 edge closeout 已收口`
-- 当前版本：`单页东京地图 + 7 模式 + manifest/catalog runtime + V1.5 站点分享增强 + V1.6 MapLibre 脱主包 / 灾害三灾种收口 + Tailnet 预览`
+- 当前版本：`单页东京地图 + 7 模式 + manifest/catalog runtime + V1.5 站点分享增强 + V1.6 MapLibre 脱主包 / 灾害三灾种收口 + Cloudflare 正式域名 + Tailnet 预览`
 - 当前可用能力：
   - 直接进入东京地图，不做独立首页
   - Google Maps 风格启发的左侧边栏、左上搜索栏和顶部模式按钮
@@ -202,6 +202,22 @@ python3 scripts/readme_closeout_guard.py /home/ubuntu/codex/日本房价地图 -
 
 ## Tailnet 预览
 
+正式外网域名：
+
+```text
+https://tokyohouse.saaaai.com/
+```
+
+正式公网入口当前通过现有 Cloudflare Tunnel 反向接到本机 `4173` 预览服务。
+
+入口维护真相源：
+
+- Tunnel 持久配置：`/etc/cloudflared/config.yml`
+- 运行服务：`cloudflared.service`
+- 站点 origin：`http://127.0.0.1:4173/`
+
+内部 Tailnet 预览：
+
 启动：
 
 ```bash
@@ -239,6 +255,7 @@ https://vps-jp.tail4b5213.ts.net:8443/
    - `./scripts/start_tailnet_preview.sh`
 6. 对真实入口探活：
    - `curl -I http://127.0.0.1:4173/`
+   - `curl -I https://tokyohouse.saaaai.com/`
    - `curl -I https://vps-jp.tail4b5213.ts.net:8443/`
 7. 回写根 `README.md`
 8. 提交、推送，并确保 `git status --short` 为空
@@ -256,17 +273,17 @@ https://vps-jp.tail4b5213.ts.net:8443/
     - `dist/assets/IntroOverlay-*.js`
 - `npm run acceptance:tokyo-v1` 通过
   - 最新验收产物：
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T172535Z/desktop-price-default.png`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T172535Z/desktop-schools-summary.png`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T172535Z/desktop-convenience-summary.png`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T172535Z/desktop-hazard-summary.png`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T172535Z/desktop-population-summary.png`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T172535Z/mobile-price-default.png`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T172535Z/live-default.png`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T172535Z/report.json`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T172535Z/console-report.json`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T172535Z/network-report.json`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T172535Z/interaction-summary.json`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T175526Z/desktop-price-default.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T175526Z/desktop-schools-summary.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T175526Z/desktop-convenience-summary.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T175526Z/desktop-hazard-summary.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T175526Z/desktop-population-summary.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T175526Z/mobile-price-default.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T175526Z/live-default.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T175526Z/report.json`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T175526Z/console-report.json`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T175526Z/network-report.json`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T175526Z/interaction-summary.json`
   - 验收报告确认：
     - `schools / convenience / hazard / population` 都已进入三档 manifest 矩阵
     - 默认东京视口：
@@ -284,6 +301,7 @@ https://vps-jp.tail4b5213.ts.net:8443/
     - 点击空白区域可以收起站点卡片
     - price 默认态已经能看到热门站点 detail shard 预取请求
 - `curl -I http://127.0.0.1:4173/` 返回 `HTTP 200`
+- `curl -I https://tokyohouse.saaaai.com/` 返回 `HTTP 200`
 - `curl -I https://vps-jp.tail4b5213.ts.net:8443/` 返回 `HTTP 200`
 
 ## 当前边界
@@ -294,6 +312,7 @@ https://vps-jp.tail4b5213.ts.net:8443/
 - 便利度模式当前只是“医疗 + 公共服务”的第一版官方代理指标
 - 还没有独立站点详情页和 AI 功能
 - 当前前台验收使用 `Chromium + SwiftShader`，用于无头环境下验证 MapLibre 页面可用；MapLibre 脚本本体已移到本地 vendor，不再进入应用主包
+- 正式域名当前通过现有 Cloudflare Tunnel 反向接到本机 `4173` 预览服务；Cloudflare Pages `tokyohouse-2xk.pages.dev` 已建成，后续可作为静态托管备选面
 
 ## 仓库卫生要求
 

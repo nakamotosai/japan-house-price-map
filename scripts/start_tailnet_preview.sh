@@ -17,3 +17,4 @@ tailscale serve --bg --yes --https "$TAILNET_HTTPS_PORT" "http://127.0.0.1:${LOC
 
 echo "local_http=http://127.0.0.1:${LOCAL_PORT}/"
 echo "tailnet_https=https://vps-jp.tail4b5213.ts.net:${TAILNET_HTTPS_PORT}/"
+echo "public_https=https://tokyohouse.saaaai.com/"

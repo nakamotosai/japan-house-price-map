@@ -22,7 +22,7 @@ export default defineConfig({
     },
   },
   preview: {
-    allowedHosts: ['vps-jp.tail4b5213.ts.net'],
+    allowedHosts: ['vps-jp.tail4b5213.ts.net', 'tokyohouse.saaaai.com'],
   },
   test: {
     environment: 'node',
