@@ -105,14 +105,22 @@ WATER_DEPTH_LABELS = {
 
 RUNTIME_POINT_DETAIL_CHUNK_LON = 0.035
 RUNTIME_POINT_DETAIL_CHUNK_LAT = 0.025
+RUNTIME_POINT_SUMMARY_CHUNK_LON = 0.22
+RUNTIME_POINT_SUMMARY_CHUNK_LAT = 0.14
 RUNTIME_POINT_OVERVIEW_CHUNK_LON = 0.11
 RUNTIME_POINT_OVERVIEW_CHUNK_LAT = 0.08
+POINT_SUMMARY_AGG_LON = 0.14
+POINT_SUMMARY_AGG_LAT = 0.1
 POINT_OVERVIEW_AGG_LON = 0.05
 POINT_OVERVIEW_AGG_LAT = 0.04
-RUNTIME_AREA_CHUNK_LON = 0.07
-RUNTIME_AREA_CHUNK_LAT = 0.05
+RUNTIME_AREA_SUMMARY_CHUNK_LON = 0.15
+RUNTIME_AREA_SUMMARY_CHUNK_LAT = 0.1
+RUNTIME_AREA_OVERVIEW_CHUNK_LON = 0.07
+RUNTIME_AREA_OVERVIEW_CHUNK_LAT = 0.05
 AREA_DETAIL_ZOOM_THRESHOLD = 12.3
 POINT_DETAIL_ZOOM_THRESHOLD = 12.8
+POINT_SUMMARY_ZOOM_THRESHOLD = 11.9
+AREA_SUMMARY_ZOOM_THRESHOLD = 11.8
 
 
 def parse_args() -> argparse.Namespace:
@@ -979,6 +987,9 @@ def build_point_overview_features(
     points: list[dict[str, Any]],
     *,
     mode_id: str,
+    level: str,
+    agg_lon: float,
+    agg_lat: float,
 ) -> list[dict[str, Any]]:
     grouped: dict[tuple[int, int], list[dict[str, Any]]] = defaultdict(list)
     for point in points:
@@ -986,8 +997,8 @@ def build_point_overview_features(
             point_chunk_key(
                 point["lng"],
                 point["lat"],
-                step_lon=POINT_OVERVIEW_AGG_LON,
-                step_lat=POINT_OVERVIEW_AGG_LAT,
+                step_lon=agg_lon,
+                step_lat=agg_lat,
             )
         ].append(point)
 
@@ -1013,16 +1024,20 @@ def build_point_overview_features(
 
         overview_points.append(
             {
-                "id": f"{mode_id}-overview-{chunk_x:02d}-{chunk_y:02d}",
+                "id": f"{mode_id}-{level}-{chunk_x:02d}-{chunk_y:02d}",
                 "name": f"{len(members)} 个{label_base}聚合",
                 "categoryId": dominant_category_id,
                 "categoryLabel": dominant_category_label,
                 "lat": round(lat, 6),
                 "lng": round(lng, 6),
                 "stationId": None,
-                "note": f"低缩放总览层：{category_summary}",
+                "note": (
+                    f"默认视口摘要层：{category_summary}"
+                    if level == "summary"
+                    else f"低缩放总览层：{category_summary}"
+                ),
                 "count": len(members),
-                "level": "overview",
+                "level": level,
             }
         )
 
@@ -1301,9 +1316,11 @@ def build_area_chunk_manifest(
     level: str,
     tolerance: float,
     digits: int,
+    step_lon: float,
+    step_lat: float,
 ) -> dict[str, Any]:
     chunk_map: dict[tuple[int, int], dict[str, dict[str, Any]]] = defaultdict(dict)
-    cols, rows = chunk_grid_dimensions(RUNTIME_AREA_CHUNK_LON, RUNTIME_AREA_CHUNK_LAT)
+    cols, rows = chunk_grid_dimensions(step_lon, step_lat)
     simplified_areas: list[dict[str, Any]] = []
 
     for area in areas:
@@ -1314,26 +1331,27 @@ def build_area_chunk_manifest(
                 tolerance=tolerance,
                 digits=digits,
             ),
+            "level": level,
         }
         simplified_areas.append(area_copy)
         min_x, min_y, max_x, max_y = geometry_bbox(area_copy["geometry"])
         chunk_x_start = clamp_int(
-            int((min_x - TOKYO_CORE_BOUNDS["west"]) / RUNTIME_AREA_CHUNK_LON),
+            int((min_x - TOKYO_CORE_BOUNDS["west"]) / step_lon),
             0,
             cols - 1,
         )
         chunk_x_end = clamp_int(
-            int((max_x - TOKYO_CORE_BOUNDS["west"]) / RUNTIME_AREA_CHUNK_LON),
+            int((max_x - TOKYO_CORE_BOUNDS["west"]) / step_lon),
             0,
             cols - 1,
         )
         chunk_y_start = clamp_int(
-            int((min_y - TOKYO_CORE_BOUNDS["south"]) / RUNTIME_AREA_CHUNK_LAT),
+            int((min_y - TOKYO_CORE_BOUNDS["south"]) / step_lat),
             0,
             rows - 1,
         )
         chunk_y_end = clamp_int(
-            int((max_y - TOKYO_CORE_BOUNDS["south"]) / RUNTIME_AREA_CHUNK_LAT),
+            int((max_y - TOKYO_CORE_BOUNDS["south"]) / step_lat),
             0,
             rows - 1,
         )
@@ -1343,8 +1361,8 @@ def build_area_chunk_manifest(
                 chunk_bounds = chunk_bounds_for_key(
                     chunk_x,
                     chunk_y,
-                    step_lon=RUNTIME_AREA_CHUNK_LON,
-                    step_lat=RUNTIME_AREA_CHUNK_LAT,
+                    step_lon=step_lon,
+                    step_lat=step_lat,
                 )
                 area_bounds = {
                     "west": min_x,
@@ -1373,8 +1391,8 @@ def build_area_chunk_manifest(
                 "bounds": chunk_bounds_for_key(
                     chunk_x,
                     chunk_y,
-                    step_lon=RUNTIME_AREA_CHUNK_LON,
-                    step_lat=RUNTIME_AREA_CHUNK_LAT,
+                    step_lon=step_lon,
+                    step_lat=step_lat,
                 ),
                 "featureCount": len(payload),
             }
@@ -1418,10 +1436,40 @@ def write_runtime_payloads(
     for shard in station_payloads["detailShards"]:
         write_json(RUNTIME_DIR / shard["path"], shard["payload"], indent=None)
 
-    school_overview_points = build_point_overview_features(schools, mode_id="schools")
+    school_summary_points = build_point_overview_features(
+        schools,
+        mode_id="schools",
+        level="summary",
+        agg_lon=POINT_SUMMARY_AGG_LON,
+        agg_lat=POINT_SUMMARY_AGG_LAT,
+    )
+    school_overview_points = build_point_overview_features(
+        schools,
+        mode_id="schools",
+        level="overview",
+        agg_lon=POINT_OVERVIEW_AGG_LON,
+        agg_lat=POINT_OVERVIEW_AGG_LAT,
+    )
+    convenience_summary_points = build_point_overview_features(
+        convenience,
+        mode_id="convenience",
+        level="summary",
+        agg_lon=POINT_SUMMARY_AGG_LON,
+        agg_lat=POINT_SUMMARY_AGG_LAT,
+    )
     convenience_overview_points = build_point_overview_features(
         convenience,
         mode_id="convenience",
+        level="overview",
+        agg_lon=POINT_OVERVIEW_AGG_LON,
+        agg_lat=POINT_OVERVIEW_AGG_LAT,
+    )
+    schools_summary_manifest = build_point_chunk_manifest(
+        school_summary_points,
+        mode_id="schools",
+        level="summary",
+        step_lon=RUNTIME_POINT_SUMMARY_CHUNK_LON,
+        step_lat=RUNTIME_POINT_SUMMARY_CHUNK_LAT,
     )
     schools_overview_manifest = build_point_chunk_manifest(
         school_overview_points,
@@ -1444,6 +1492,13 @@ def write_runtime_payloads(
         step_lon=RUNTIME_POINT_OVERVIEW_CHUNK_LON,
         step_lat=RUNTIME_POINT_OVERVIEW_CHUNK_LAT,
     )
+    convenience_summary_manifest = build_point_chunk_manifest(
+        convenience_summary_points,
+        mode_id="convenience",
+        level="summary",
+        step_lon=RUNTIME_POINT_SUMMARY_CHUNK_LON,
+        step_lat=RUNTIME_POINT_SUMMARY_CHUNK_LAT,
+    )
     convenience_detail_manifest = build_point_chunk_manifest(
         convenience,
         mode_id="convenience",
@@ -1451,12 +1506,23 @@ def write_runtime_payloads(
         step_lon=RUNTIME_POINT_DETAIL_CHUNK_LON,
         step_lat=RUNTIME_POINT_DETAIL_CHUNK_LAT,
     )
+    hazard_summary_manifest = build_area_chunk_manifest(
+        hazards,
+        mode_id="hazard",
+        level="summary",
+        tolerance=0.00048,
+        digits=4,
+        step_lon=RUNTIME_AREA_SUMMARY_CHUNK_LON,
+        step_lat=RUNTIME_AREA_SUMMARY_CHUNK_LAT,
+    )
     hazard_overview_manifest = build_area_chunk_manifest(
         hazards,
         mode_id="hazard",
         level="overview",
         tolerance=0.00022,
         digits=5,
+        step_lon=RUNTIME_AREA_OVERVIEW_CHUNK_LON,
+        step_lat=RUNTIME_AREA_OVERVIEW_CHUNK_LAT,
     )
     hazard_detail_manifest = build_area_chunk_manifest(
         hazards,
@@ -1464,6 +1530,17 @@ def write_runtime_payloads(
         level="detail",
         tolerance=0.00006,
         digits=6,
+        step_lon=RUNTIME_AREA_OVERVIEW_CHUNK_LON,
+        step_lat=RUNTIME_AREA_OVERVIEW_CHUNK_LAT,
+    )
+    population_summary_manifest = build_area_chunk_manifest(
+        population,
+        mode_id="population",
+        level="summary",
+        tolerance=0.00034,
+        digits=4,
+        step_lon=RUNTIME_AREA_SUMMARY_CHUNK_LON,
+        step_lat=RUNTIME_AREA_SUMMARY_CHUNK_LAT,
     )
     population_overview_manifest = build_area_chunk_manifest(
         population,
@@ -1471,6 +1548,8 @@ def write_runtime_payloads(
         level="overview",
         tolerance=0.00018,
         digits=5,
+        step_lon=RUNTIME_AREA_OVERVIEW_CHUNK_LON,
+        step_lat=RUNTIME_AREA_OVERVIEW_CHUNK_LAT,
     )
     population_detail_manifest = build_area_chunk_manifest(
         population,
@@ -1478,6 +1557,8 @@ def write_runtime_payloads(
         level="detail",
         tolerance=0.00001,
         digits=6,
+        step_lon=RUNTIME_AREA_OVERVIEW_CHUNK_LON,
+        step_lat=RUNTIME_AREA_OVERVIEW_CHUNK_LAT,
     )
 
     runtime_index = {
@@ -1493,8 +1574,13 @@ def write_runtime_payloads(
                 "kind": "point",
                 "manifests": [
                     {
-                        "path": "/data/tokyo/runtime/schools/overview.manifest.json",
+                        "path": "/data/tokyo/runtime/schools/summary.manifest.json",
                         "minZoom": 9,
+                        "maxZoom": POINT_SUMMARY_ZOOM_THRESHOLD,
+                    },
+                    {
+                        "path": "/data/tokyo/runtime/schools/overview.manifest.json",
+                        "minZoom": POINT_SUMMARY_ZOOM_THRESHOLD,
                         "maxZoom": POINT_DETAIL_ZOOM_THRESHOLD,
                     },
                     {
@@ -1508,8 +1594,13 @@ def write_runtime_payloads(
                 "kind": "point",
                 "manifests": [
                     {
-                        "path": "/data/tokyo/runtime/convenience/overview.manifest.json",
+                        "path": "/data/tokyo/runtime/convenience/summary.manifest.json",
                         "minZoom": 9,
+                        "maxZoom": POINT_SUMMARY_ZOOM_THRESHOLD,
+                    },
+                    {
+                        "path": "/data/tokyo/runtime/convenience/overview.manifest.json",
+                        "minZoom": POINT_SUMMARY_ZOOM_THRESHOLD,
                         "maxZoom": POINT_DETAIL_ZOOM_THRESHOLD,
                     },
                     {
@@ -1523,8 +1614,13 @@ def write_runtime_payloads(
                 "kind": "area",
                 "manifests": [
                     {
-                        "path": "/data/tokyo/runtime/hazard/overview.manifest.json",
+                        "path": "/data/tokyo/runtime/hazard/summary.manifest.json",
                         "minZoom": 9,
+                        "maxZoom": AREA_SUMMARY_ZOOM_THRESHOLD,
+                    },
+                    {
+                        "path": "/data/tokyo/runtime/hazard/overview.manifest.json",
+                        "minZoom": AREA_SUMMARY_ZOOM_THRESHOLD,
                         "maxZoom": AREA_DETAIL_ZOOM_THRESHOLD,
                     },
                     {
@@ -1538,8 +1634,13 @@ def write_runtime_payloads(
                 "kind": "area",
                 "manifests": [
                     {
-                        "path": "/data/tokyo/runtime/population/overview.manifest.json",
+                        "path": "/data/tokyo/runtime/population/summary.manifest.json",
                         "minZoom": 9,
+                        "maxZoom": AREA_SUMMARY_ZOOM_THRESHOLD,
+                    },
+                    {
+                        "path": "/data/tokyo/runtime/population/overview.manifest.json",
+                        "minZoom": AREA_SUMMARY_ZOOM_THRESHOLD,
                         "maxZoom": AREA_DETAIL_ZOOM_THRESHOLD,
                     },
                     {
@@ -1551,18 +1652,27 @@ def write_runtime_payloads(
             },
         },
         "summary": {
+            "schoolsSummaryChunks": schools_summary_manifest["chunkCount"],
             "schoolsOverviewChunks": schools_overview_manifest["chunkCount"],
             "schoolsDetailChunks": schools_detail_manifest["chunkCount"],
+            "convenienceSummaryChunks": convenience_summary_manifest["chunkCount"],
             "convenienceOverviewChunks": convenience_overview_manifest["chunkCount"],
             "convenienceDetailChunks": convenience_detail_manifest["chunkCount"],
+            "hazardSummaryChunks": hazard_summary_manifest["chunkCount"],
             "hazardOverviewChunks": hazard_overview_manifest["chunkCount"],
             "hazardDetailChunks": hazard_detail_manifest["chunkCount"],
+            "populationSummaryChunks": population_summary_manifest["chunkCount"],
             "populationOverviewChunks": population_overview_manifest["chunkCount"],
             "populationDetailChunks": population_detail_manifest["chunkCount"],
+            "schoolsSummaryFeatures": schools_summary_manifest["featureCount"],
             "schoolsOverviewFeatures": schools_overview_manifest["featureCount"],
+            "convenienceSummaryFeatures": convenience_summary_manifest["featureCount"],
             "convenienceOverviewFeatures": convenience_overview_manifest["featureCount"],
+            "hazardSummaryGeometryPoints": hazard_summary_manifest["geometryPointCount"],
             "hazardOverviewGeometryPoints": hazard_overview_manifest["geometryPointCount"],
             "hazardDetailGeometryPoints": hazard_detail_manifest["geometryPointCount"],
+            "populationSummaryGeometryPoints": population_summary_manifest["geometryPointCount"],
+            "populationOverviewGeometryPoints": population_overview_manifest["geometryPointCount"],
         },
     }
     write_json(RUNTIME_DIR / "index.json", runtime_index, indent=None)

@@ -24,7 +24,12 @@ export function LegendCard(props: LegendCardProps) {
       : activeMode.category === 'point'
         ? '设施点模式'
         : '区域覆盖模式'
-  const layerLabel = overlayInfo?.level === 'overview' ? '总览层' : '细节层'
+  const layerLabel =
+    overlayInfo?.level === 'summary'
+      ? '摘要层'
+      : overlayInfo?.level === 'overview'
+        ? '总览层'
+        : '细节层'
   const runtimeFootnote =
     activeMode.category === 'station'
       ? '7 个模式共用同一张东京地图底座；切换时只换图层，不换页面。'

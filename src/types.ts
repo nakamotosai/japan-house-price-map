@@ -14,7 +14,7 @@ export type RiskLevel = 'low' | 'medium' | 'high' | 'unknown'
 export type PopulationTrend = '增长' | '稳定' | '收缩' | '待补'
 
 export type AsyncStatus = 'idle' | 'loading' | 'ready' | 'error'
-export type RuntimeLayerLevel = 'overview' | 'detail'
+export type RuntimeLayerLevel = 'summary' | 'overview' | 'detail'
 
 export type Bounds = {
   west: number
@@ -127,6 +127,7 @@ export type AreaLayerFeature = {
   stationIds: string[]
   metricValue: number | null
   metricLabel: string
+  level?: RuntimeLayerLevel
   geometry: {
     type: 'Polygon' | 'MultiPolygon'
     coordinates: number[][][] | number[][][][]

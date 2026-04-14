@@ -16,10 +16,10 @@ const MODE_CASES = [
   { id: 'price', label: '房产均价', screenshotName: 'desktop-price-default.png' },
   { id: 'land', label: '公示地价', screenshotName: 'desktop-land-default.png' },
   { id: 'heat', label: '车站热度', screenshotName: 'desktop-heat-default.png' },
-  { id: 'schools', label: '学校分布', screenshotName: 'desktop-schools-overview.png' },
-  { id: 'convenience', label: '生活便利度', screenshotName: 'desktop-convenience-overview.png' },
-  { id: 'hazard', label: '灾害风险', screenshotName: 'desktop-hazard-overview.png' },
-  { id: 'population', label: '人口趋势', screenshotName: 'desktop-population-overview.png' },
+  { id: 'schools', label: '学校分布', screenshotName: 'desktop-schools-summary.png' },
+  { id: 'convenience', label: '生活便利度', screenshotName: 'desktop-convenience-summary.png' },
+  { id: 'hazard', label: '灾害风险', screenshotName: 'desktop-hazard-summary.png' },
+  { id: 'population', label: '人口趋势', screenshotName: 'desktop-population-summary.png' },
 ]
 
 function parseArgs(argv) {

@@ -88,6 +88,16 @@ function depthRankLabel(rank: number | null) {
   return '0-0.5m'
 }
 
+function runtimeLevelLabel(level: RuntimeLayerLevel | null | undefined) {
+  if (level === 'summary') {
+    return '摘要层'
+  }
+  if (level === 'overview') {
+    return '总览层'
+  }
+  return '细节层'
+}
+
 function PreviewList(props: { items: string[]; emptyText: string }) {
   const { emptyText, items } = props
 
@@ -141,9 +151,9 @@ function LoadingBody(props: {
       ? '当前模式直接基于站点底座渲染，不需要额外图层补载。'
       : overlayStatus === 'loading'
         ? '当前视口图层正在补数据，面板会沿用已经到位的结果。'
-        : overlayStatus === 'error'
-          ? `当前模式图层加载失败：${overlayErrorMessage ?? 'unknown_error'}`
-          : `当前模式图层会跟着地图视口按需加载，当前是${overlayLevel === 'overview' ? '总览层' : '细节层'}。`
+      : overlayStatus === 'error'
+        ? `当前模式图层加载失败：${overlayErrorMessage ?? 'unknown_error'}`
+        : `当前模式图层会跟着地图视口按需加载，当前是${runtimeLevelLabel(overlayLevel)}。`
 
   return (
     <div className="panel-grid">
@@ -321,9 +331,13 @@ function ModeBody(props: {
           <strong>{station.metrics.coverage.schools ? '已覆盖' : '较弱'}</strong>
         </article>
         <article className="metric-card metric-card--wide">
-          <span>{overlayLevel === 'overview' ? '当前视图说明' : '示例学校'}</span>
-          {overlayLevel === 'overview' ? (
-            <p>当前是低缩放总览层，站点周边学校数已经计入摘要；放大后再显示原始学校样本。</p>
+          <span>{overlayLevel === 'detail' ? '示例学校' : '当前视图说明'}</span>
+          {overlayLevel !== 'detail' ? (
+            <p>
+              {overlayLevel === 'summary'
+                ? '当前是默认视口摘要层，先看更粗的学校聚合，再放大到总览和原始点。'
+                : '当前是低缩放总览层，站点周边学校数已经计入摘要；放大后再显示原始学校样本。'}
+            </p>
           ) : (
             <PreviewList
               emptyText="当前 1.5km 归属范围内没有学校点。"
@@ -368,9 +382,13 @@ function ModeBody(props: {
           <strong>{station.metrics.convenienceBreakdown.publicService}</strong>
         </article>
         <article className="metric-card metric-card--wide">
-          <span>{overlayLevel === 'overview' ? '当前视图说明' : '示例设施'}</span>
-          {overlayLevel === 'overview' ? (
-            <p>当前是低缩放总览层，先看设施聚合热区；放大后再显示原始医疗与公共服务点。</p>
+          <span>{overlayLevel === 'detail' ? '示例设施' : '当前视图说明'}</span>
+          {overlayLevel !== 'detail' ? (
+            <p>
+              {overlayLevel === 'summary'
+                ? '当前是默认视口摘要层，先看更粗的设施聚合，再放大到总览和原始点。'
+                : '当前是低缩放总览层，先看设施聚合热区；放大后再显示原始医疗与公共服务点。'}
+            </p>
           ) : (
             <PreviewList
               emptyText="当前没有命中设施点。"

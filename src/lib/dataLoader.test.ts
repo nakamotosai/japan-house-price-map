@@ -56,7 +56,7 @@ describe('dataLoader', () => {
     )
     const chunkManifest = await loadChunkManifest(
       '/data/tokyo/runtime/schools/detail.manifest.json',
-      createFetcher({ chunks: [{ id: '00-00' }], level: 'detail' }),
+      createFetcher({ chunks: [{ id: '00-00' }], level: 'summary' }),
     )
     const pointChunk = await loadPointChunk(
       '/data/tokyo/runtime/schools/detail/chunks/00-00.json',
@@ -71,6 +71,7 @@ describe('dataLoader', () => {
     expect(detailManifest.stationToShard.tokyo).toBe('shard-00')
     expect(detailShard.tokyo?.id).toBe('tokyo')
     expect(stationsMeta.stationCount).toBe(589)
+    expect(chunkManifest.level).toBe('summary')
     expect(chunkManifest.chunks[0]?.id).toBe('00-00')
     expect(pointChunk[0]?.id).toBe('school-1')
     expect(areaChunk[0]?.id).toBe('hazard-1')

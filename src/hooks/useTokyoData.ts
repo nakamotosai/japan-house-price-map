@@ -19,6 +19,7 @@ import type {
   OverlayRuntimeInfo,
   PointLayerFeature,
   RuntimeIndex,
+  RuntimeLayerLevel,
   RuntimeModeManifestRef,
   Station,
   StationBase,
@@ -98,6 +99,10 @@ function cloneOverlays(overlays: TokyoOverlayData): TokyoOverlayData {
   }
 }
 
+function dedupePayload<T extends { id: string }>(items: T[]) {
+  return [...new Map(items.map((item) => [item.id, item])).values()]
+}
+
 function touchCacheEntry<K, V>(cache: Map<K, V>, key: K, value: V, limit: number) {
   if (cache.has(key)) {
     cache.delete(key)
@@ -127,7 +132,11 @@ function pickRuntimeManifest(
   )
 }
 
-function getViewportPaddingMultiplier(zoom: number) {
+function getViewportPaddingMultiplier(level: RuntimeLayerLevel, zoom: number) {
+  if (level === 'summary') {
+    return 1.02
+  }
+
   if (zoom < 11.1) {
     return 1.08
   }
@@ -373,7 +382,8 @@ export function useTokyoData(args: UseTokyoDataArgs): TokyoDataState {
 
     const overlayMode = activeMode as OverlayModeId
     const runtimeIndex = runtimeIndexRef.current
-    const manifestRef = pickRuntimeManifest(runtimeIndex, overlayMode, viewport.zoom)
+    const activeViewport = viewport
+    const manifestRef = pickRuntimeManifest(runtimeIndex, overlayMode, activeViewport.zoom)
     if (!manifestRef) {
       return
     }
@@ -381,17 +391,16 @@ export function useTokyoData(args: UseTokyoDataArgs): TokyoDataState {
     const activeManifestRef = manifestRef
 
     const controller = new AbortController()
-    const paddedViewport = padBounds(
-      viewport.bounds,
-      getViewportPaddingMultiplier(viewport.zoom),
-    )
-
     async function run() {
       try {
         const manifest = await getChunkManifestCached(
           manifestCacheRef.current,
           activeManifestRef.path,
           controller.signal,
+        )
+        const paddedViewport = padBounds(
+          activeViewport.bounds,
+          getViewportPaddingMultiplier(manifest.level ?? 'detail', activeViewport.zoom),
         )
         const matchedChunks = manifest.chunks.filter((chunk) =>
           intersectsBounds(chunk.bounds, paddedViewport),
@@ -438,7 +447,7 @@ export function useTokyoData(args: UseTokyoDataArgs): TokyoDataState {
           return
         }
 
-        const mergedPayload = payloads.flat()
+        const mergedPayload = dedupePayload(payloads.flat())
         lastOverlayKeyRef.current[overlayMode] = nextOverlayKey
         setOverlayInfo(nextOverlayInfo)
 
