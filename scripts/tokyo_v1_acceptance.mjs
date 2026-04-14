@@ -10,6 +10,18 @@ const PROJECT_ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)))
 const ARTIFACT_ROOT = resolve(PROJECT_ROOT, '.artifacts', 'tokyo-v1-acceptance')
 const CHROME_BIN = process.env.CHROME_BIN || '/usr/bin/chromium-browser'
 
+const DESKTOP_VIEWPORT = { width: 1440, height: 960, mobile: false }
+const MOBILE_VIEWPORT = { width: 393, height: 852, mobile: true }
+const MODE_CASES = [
+  { id: 'price', label: '房产均价', screenshotName: 'desktop-price-default.png' },
+  { id: 'land', label: '公示地价', screenshotName: 'desktop-land-default.png' },
+  { id: 'heat', label: '车站热度', screenshotName: 'desktop-heat-default.png' },
+  { id: 'schools', label: '学校分布', screenshotName: 'desktop-schools-overview.png' },
+  { id: 'convenience', label: '生活便利度', screenshotName: 'desktop-convenience-overview.png' },
+  { id: 'hazard', label: '灾害风险', screenshotName: 'desktop-hazard-overview.png' },
+  { id: 'population', label: '人口趋势', screenshotName: 'desktop-population-overview.png' },
+]
+
 function parseArgs(argv) {
   const args = { url: 'http://127.0.0.1:4173/', tailnetUrl: '' }
   for (let index = 2; index < argv.length; index += 1) {
@@ -168,7 +180,7 @@ async function clickSelector(client, selector) {
     client,
     `(() => {
       const target = document.querySelector(${JSON.stringify(selector)})
-      if (!target) {
+      if (!(target instanceof HTMLElement)) {
         return false
       }
       target.click()
@@ -187,7 +199,7 @@ async function clickMode(client, label) {
     `(() => {
       const buttons = Array.from(document.querySelectorAll('.mode-chip'))
       const target = buttons.find((item) => item.textContent?.trim() === ${JSON.stringify(label)})
-      if (!target) {
+      if (!(target instanceof HTMLElement)) {
         return false
       }
       target.click()
@@ -280,14 +292,34 @@ async function findBlankMapPoint(client) {
   )
 }
 
-function uniqueRuntimeRequests(urls) {
-  return [...new Set(urls.filter((item) => item.includes('/data/tokyo/runtime/')))]
+function extractRuntimeRequests(entries) {
+  return [
+    ...new Set(entries.map((item) => item.url).filter((item) => item.includes('/data/tokyo/runtime/'))),
+  ]
 }
 
-async function collectModeResult(client, requests, label, screenshotPath) {
-  const requestCursor = requests.length
-  await clickMode(client, label)
-  await delay(1600)
+async function waitForMapReady(client) {
+  await waitForExpression(
+    client,
+    `document.querySelectorAll('.mode-chip').length >= 7 && !!window.__TOKYO_MAP__`,
+  )
+  await delay(1000)
+}
+
+async function navigateAndWait(client, url) {
+  await client.send('Page.navigate', { url })
+  await client.waitFor('Page.loadEventFired')
+  await waitForMapReady(client)
+}
+
+async function collectModeResult(client, requestLog, modeCase, artifactDir, clickBeforeCapture = true) {
+  const requestCursor = requestLog.length
+  if (clickBeforeCapture) {
+    await clickMode(client, modeCase.label)
+    await delay(1400)
+  }
+
+  const screenshotPath = resolve(artifactDir, modeCase.screenshotName)
   await captureScreenshot(client, screenshotPath)
 
   const legendText = await evaluate(
@@ -296,9 +328,11 @@ async function collectModeResult(client, requests, label, screenshotPath) {
   )
 
   return {
-    label,
+    id: modeCase.id,
+    label: modeCase.label,
     legendText,
-    requests: uniqueRuntimeRequests(requests.slice(requestCursor)),
+    requests: extractRuntimeRequests(requestLog.slice(requestCursor)),
+    screenshotPath,
   }
 }
 
@@ -347,43 +381,54 @@ async function main() {
       client.send('Network.enable'),
     ])
 
-    const runtimeRequests = []
+    const requestLog = []
+    const consoleEntries = []
+    const exceptionEntries = []
+    const failedRequests = []
+
     client.on('Network.requestWillBeSent', (params) => {
       if (typeof params.request?.url === 'string') {
-        runtimeRequests.push(params.request.url)
+        requestLog.push({
+          url: params.request.url,
+          type: params.type ?? 'unknown',
+        })
       }
     })
 
-    await setViewport(client, 1440, 960, false)
-    await client.send('Page.navigate', { url: args.url })
-    await client.waitFor('Page.loadEventFired')
-    await waitForExpression(
-      client,
-      `document.querySelectorAll('.mode-chip').length >= 7 && !!window.__TOKYO_MAP__`,
-    )
-    await delay(1000)
+    client.on('Network.loadingFailed', (params) => {
+      failedRequests.push({
+        url: params.requestId,
+        errorText: params.errorText,
+      })
+    })
 
-    const desktopDefaultPath = resolve(artifactDir, 'desktop-price-default.png')
-    await captureScreenshot(client, desktopDefaultPath)
+    client.on('Runtime.consoleAPICalled', (params) => {
+      consoleEntries.push({
+        type: params.type,
+        text: params.args?.map((item) => item.value ?? item.description ?? '').join(' ').trim(),
+      })
+    })
 
-    const schoolsResult = await collectModeResult(
+    client.on('Runtime.exceptionThrown', (params) => {
+      exceptionEntries.push({
+        text: params.exceptionDetails?.text ?? 'unknown_exception',
+        url: params.exceptionDetails?.url ?? null,
+      })
+    })
+
+    await setViewport(
       client,
-      runtimeRequests,
-      '学校分布',
-      resolve(artifactDir, 'desktop-schools-overview.png'),
+      DESKTOP_VIEWPORT.width,
+      DESKTOP_VIEWPORT.height,
+      DESKTOP_VIEWPORT.mobile,
     )
-    const convenienceResult = await collectModeResult(
-      client,
-      runtimeRequests,
-      '生活便利度',
-      resolve(artifactDir, 'desktop-convenience-overview.png'),
-    )
-    const hazardResult = await collectModeResult(
-      client,
-      runtimeRequests,
-      '灾害风险',
-      resolve(artifactDir, 'desktop-hazard-overview.png'),
-    )
+    await navigateAndWait(client, args.url)
+
+    const modeResults = []
+    modeResults.push(await collectModeResult(client, requestLog, MODE_CASES[0], artifactDir, false))
+    for (const modeCase of MODE_CASES.slice(1)) {
+      modeResults.push(await collectModeResult(client, requestLog, modeCase, artifactDir))
+    }
 
     await clickMode(client, '房产均价')
     await delay(1200)
@@ -402,37 +447,127 @@ async function main() {
       `!document.querySelector('.station-panel')`,
     )
 
-    await setViewport(client, 393, 852, true)
+    await clickSelector(client, '[aria-label="打开数据说明"]')
+    await waitForExpression(client, `!!document.querySelector('.intro-overlay')`)
+    const introOpenPath = resolve(artifactDir, 'desktop-intro-open.png')
+    await captureScreenshot(client, introOpenPath)
+    const introOpened = await evaluate(client, `!!document.querySelector('.intro-overlay')`)
+    await clickSelector(client, '.intro-overlay .ghost-button')
+    await delay(400)
+
+    await setSearchQuery(client, '不存在站点XYZ')
+    await waitForExpression(client, `!!document.querySelector('.search-results__empty')`)
+    const searchEmptyPath = resolve(artifactDir, 'desktop-search-empty.png')
+    await captureScreenshot(client, searchEmptyPath)
+    const zeroResultsShown = await evaluate(
+      client,
+      `document.querySelector('.search-results__empty')?.textContent?.includes('没有匹配到') ?? false`,
+    )
+    await setSearchQuery(client, '')
+    await delay(200)
+
+    await setViewport(
+      client,
+      MOBILE_VIEWPORT.width,
+      MOBILE_VIEWPORT.height,
+      MOBILE_VIEWPORT.mobile,
+    )
     await client.send('Page.reload', { ignoreCache: true })
     await client.waitFor('Page.loadEventFired')
-    await waitForExpression(
-      client,
-      `document.querySelectorAll('.mode-chip').length >= 7 && !!window.__TOKYO_MAP__`,
-    )
-    await delay(1000)
+    await waitForMapReady(client)
     const mobileDefaultPath = resolve(artifactDir, 'mobile-price-default.png')
     await captureScreenshot(client, mobileDefaultPath)
 
-    const tailnetHead = args.tailnetUrl
-      ? await fetch(args.tailnetUrl, { method: 'HEAD' }).then((response) => ({
-          ok: response.ok,
-          status: response.status,
-        }))
-      : null
+    await clickSelector(client, '.left-rail__button--menu')
+    await waitForExpression(client, `!!document.querySelector('.map-menu')`)
+    const mobileMenuOpenPath = resolve(artifactDir, 'mobile-menu-open.png')
+    await captureScreenshot(client, mobileMenuOpenPath)
+    const mobileMenuOpened = await evaluate(client, `!!document.querySelector('.map-menu')`)
+    await clickSelector(client, '.map-menu__backdrop')
+    await delay(300)
+
+    const liveCheck = {
+      head: null,
+      domReady: false,
+      screenshotPath: null,
+      error: null,
+    }
+
+    if (args.tailnetUrl) {
+      liveCheck.head = await fetch(args.tailnetUrl, { method: 'HEAD' }).then((response) => ({
+        ok: response.ok,
+        status: response.status,
+      }))
+
+      try {
+        await setViewport(
+          client,
+          DESKTOP_VIEWPORT.width,
+          DESKTOP_VIEWPORT.height,
+          DESKTOP_VIEWPORT.mobile,
+        )
+        await navigateAndWait(client, args.tailnetUrl)
+        liveCheck.domReady = true
+        liveCheck.screenshotPath = resolve(artifactDir, 'live-default.png')
+        await captureScreenshot(client, liveCheck.screenshotPath)
+      } catch (error) {
+        liveCheck.error = error instanceof Error ? error.message : 'unknown_live_error'
+      }
+    }
+
+    const consoleReport = {
+      consoleEntries,
+      exceptionEntries,
+    }
+    const networkReport = {
+      modeResults: modeResults.map((item) => ({
+        id: item.id,
+        label: item.label,
+        requests: item.requests,
+      })),
+      failedRequests,
+    }
+    const interactionSummary = {
+      stationPanelClosedByBlankClick: stationPanelClosed,
+      introOpened,
+      zeroResultsShown,
+      mobileMenuOpened,
+      liveDomReady: liveCheck.domReady,
+    }
+
+    await Promise.all([
+      writeFile(
+        resolve(artifactDir, 'console-report.json'),
+        `${JSON.stringify(consoleReport, null, 2)}\n`,
+      ),
+      writeFile(
+        resolve(artifactDir, 'network-report.json'),
+        `${JSON.stringify(networkReport, null, 2)}\n`,
+      ),
+      writeFile(
+        resolve(artifactDir, 'interaction-summary.json'),
+        `${JSON.stringify(interactionSummary, null, 2)}\n`,
+      ),
+    ])
 
     const report = {
       artifactDir,
       chromeVersion: versionInfo.Browser,
       url: args.url,
       tailnetUrl: args.tailnetUrl || null,
-      tailnetHead,
-      stationPanelClosedByBlankClick: stationPanelClosed,
-      modeResults: [schoolsResult, convenienceResult, hazardResult],
+      liveCheck,
+      modeResults,
+      consoleReportPath: resolve(artifactDir, 'console-report.json'),
+      networkReportPath: resolve(artifactDir, 'network-report.json'),
+      interactionSummaryPath: resolve(artifactDir, 'interaction-summary.json'),
       screenshots: {
-        desktopDefaultPath,
         stationOpenPath,
+        introOpenPath,
+        searchEmptyPath,
         mobileDefaultPath,
+        mobileMenuOpenPath,
       },
+      interactionSummary,
     }
 
     await writeFile(

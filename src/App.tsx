@@ -1,7 +1,7 @@
-import { startTransition, useDeferredValue, useEffect, useState } from 'react'
-import { IntroOverlay } from './components/IntroOverlay'
+import { lazy, Suspense, startTransition, useDeferredValue, useEffect, useState } from 'react'
 import { LeftRail } from './components/LeftRail'
 import { LegendCard } from './components/LegendCard'
+import { MapMenu } from './components/MapMenu'
 import { ModeChips } from './components/ModeChips'
 import { StationPanel } from './components/StationPanel'
 import { TokyoMap } from './components/TokyoMap'
@@ -20,14 +20,28 @@ const EMPTY_OVERLAYS: TokyoOverlayData = {
   population: [],
 }
 
+const IntroOverlay = lazy(() =>
+  import('./components/IntroOverlay').then((module) => ({ default: module.IntroOverlay })),
+)
+
+function getInitialCompactLayout() {
+  if (typeof window === 'undefined') {
+    return false
+  }
+
+  return window.matchMedia('(max-width: 820px)').matches
+}
+
 export default function App() {
+  const [isCompactLayout, setIsCompactLayout] = useState(getInitialCompactLayout)
   const [activeMode, setActiveMode] = useState<ModeId>('price')
   const [selectedStationId, setSelectedStationId] = useState<string | null>(null)
   const [viewport, setViewport] = useState<MapViewport | null>(null)
   const [query, setQuery] = useState('')
   const [resetToken, setResetToken] = useState(0)
   const [showIntro, setShowIntro] = useState(false)
-  const [legendCollapsed, setLegendCollapsed] = useState(false)
+  const [showMenu, setShowMenu] = useState(false)
+  const [legendCollapsed, setLegendCollapsed] = useState(getInitialCompactLayout)
   const dataState = useTokyoData({ activeMode, viewport, selectedStationId })
 
   const stationBases = dataState.stationBases
@@ -44,6 +58,30 @@ export default function App() {
   )
 
   useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined
+    }
+
+    const media = window.matchMedia('(max-width: 820px)')
+    const handleChange = (event: MediaQueryListEvent) => {
+      setIsCompactLayout(event.matches)
+      if (event.matches) {
+        setLegendCollapsed(true)
+      }
+    }
+
+    media.addEventListener('change', handleChange)
+
+    return () => {
+      media.removeEventListener('change', handleChange)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (isCompactLayout) {
+      return undefined
+    }
+
     const timer = window.setTimeout(() => {
       setLegendCollapsed(true)
     }, 3800)
@@ -51,24 +89,36 @@ export default function App() {
     return () => {
       window.clearTimeout(timer)
     }
-  }, [activeMode])
+  }, [activeMode, isCompactLayout])
 
   function handleSelectStation(stationId: string | null) {
     startTransition(() => {
       setSelectedStationId(stationId)
     })
     setQuery('')
+    setShowMenu(false)
   }
 
   function handleResetView() {
     setSelectedStationId(null)
     setQuery('')
     setResetToken((value) => value + 1)
+    setShowMenu(false)
   }
 
   function handleChangeMode(mode: ModeId) {
     setActiveMode(mode)
-    setLegendCollapsed(false)
+    setLegendCollapsed(isCompactLayout)
+    setShowMenu(false)
+  }
+
+  function handleOpenIntro() {
+    setShowMenu(false)
+    setShowIntro(true)
+  }
+
+  function handleToggleLegend() {
+    setLegendCollapsed((value) => !value)
   }
 
   return (
@@ -88,11 +138,25 @@ export default function App() {
 
       <LeftRail
         activeModeLabel={MODES[activeMode].shortLabel}
-        onOpenIntro={() => setShowIntro(true)}
+        menuOpen={showMenu}
+        onOpenIntro={handleOpenIntro}
         onResetView={handleResetView}
+        onToggleMenu={() => setShowMenu((value) => !value)}
         releaseLabel={TOKYO_SITE_RELEASE.shortVersionLabel}
         stationCount={stationBases.length}
         updatedLabel={updatedLabel}
+      />
+
+      <MapMenu
+        activeMode={activeMode}
+        collapsedLegend={legendCollapsed}
+        modes={MODES}
+        onChangeMode={handleChangeMode}
+        onClose={() => setShowMenu(false)}
+        onOpenIntro={handleOpenIntro}
+        onResetView={handleResetView}
+        onToggleLegend={handleToggleLegend}
+        open={showMenu}
       />
 
       <TopSearchBar
@@ -102,7 +166,12 @@ export default function App() {
         results={searchResults}
       />
 
-      <ModeChips activeMode={activeMode} modes={MODES} onChangeMode={handleChangeMode} />
+      <ModeChips
+        activeMode={activeMode}
+        compact={isCompactLayout}
+        modes={MODES}
+        onChangeMode={handleChangeMode}
+      />
 
       <StationPanel
         activeMode={activeMode}
@@ -115,7 +184,7 @@ export default function App() {
         hazards={overlays.hazards}
         modes={MODES}
         onClose={() => setSelectedStationId(null)}
-        onOpenIntro={() => setShowIntro(true)}
+        onOpenIntro={handleOpenIntro}
         overlayInfo={dataState.overlayInfo}
         overlayErrorMessage={
           dataState.status === 'ready' ? dataState.overlayErrorMessage : undefined
@@ -137,12 +206,14 @@ export default function App() {
         onExpand={() => setLegendCollapsed(false)}
       />
 
-      <IntroOverlay
-        metadata={metadata}
-        open={showIntro}
-        runtimeGeneratedAt={dataState.runtimeGeneratedAt}
-        onClose={() => setShowIntro(false)}
-      />
+      <Suspense fallback={null}>
+        <IntroOverlay
+          metadata={metadata}
+          open={showIntro}
+          runtimeGeneratedAt={dataState.runtimeGeneratedAt}
+          onClose={() => setShowIntro(false)}
+        />
+      </Suspense>
     </div>
   )
 }

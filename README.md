@@ -6,11 +6,16 @@
 
 ## 当前状态
 
-- 状态：`Tokyo V1 已收口`
-- 当前版本：`单页东京地图 + 7 模式 + point/area runtime streaming + 页面内数据说明 + 固定验收脚本 + Tailnet 预览`
+- 状态：`Tokyo V1.1 前端壳层增强已收口`
+- 当前版本：`单页东京地图 + 7 模式 + point/area runtime streaming + V1.1 移动端壳层 + 强化前台验收 + Tailnet 预览`
 - 当前可用能力：
   - 直接进入东京地图，不做独立首页
   - Google Maps 风格启发的左侧边栏、左上搜索栏和顶部模式按钮
+  - 左上菜单按钮已经变成真实入口：
+    - 重置东京视角
+    - 打开数据说明
+    - 展开/收起图例
+    - 菜单内切换 7 个模式
   - 7 个模式即时切换：
     - 房产均价
     - 公示地价
@@ -24,7 +29,11 @@
   - `schools / convenience / hazard / population` 全部走 runtime manifest
   - `schools / convenience` 已补低缩放 `overview` 聚合层
   - 页面内说明弹窗已回写真实口径、来源、年份、覆盖范围和当前边界
-  - UI 可见 `Tokyo V1` 和数据更新时间
+  - 移动端模式区已收成单行横向带，不再多行挤压地图
+  - 移动端图例默认折叠，默认先把地图让出来
+  - 说明弹窗已拆成懒加载 chunk，不再挤在首屏主包里
+  - UI 可见 `Tokyo V1.1` 和数据更新时间
+  - 固定前台验收现在会额外产出 `console / network / interaction / live screenshot`
   - 固定 Tailnet HTTPS 预览入口可直接从 Windows 访问
 
 ## 当前数据口径
@@ -109,6 +118,7 @@
 
 - 默认进入东京核心视角：`zoom 11.55`
 - 默认房产均价模式继续优先显示大站和核心价格 badge
+- 左上菜单按钮现在会打开地图菜单，不再是死控件
 - `schools / convenience`
   - 低缩放先用 `overview`
   - 放大到 `12.8+` 才切 `detail`
@@ -118,7 +128,9 @@
 - 说明按钮继续做成透明弹窗，不做独立说明页
 - 点击空白区域可以收起站点卡片
 - 图例继续自动收起，但会显示当前层级和视口命中状态
-- 左侧边栏底部可看到 `Tokyo V1` 与数据更新时间简写
+- 移动端模式区固定为单行横向滚动，不再堆成多行按钮墙
+- 移动端默认先显示折叠图例，需要时再展开
+- 左侧边栏底部可看到 `Tokyo V1.1` 与数据更新时间简写
 
 ## 运行与构建
 
@@ -210,15 +222,27 @@ https://vps-jp.tail4b5213.ts.net:8443/
 - `npm test` 通过
 - `npm run lint` 通过
 - `npm run build` 通过
+  - 当前 build 产物已拆出：
+    - `dist/assets/IntroOverlay-B0Oyhxr3.js`
 - `npm run acceptance:tokyo-v1` 通过
   - 最新验收产物：
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T074124Z/desktop-price-default.png`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T074124Z/mobile-price-default.png`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T074124Z/report.json`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T144919Z/desktop-price-default.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T144919Z/mobile-price-default.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T144919Z/mobile-menu-open.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T144919Z/live-default.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T144919Z/report.json`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T144919Z/console-report.json`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T144919Z/network-report.json`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T144919Z/interaction-summary.json`
   - 验收报告确认：
+    - `schools / convenience / hazard / population` 都已进入固定模式切换矩阵
     - `schools` 只请求 `overview.manifest.json + overview chunks`
     - `convenience` 只请求 `overview.manifest.json + overview chunks`
     - `hazard` 只请求 `overview.manifest.json + overview chunks`
+    - `population` 只请求 `overview.manifest.json + overview chunks`
+    - 菜单按钮已可打开地图菜单
+    - 搜索零结果态已覆盖
+    - live 入口已拿到真实浏览器截图
     - 点击空白区域可以收起站点卡片
 - `curl -I http://127.0.0.1:4173/` 返回 `HTTP 200`
 - `curl -I https://vps-jp.tail4b5213.ts.net:8443/` 返回 `HTTP 200`
