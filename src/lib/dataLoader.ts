@@ -1,4 +1,5 @@
 import type {
+  AreaCatalog,
   AreaLayerFeature,
   ChunkManifest,
   PointLayerFeature,
@@ -75,4 +76,12 @@ export async function loadPointChunk(path: string, fetcher?: FetchLike, signal?:
 
 export async function loadAreaChunk(path: string, fetcher?: FetchLike, signal?: AbortSignal) {
   return readJson<AreaLayerFeature[]>(path, fetcher, signal)
+}
+
+export async function loadAreaCatalog(path: string, fetcher?: FetchLike, signal?: AbortSignal) {
+  return readJson<AreaCatalog>(path, fetcher, signal)
+}
+
+export async function loadAreaChunkRefs(path: string, fetcher?: FetchLike, signal?: AbortSignal) {
+  return readJson<string[]>(path, fetcher, signal)
 }

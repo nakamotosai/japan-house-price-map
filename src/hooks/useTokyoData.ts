@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
+  loadAreaCatalog,
   loadAreaChunk,
+  loadAreaChunkRefs,
   loadChunkManifest,
   loadPointChunk,
   loadRuntimeIndex,
@@ -11,6 +13,7 @@ import {
 } from '../lib/dataLoader'
 import type {
   AreaLayerFeature,
+  AreaCatalog,
   AsyncStatus,
   Bounds,
   ChunkManifest,
@@ -42,9 +45,11 @@ const OVERLAY_MODE_IDS = new Set<ModeId>([...POINT_MODE_IDS, ...AREA_MODE_IDS])
 const MANIFEST_CACHE_LIMIT = 12
 const CHUNK_CACHE_LIMIT = 180
 const DETAIL_CACHE_LIMIT = 20
+const AREA_CATALOG_CACHE_LIMIT = 12
+const PREFETCH_DETAIL_SHARD_LIMIT = 4
 
 type OverlayModeId = 'schools' | 'convenience' | 'hazard' | 'population'
-type ChunkPayload = PointLayerFeature[] | AreaLayerFeature[]
+type ChunkPayload = PointLayerFeature[] | AreaLayerFeature[] | string[]
 
 type UseTokyoDataArgs = {
   activeMode: ModeId
@@ -101,6 +106,10 @@ function cloneOverlays(overlays: TokyoOverlayData): TokyoOverlayData {
 
 function dedupePayload<T extends { id: string }>(items: T[]) {
   return [...new Map(items.map((item) => [item.id, item])).values()]
+}
+
+function dedupeIds(items: string[]) {
+  return [...new Set(items)]
 }
 
 function touchCacheEntry<K, V>(cache: Map<K, V>, key: K, value: V, limit: number) {
@@ -232,6 +241,62 @@ async function getChunkPayloadCached(
   return payload
 }
 
+async function getAreaCatalogCached(
+  cache: Map<string, AreaCatalog>,
+  path: string,
+  signal: AbortSignal,
+) {
+  const cached = cache.get(path)
+  if (cached) {
+    touchCacheEntry(cache, path, cached, AREA_CATALOG_CACHE_LIMIT)
+    return cached
+  }
+
+  const catalog = await loadAreaCatalog(path, undefined, signal)
+  touchCacheEntry(cache, path, catalog, AREA_CATALOG_CACHE_LIMIT)
+  return catalog
+}
+
+async function getAreaChunkRefsCached(
+  cache: Map<string, ChunkPayload>,
+  path: string,
+  signal: AbortSignal,
+) {
+  const cached = cache.get(path)
+  if (cached) {
+    touchCacheEntry(cache, path, cached, CHUNK_CACHE_LIMIT)
+    return cached as string[]
+  }
+
+  const payload = await loadAreaChunkRefs(path, undefined, signal)
+  touchCacheEntry(cache, path, payload, CHUNK_CACHE_LIMIT)
+  return payload
+}
+
+function topPriorityShardIds(
+  stationBases: StationBase[],
+  detailManifest: StationDetailManifest | null,
+) {
+  if (!detailManifest) {
+    return []
+  }
+
+  const rankedStations = [...stationBases]
+    .sort((left, right) => {
+      if (left.labelTier !== right.labelTier) {
+        return left.labelTier === 'major' ? -1 : 1
+      }
+      return right.metrics.ridershipDaily - left.metrics.ridershipDaily
+    })
+    .slice(0, 18)
+
+  const shardIds = rankedStations
+    .map((station) => detailManifest.stationToShard[station.id])
+    .filter((shardId): shardId is string => typeof shardId === 'string')
+
+  return [...new Set(shardIds)].slice(0, PREFETCH_DETAIL_SHARD_LIMIT)
+}
+
 export function useTokyoData(args: UseTokyoDataArgs): TokyoDataState {
   const { activeMode, selectedStationId, viewport } = args
   const [status, setStatus] = useState<'loading' | 'error' | 'ready'>('loading')
@@ -251,7 +316,9 @@ export function useTokyoData(args: UseTokyoDataArgs): TokyoDataState {
   const detailManifestRef = useRef<StationDetailManifest | null>(null)
   const manifestCacheRef = useRef(new Map<string, ChunkManifest>())
   const chunkCacheRef = useRef(new Map<string, ChunkPayload>())
+  const areaCatalogCacheRef = useRef(new Map<string, AreaCatalog>())
   const detailShardCacheRef = useRef(new Map<string, StationDetailShard>())
+  const prefetchedShardIdsRef = useRef(new Set<string>())
   const lastOverlayKeyRef = useRef<Record<OverlayModeId, string>>({
     schools: '',
     convenience: '',
@@ -302,6 +369,55 @@ export function useTokyoData(args: UseTokyoDataArgs): TokyoDataState {
       controller.abort()
     }
   }, [])
+
+  useEffect(() => {
+    if (status !== 'ready' || !stationBases.length || !detailManifestRef.current) {
+      return
+    }
+
+    const controller = new AbortController()
+    const detailManifest = detailManifestRef.current
+    const priorityShardIds = topPriorityShardIds(stationBases, detailManifest)
+      .filter((shardId) => !prefetchedShardIdsRef.current.has(shardId))
+
+    if (!priorityShardIds.length) {
+      return
+    }
+
+    let timeoutId: number | null = null
+
+    const prefetch = async () => {
+      for (const shardId of priorityShardIds) {
+        if (controller.signal.aborted) {
+          return
+        }
+
+        try {
+          await getDetailShardCached(
+            detailShardCacheRef.current,
+            shardId,
+            controller.signal,
+          )
+          prefetchedShardIdsRef.current.add(shardId)
+        } catch {
+          return
+        }
+      }
+    }
+
+    if (typeof window !== 'undefined') {
+      timeoutId = window.setTimeout(() => {
+        void prefetch()
+      }, 350)
+    }
+
+    return () => {
+      controller.abort()
+      if (typeof window !== 'undefined' && timeoutId !== null) {
+        window.clearTimeout(timeoutId)
+      }
+    }
+  }, [stationBases, status])
 
   useEffect(() => {
     if (status !== 'ready') {
@@ -432,22 +548,52 @@ export function useTokyoData(args: UseTokyoDataArgs): TokyoDataState {
         setOverlayErrorMessage(undefined)
         setOverlayInfo(nextOverlayInfo)
 
-        const payloads = await Promise.all(
-          matchedChunks.map((chunk) =>
-            getChunkPayloadCached(
-              chunkCacheRef.current,
-              chunk.path,
-              manifest.kind,
-              controller.signal,
-            ),
-          ),
-        )
+        const payloads =
+          manifest.kind === 'area' && manifest.catalogPath
+            ? await Promise.all(
+                matchedChunks.map((chunk) =>
+                  getAreaChunkRefsCached(
+                    chunkCacheRef.current,
+                    chunk.path,
+                    controller.signal,
+                  ),
+                ),
+              )
+            : await Promise.all(
+                matchedChunks.map((chunk) =>
+                  getChunkPayloadCached(
+                    chunkCacheRef.current,
+                    chunk.path,
+                    manifest.kind,
+                    controller.signal,
+                  ),
+                ),
+              )
 
         if (controller.signal.aborted) {
           return
         }
 
-        const mergedPayload = dedupePayload(payloads.flat())
+        let resolvedPayload: PointLayerFeature[] | AreaLayerFeature[]
+        if (manifest.kind === 'area' && manifest.catalogPath) {
+          const catalog = await getAreaCatalogCached(
+            areaCatalogCacheRef.current,
+            manifest.catalogPath,
+            controller.signal,
+          )
+          resolvedPayload = dedupeIds(payloads.flat() as string[])
+            .map((id) => catalog[id])
+            .filter((item): item is AreaLayerFeature => Boolean(item))
+        } else {
+          resolvedPayload = dedupePayload(
+            payloads.flat() as Array<PointLayerFeature | AreaLayerFeature>,
+          ) as PointLayerFeature[] | AreaLayerFeature[]
+        }
+
+        if (controller.signal.aborted) {
+          return
+        }
+
         lastOverlayKeyRef.current[overlayMode] = nextOverlayKey
         setOverlayInfo(nextOverlayInfo)
 
@@ -455,13 +601,13 @@ export function useTokyoData(args: UseTokyoDataArgs): TokyoDataState {
           const next = cloneOverlays(current)
 
           if (overlayMode === 'schools') {
-            next.schools = mergedPayload as PointLayerFeature[]
+            next.schools = resolvedPayload as PointLayerFeature[]
           } else if (overlayMode === 'convenience') {
-            next.convenience = mergedPayload as PointLayerFeature[]
+            next.convenience = resolvedPayload as PointLayerFeature[]
           } else if (overlayMode === 'hazard') {
-            next.hazards = mergedPayload as AreaLayerFeature[]
+            next.hazards = resolvedPayload as AreaLayerFeature[]
           } else {
-            next.population = mergedPayload as AreaLayerFeature[]
+            next.population = resolvedPayload as AreaLayerFeature[]
           }
 
           return next

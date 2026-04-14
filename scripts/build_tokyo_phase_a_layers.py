@@ -1319,7 +1319,7 @@ def build_area_chunk_manifest(
     step_lon: float,
     step_lat: float,
 ) -> dict[str, Any]:
-    chunk_map: dict[tuple[int, int], dict[str, dict[str, Any]]] = defaultdict(dict)
+    chunk_map: dict[tuple[int, int], set[str]] = defaultdict(set)
     cols, rows = chunk_grid_dimensions(step_lon, step_lat)
     simplified_areas: list[dict[str, Any]] = []
 
@@ -1371,18 +1371,25 @@ def build_area_chunk_manifest(
                     "north": max_y,
                 }
                 if bounds_intersect(area_bounds, chunk_bounds):
-                    chunk_map[(chunk_x, chunk_y)][area_copy["id"]] = area_copy
+                    chunk_map[(chunk_x, chunk_y)].add(area_copy["id"])
 
     chunks: list[dict[str, Any]] = []
     chunk_dir = RUNTIME_DIR / mode_id / level / "chunks"
+    catalog_path = RUNTIME_DIR / mode_id / f"{level}.catalog.json"
+    write_json(
+        catalog_path,
+        {
+            area["id"]: area
+            for area in sorted(simplified_areas, key=lambda item: item["id"])
+        },
+        indent=None,
+    )
+
     for chunk_key in sorted(chunk_map):
         chunk_x, chunk_y = chunk_key
         chunk_id = f"{chunk_x:02d}-{chunk_y:02d}"
         chunk_path = chunk_dir / f"{chunk_id}.json"
-        payload = sorted(
-            chunk_map[chunk_key].values(),
-            key=lambda item: item["id"],
-        )
+        payload = sorted(chunk_map[chunk_key])
         write_json(chunk_path, payload, indent=None)
         chunks.append(
             {
@@ -1409,6 +1416,7 @@ def build_area_chunk_manifest(
         "geometryPointCount": sum(
             geometry_point_count(area["geometry"]) for area in simplified_areas
         ),
+        "catalogPath": to_public_path(catalog_path),
         "chunks": chunks,
     }
     write_json(manifest_path, manifest, indent=None)

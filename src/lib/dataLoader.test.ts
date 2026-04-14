@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
+  loadAreaCatalog,
   loadAreaChunk,
+  loadAreaChunkRefs,
   loadChunkManifest,
   loadPointChunk,
   loadRuntimeIndex,
@@ -66,6 +68,14 @@ describe('dataLoader', () => {
       '/data/tokyo/runtime/hazard/detail/chunks/00-00.json',
       createFetcher([{ id: 'hazard-1' }]),
     )
+    const areaCatalog = await loadAreaCatalog(
+      '/data/tokyo/runtime/hazard/detail.catalog.json',
+      createFetcher({ 'hazard-1': { id: 'hazard-1' } }),
+    )
+    const areaChunkRefs = await loadAreaChunkRefs(
+      '/data/tokyo/runtime/hazard/detail/chunks/00-00.json',
+      createFetcher(['hazard-1']),
+    )
 
     expect(stationBases[0]?.id).toBe('tokyo')
     expect(detailManifest.stationToShard.tokyo).toBe('shard-00')
@@ -75,6 +85,8 @@ describe('dataLoader', () => {
     expect(chunkManifest.chunks[0]?.id).toBe('00-00')
     expect(pointChunk[0]?.id).toBe('school-1')
     expect(areaChunk[0]?.id).toBe('hazard-1')
+    expect(areaCatalog['hazard-1']?.id).toBe('hazard-1')
+    expect(areaChunkRefs[0]).toBe('hazard-1')
   })
 
   it('throws when a runtime resource fails to load', async () => {

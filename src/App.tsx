@@ -32,10 +32,49 @@ function getInitialCompactLayout() {
   return window.matchMedia('(max-width: 820px)').matches
 }
 
+function getInitialMode() {
+  if (typeof window === 'undefined') {
+    return 'price' as ModeId
+  }
+
+  const mode = new URL(window.location.href).searchParams.get('mode')
+  return mode && mode in MODES ? (mode as ModeId) : 'price'
+}
+
+function getInitialStationId() {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  return new URL(window.location.href).searchParams.get('station')
+}
+
+function syncUrlState(activeMode: ModeId, selectedStationId: string | null) {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  const url = new URL(window.location.href)
+
+  if (activeMode === 'price') {
+    url.searchParams.delete('mode')
+  } else {
+    url.searchParams.set('mode', activeMode)
+  }
+
+  if (selectedStationId) {
+    url.searchParams.set('station', selectedStationId)
+  } else {
+    url.searchParams.delete('station')
+  }
+
+  window.history.replaceState({}, '', url)
+}
+
 export default function App() {
   const [isCompactLayout, setIsCompactLayout] = useState(getInitialCompactLayout)
-  const [activeMode, setActiveMode] = useState<ModeId>('price')
-  const [selectedStationId, setSelectedStationId] = useState<string | null>(null)
+  const [activeMode, setActiveMode] = useState<ModeId>(getInitialMode)
+  const [selectedStationId, setSelectedStationId] = useState<string | null>(getInitialStationId)
   const [viewport, setViewport] = useState<MapViewport | null>(null)
   const [query, setQuery] = useState('')
   const [resetToken, setResetToken] = useState(0)
@@ -45,12 +84,16 @@ export default function App() {
   const dataState = useTokyoData({ activeMode, viewport, selectedStationId })
 
   const stationBases = dataState.stationBases
+  const effectiveSelectedStationId =
+    selectedStationId && stationBases.some((station) => station.id === selectedStationId)
+      ? selectedStationId
+      : null
   const metadata = dataState.metadata
   const overlays = dataState.status === 'ready' ? dataState.overlays : EMPTY_OVERLAYS
   const deferredQuery = useDeferredValue(query)
   const searchResults = searchStations(deferredQuery, stationBases)
   const selectedStationBase =
-    stationBases.find((station) => station.id === selectedStationId) ?? null
+    stationBases.find((station) => station.id === effectiveSelectedStationId) ?? null
   const selectedStationDetail =
     dataState.status === 'ready' ? dataState.selectedStationDetail : null
   const updatedLabel = formatShortDateLabel(
@@ -90,6 +133,10 @@ export default function App() {
       window.clearTimeout(timer)
     }
   }, [activeMode, isCompactLayout])
+
+  useEffect(() => {
+    syncUrlState(activeMode, effectiveSelectedStationId)
+  }, [activeMode, effectiveSelectedStationId])
 
   function handleSelectStation(stationId: string | null) {
     startTransition(() => {

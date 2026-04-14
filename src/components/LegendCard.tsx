@@ -1,3 +1,4 @@
+import { TOKYO_MODE_METHODS } from '../data/siteMeta'
 import type { AsyncStatus, ModeDefinition, OverlayRuntimeInfo } from '../types'
 
 type LegendCardProps = {
@@ -32,7 +33,7 @@ export function LegendCard(props: LegendCardProps) {
         : '细节层'
   const runtimeFootnote =
     activeMode.category === 'station'
-      ? '7 个模式共用同一张东京地图底座；切换时只换图层，不换页面。'
+      ? `${TOKYO_MODE_METHODS[activeMode.id].method} ${TOKYO_MODE_METHODS[activeMode.id].boundary}`
       : overlayStatus === 'loading'
         ? `当前视口正在补 ${activeMode.label}${layerLabel} 数据。`
         : overlayStatus === 'error'

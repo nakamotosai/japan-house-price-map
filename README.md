@@ -6,8 +6,8 @@
 
 ## 当前状态
 
-- 状态：`Tokyo V1.2 runtime perf 已收口`
-- 当前版本：`单页东京地图 + 7 模式 + summary/overview/detail runtime + V1.2 包体拆分 + 强化前台验收 + Tailnet 预览`
+- 状态：`Tokyo V1.5 bundle upgrade 已收口`
+- 当前版本：`单页东京地图 + 7 模式 + summary/overview/detail runtime + V1.3 area catalog streaming + V1.4 图例/验收补全 + V1.5 站点分享增强 + Tailnet 预览`
 - 当前可用能力：
   - 直接进入东京地图，不做独立首页
   - Google Maps 风格启发的左侧边栏、左上搜索栏和顶部模式按钮
@@ -26,10 +26,13 @@
     - 人口趋势
   - 车站继续作为核心锚点，不做房源级列表
   - 站点详情继续按点击补载 shard，而不是首屏整包塞进来
+  - 热门站点 detail shard 会在空闲时预取，首个点击等待更短
   - `schools / convenience / hazard / population` 全部走三档 runtime manifest：
     - `summary`
     - `overview`
     - `detail`
+  - `hazard / population` 的三档 area runtime 已改成 `manifest + catalog + id chunk`，不再把同一块面数据重复塞进多个 chunk
+  - 当前 `runtime/` 目录约 `7.3M`，比上一轮约 `24M` 明显下降
   - `schools / convenience` 已补低缩放 `overview` 聚合层
   - 默认东京视口现在优先命中更粗的 `summary` 层，而不是直接打碎 `overview`
   - 页面内说明弹窗已回写真实口径、来源、年份、覆盖范围和当前边界
@@ -37,7 +40,10 @@
   - 移动端图例默认折叠，默认先把地图让出来
   - 说明弹窗已拆成懒加载 chunk，不再挤在首屏主包里
   - build 已拆成 `vendor-react / vendor-maplibre / app entry`
-  - UI 可见 `Tokyo V1.2` 和数据更新时间
+  - URL 现在支持 `?mode=<mode>&station=<stationId>` 直达和分享
+  - 站点面板现在有“分享这站”入口，优先 Web Share，失败时回退复制链接
+  - 7 个模式的图例脚注和固定验收报告都已补成可读文本
+  - UI 可见 `Tokyo V1.5` 和数据更新时间
   - 固定前台验收现在会额外产出 `console / network / interaction / live screenshot`
   - 固定 Tailnet HTTPS 预览入口可直接从 Windows 访问
 
@@ -105,12 +111,12 @@
 - `runtime/convenience/summary.manifest.json + chunks`
 - `runtime/convenience/overview.manifest.json + chunks`
 - `runtime/convenience/detail.manifest.json + chunks`
-- `runtime/hazard/summary.manifest.json + chunks`
-- `runtime/hazard/overview.manifest.json + chunks`
-- `runtime/hazard/detail.manifest.json + chunks`
-- `runtime/population/summary.manifest.json + chunks`
-- `runtime/population/overview.manifest.json + chunks`
-- `runtime/population/detail.manifest.json + chunks`
+- `runtime/hazard/summary.manifest.json + summary.catalog.json + chunks`
+- `runtime/hazard/overview.manifest.json + overview.catalog.json + chunks`
+- `runtime/hazard/detail.manifest.json + detail.catalog.json + chunks`
+- `runtime/population/summary.manifest.json + summary.catalog.json + chunks`
+- `runtime/population/overview.manifest.json + overview.catalog.json + chunks`
+- `runtime/population/detail.manifest.json + detail.catalog.json + chunks`
 
 当前运行时摘要：
 
@@ -132,6 +138,7 @@
 - 默认进入东京核心视角：`zoom 11.55`
 - 默认房产均价模式继续优先显示大站和核心价格 badge
 - 左上菜单按钮现在会打开地图菜单，不再是死控件
+- 直达链接支持把当前 `mode + station` 保留在 URL 里
 - `schools / convenience`
   - 默认东京视口先用 `summary`
   - 低缩放先用 `overview`
@@ -140,12 +147,13 @@
   - 默认东京视口先用 `summary`
   - 低缩放先用 `overview`
   - 放大到 `12.3+` 才切 `detail`
+  - 会额外补一次对应 level 的 `catalog.json`，chunk 本体只传 feature id
 - 说明按钮继续做成透明弹窗，不做独立说明页
 - 点击空白区域可以收起站点卡片
-- 图例继续自动收起，但会显示当前层级和视口命中状态
+- 图例继续自动收起，但 7 个模式都能显示稳定脚注和当前层级命中状态
 - 移动端模式区固定为单行横向滚动，不再堆成多行按钮墙
 - 移动端默认先显示折叠图例，需要时再展开
-- 左侧边栏底部可看到 `Tokyo V1.2` 与数据更新时间简写
+- 左侧边栏底部可看到 `Tokyo V1.5` 与数据更新时间简写
 
 ## 运行与构建
 
@@ -245,28 +253,32 @@ https://vps-jp.tail4b5213.ts.net:8443/
     - `dist/assets/IntroOverlay-*.js`
 - `npm run acceptance:tokyo-v1` 通过
   - 最新验收产物：
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T153214Z/desktop-price-default.png`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T153214Z/desktop-schools-summary.png`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T153214Z/desktop-convenience-summary.png`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T153214Z/desktop-hazard-summary.png`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T153214Z/desktop-population-summary.png`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T153214Z/mobile-price-default.png`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T153214Z/live-default.png`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T153214Z/report.json`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T153214Z/console-report.json`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T153214Z/network-report.json`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T153214Z/interaction-summary.json`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T161536Z/desktop-price-default.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T161536Z/desktop-schools-summary.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T161536Z/desktop-convenience-summary.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T161536Z/desktop-hazard-summary.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T161536Z/desktop-population-summary.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T161536Z/mobile-price-default.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T161536Z/live-default.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T161536Z/report.json`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T161536Z/console-report.json`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T161536Z/network-report.json`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T161536Z/interaction-summary.json`
   - 验收报告确认：
     - `schools / convenience / hazard / population` 都已进入三档 manifest 矩阵
     - 默认东京视口：
       - `schools` 命中 `summary.manifest.json + 4 个 summary chunks`
       - `convenience` 命中 `summary.manifest.json + 4 个 summary chunks`
-      - `hazard` 命中 `summary.manifest.json + 6 个 summary chunks`
-      - `population` 命中 `summary.manifest.json + 8 个 summary chunks`
+      - `hazard` 命中 `summary.manifest.json + 6 个 summary chunks + summary.catalog.json`
+      - `population` 命中 `summary.manifest.json + 8 个 summary chunks + summary.catalog.json`
+    - `price / land / heat / schools / convenience / hazard / population` 的 `legendText` 全部非空
     - 菜单按钮已可打开地图菜单
     - 搜索零结果态已覆盖
+    - 站点打开态已确认分享按钮可见
+    - 站点选择后 URL 会保留 `station` 与当前 `mode`
     - live 入口已拿到真实浏览器截图
     - 点击空白区域可以收起站点卡片
+    - price 默认态已经能看到热门站点 detail shard 预取请求
 - `curl -I http://127.0.0.1:4173/` 返回 `HTTP 200`
 - `curl -I https://vps-jp.tail4b5213.ts.net:8443/` 返回 `HTTP 200`
 
@@ -276,7 +288,7 @@ https://vps-jp.tail4b5213.ts.net:8443/
 - 站点是核心锚点，不做房源级列表
 - 灾害模式当前只正式接入洪水浸水，不代表全灾种完成
 - 便利度模式当前只是“医疗 + 公共服务”的第一版官方代理指标
-- 还没有站点详情页、分享页和 AI 功能
+- 还没有独立站点详情页和 AI 功能
 - 当前前台验收使用 `Chromium + SwiftShader`，用于无头环境下验证 MapLibre 页面可用
 
 ## 仓库卫生要求

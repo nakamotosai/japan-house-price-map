@@ -182,6 +182,7 @@ export type ChunkManifest = {
   featureCount: number
   weightedFeatureCount?: number
   geometryPointCount?: number
+  catalogPath?: string
   chunks: ChunkManifestItem[]
 }
 
@@ -192,6 +193,8 @@ export type StationDetailManifest = {
 }
 
 export type StationDetailShard = Record<string, Station>
+
+export type AreaCatalog = Record<string, AreaLayerFeature>
 
 export type TokyoStationsMeta = {
   generatedAt: string

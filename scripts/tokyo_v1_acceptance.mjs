@@ -193,6 +193,47 @@ async function clickSelector(client, selector) {
   }
 }
 
+async function ensureLegendExpanded(client) {
+  const legendState = await evaluate(
+    client,
+    `(() => {
+      if (document.querySelector('.legend-card__footnote')) {
+        return 'expanded'
+      }
+      if (document.querySelector('.legend-card--collapsed')) {
+        return 'collapsed'
+      }
+      return 'missing'
+    })()`,
+  )
+
+  if (legendState === 'collapsed') {
+    await clickSelector(client, '.legend-card--collapsed')
+    await delay(180)
+  }
+}
+
+async function readLegendText(client) {
+  await ensureLegendExpanded(client)
+  try {
+    await waitForExpression(
+      client,
+      `(() => {
+        const footnote = document.querySelector('.legend-card__footnote')
+        return typeof footnote?.textContent === 'string' && footnote.textContent.trim().length > 0
+      })()`,
+      2500,
+    )
+  } catch {
+    // Fall through and return the best-effort current text.
+  }
+
+  return evaluate(
+    client,
+    `document.querySelector('.legend-card__footnote')?.textContent?.trim() ?? ''`,
+  )
+}
+
 async function clickMode(client, label) {
   const clicked = await evaluate(
     client,
@@ -320,12 +361,8 @@ async function collectModeResult(client, requestLog, modeCase, artifactDir, clic
   }
 
   const screenshotPath = resolve(artifactDir, modeCase.screenshotName)
+  const legendText = await readLegendText(client)
   await captureScreenshot(client, screenshotPath)
-
-  const legendText = await evaluate(
-    client,
-    `document.querySelector('.legend-card__footnote')?.textContent?.trim() ?? ''`,
-  )
 
   return {
     id: modeCase.id,
@@ -438,6 +475,17 @@ async function main() {
 
     const stationOpenPath = resolve(artifactDir, 'desktop-station-open.png')
     await captureScreenshot(client, stationOpenPath)
+    const shareButtonVisible = await evaluate(
+      client,
+      `document.querySelector('.station-panel__ghost')?.textContent?.includes('分享这站') ?? false`,
+    )
+    const urlStatePreserved = await evaluate(
+      client,
+      `(() => {
+        const url = new URL(window.location.href)
+        return url.searchParams.has('station') && (url.searchParams.get('mode') ?? 'price') === 'price'
+      })()`,
+    )
 
     const blankPoint = await findBlankMapPoint(client)
     await clickMapBlank(client, blankPoint.x, blankPoint.y)
@@ -529,8 +577,10 @@ async function main() {
     }
     const interactionSummary = {
       stationPanelClosedByBlankClick: stationPanelClosed,
+      shareButtonVisible,
       introOpened,
       zeroResultsShown,
+      urlStatePreserved,
       mobileMenuOpened,
       liveDomReady: liveCheck.domReady,
     }

@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { getAreaMatches, getPointMatches } from '../lib/mapLayers'
 import type {
   AreaLayerFeature,
@@ -499,6 +500,21 @@ function CrossModeSummary(props: { station: Station | StationBase }) {
   )
 }
 
+function buildShareUrl(stationId: string, activeMode: ModeId) {
+  if (typeof window === 'undefined') {
+    return ''
+  }
+
+  const url = new URL(window.location.href)
+  if (activeMode === 'price') {
+    url.searchParams.delete('mode')
+  } else {
+    url.searchParams.set('mode', activeMode)
+  }
+  url.searchParams.set('station', stationId)
+  return url.toString()
+}
+
 export function StationPanel(props: StationPanelProps) {
   const {
     activeMode,
@@ -521,6 +537,56 @@ export function StationPanel(props: StationPanelProps) {
   } = props
   const activeModeMeta = modes[activeMode]
   const stationSnapshot = selectedStation ?? selectedStationBase
+  const [shareFeedback, setShareFeedback] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!shareFeedback) {
+      return undefined
+    }
+
+    const timer = window.setTimeout(() => {
+      setShareFeedback(null)
+    }, 2200)
+
+    return () => {
+      window.clearTimeout(timer)
+    }
+  }, [shareFeedback])
+
+  async function handleShareStation() {
+    if (!selectedStationBase) {
+      return
+    }
+
+    const shareUrl = buildShareUrl(selectedStationBase.id, activeMode)
+    const shareTitle = `${selectedStationBase.name} · ${activeModeMeta.label}`
+
+    try {
+      if (typeof navigator !== 'undefined' && navigator.share) {
+        await navigator.share({
+          title: shareTitle,
+          text: `${shareTitle} · 东京房价地图`,
+          url: shareUrl,
+        })
+        setShareFeedback('分享面板已打开。')
+        return
+      }
+
+      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl)
+        setShareFeedback('链接已复制。')
+        return
+      }
+
+      setShareFeedback('当前环境不支持分享。')
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        return
+      }
+
+      setShareFeedback('分享失败，请稍后重试。')
+    }
+  }
 
   if (!selectedStationBase) {
     if (status === 'ready') {
@@ -576,10 +642,17 @@ export function StationPanel(props: StationPanelProps) {
               : selectedStationBase.nameJa}
           </p>
         </div>
-        <button className="station-panel__close" onClick={onClose} type="button">
-          收起
-        </button>
+        <div className="station-panel__header-actions">
+          <button className="station-panel__ghost" onClick={handleShareStation} type="button">
+            分享这站
+          </button>
+          <button className="station-panel__close" onClick={onClose} type="button">
+            收起
+          </button>
+        </div>
       </div>
+
+      {shareFeedback ? <p className="station-panel__share-feedback">{shareFeedback}</p> : null}
 
       <div className="station-panel__summary">
         <article>
@@ -631,7 +704,7 @@ export function StationPanel(props: StationPanelProps) {
           <p className="station-panel__note">{selectedStation.metrics.note}</p>
         ) : (
           <p className="station-panel__note">
-            当前站点详情正在按点击补载，不影响地图切模式和视口加载。
+            当前站点详情正在按点击补载；热门 shard 会预取，分享链接会保留站点和模式状态。
           </p>
         )}
       </section>

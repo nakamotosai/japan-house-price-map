@@ -247,6 +247,12 @@ button {
   align-items: flex-start;
 }
 
+.station-panel__header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
 .station-panel__header h2,
 .station-panel__empty h1 {
   margin: 6px 0 4px;
@@ -312,6 +318,21 @@ button {
   border-radius: 14px;
   padding: 10px 12px;
   white-space: nowrap;
+}
+
+.station-panel__ghost {
+  border: 0;
+  background: #eef6ff;
+  color: #1f4b99;
+  border-radius: 14px;
+  padding: 10px 12px;
+  white-space: nowrap;
+}
+
+.station-panel__share-feedback {
+  margin: 10px 0 0;
+  color: #1f4b99;
+  font-size: 0.9rem;
 }
 
 .station-panel__section-head {
@@ -774,5 +795,10 @@ button {
   .intro-overlay__stats,
   .intro-overlay__mode-grid {
     grid-template-columns: 1fr;
+  }
+
+  .station-panel__header-actions {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
