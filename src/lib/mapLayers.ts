@@ -35,16 +35,6 @@ export const STATION_INTERACTIVE_LAYER_IDS = [
   'station-name',
 ]
 
-export const NON_BLANK_INTERACTIVE_LAYER_IDS = [
-  ...STATION_INTERACTIVE_LAYER_IDS,
-  'schools-clusters',
-  'schools-unclustered',
-  'convenience-clusters',
-  'convenience-unclustered',
-  'hazards-fill',
-  'population-fill',
-]
-
 const SCHOOL_LAYER_IDS = ['schools-clusters', 'schools-cluster-count', 'schools-unclustered']
 const CONVENIENCE_LAYER_IDS = [
   'convenience-clusters',

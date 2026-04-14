@@ -12,10 +12,6 @@ export default defineConfig({
             return undefined
           }
 
-          if (id.includes('maplibre-gl')) {
-            return 'vendor-maplibre'
-          }
-
           if (id.includes('/react/') || id.includes('/react-dom/') || id.includes('/scheduler/')) {
             return 'vendor-react'
           }

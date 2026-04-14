@@ -1,9 +1,8 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react'
-import maplibregl from 'maplibre-gl'
+import type { Map as MapLibreMap, MapMouseEvent } from 'maplibre-gl'
 import {
   ensureMapDataLayers,
   getTokyoCenter,
-  NON_BLANK_INTERACTIVE_LAYER_IDS,
   setModeOverlays,
   STATION_INTERACTIVE_LAYER_IDS,
   syncAreaLayers,
@@ -11,6 +10,7 @@ import {
   syncStationLayer,
   TOKYO_MAP_STYLE,
 } from '../lib/mapLayers'
+import { loadMapLibreRuntime } from '../lib/maplibreLoader'
 import {
   getVisibilityBandForZoom,
   selectStationRenderSelection,
@@ -52,7 +52,7 @@ export function TokyoMap(props: TokyoMapProps) {
     stations,
   } = props
   const containerRef = useRef<HTMLDivElement | null>(null)
-  const mapRef = useRef<maplibregl.Map | null>(null)
+  const mapRef = useRef<MapLibreMap | null>(null)
   const lastStationSignatureRef = useRef('')
   const [mapReady, setMapReady] = useState(false)
   const onSelectStationEvent = useEffectEvent(onSelectStation)
@@ -146,85 +146,95 @@ export function TokyoMap(props: TokyoMapProps) {
       return
     }
 
-    const map = new maplibregl.Map({
-      container: containerRef.current,
-      style: TOKYO_MAP_STYLE,
-      center: getTokyoCenter(),
-      zoom: DEFAULT_TOKYO_ZOOM,
-      minZoom: 9,
-      maxZoom: 16.5,
-      pitchWithRotate: false,
-      dragRotate: false,
-      attributionControl: false,
-      localIdeographFontFamily: '"Noto Sans JP", "Noto Sans SC", sans-serif',
-    })
+    let cancelled = false
+    let cleanup: (() => void) | undefined
 
-    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right')
-    map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right')
-
-    const handleClick = (event: maplibregl.MapMouseEvent) => {
-      const features = map.queryRenderedFeatures(event.point, {
-        layers: NON_BLANK_INTERACTIVE_LAYER_IDS,
-      })
-      const stationFeature = features.find((feature) =>
-        STATION_INTERACTIVE_LAYER_IDS.includes(feature.layer.id),
-      )
-
-      if (stationFeature) {
-        const stationId = stationFeature.properties?.stationId
-        if (typeof stationId === 'string') {
-          onSelectStationEvent(stationId)
-          return
-        }
-      }
-
-      if (features.length > 0) {
+    void loadMapLibreRuntime().then((maplibre) => {
+      if (cancelled || !containerRef.current) {
         return
       }
 
-      onSelectStationEvent(null)
-    }
-
-    const handlePointerMove = (event: maplibregl.MapMouseEvent) => {
-      const features = map.queryRenderedFeatures(event.point, {
-        layers: STATION_INTERACTIVE_LAYER_IDS,
+      const map = new maplibre.Map({
+        container: containerRef.current,
+        style: TOKYO_MAP_STYLE,
+        center: getTokyoCenter(),
+        zoom: DEFAULT_TOKYO_ZOOM,
+        minZoom: 9,
+        maxZoom: 16.5,
+        pitchWithRotate: false,
+        dragRotate: false,
+        attributionControl: false,
+        localIdeographFontFamily: '"Noto Sans JP", "Noto Sans SC", sans-serif',
       })
-      map.getCanvas().style.cursor = features.length ? 'pointer' : ''
-    }
 
-    const handleZoom = () => {
-      syncStationLayerEvent(false)
-    }
+      map.addControl(new maplibre.NavigationControl({ showCompass: false }), 'bottom-right')
+      map.addControl(new maplibre.AttributionControl({ compact: true }), 'bottom-right')
 
-    const handleViewportSettled = () => {
-      emitViewportChangeEvent()
-      syncStationLayerEvent(false)
-    }
+      const handleClick = (event: MapMouseEvent) => {
+        const features = map.queryRenderedFeatures(event.point, {
+          layers: STATION_INTERACTIVE_LAYER_IDS,
+        })
+        const stationFeature = features.find((feature) =>
+          STATION_INTERACTIVE_LAYER_IDS.includes(feature.layer.id),
+        )
 
-    map.on('click', handleClick)
-    map.on('mousemove', handlePointerMove)
-    map.on('zoom', handleZoom)
-    map.on('moveend', handleViewportSettled)
-    map.on('zoomend', handleViewportSettled)
-    map.on('load', () => {
-      ensureMapDataLayers(map)
-      setMapReady(true)
-      emitViewportChangeEvent()
+        if (stationFeature) {
+          const stationId = stationFeature.properties?.stationId
+          if (typeof stationId === 'string') {
+            onSelectStationEvent(stationId)
+            return
+          }
+        }
+
+        onSelectStationEvent(null)
+      }
+
+      const handlePointerMove = (event: MapMouseEvent) => {
+        const features = map.queryRenderedFeatures(event.point, {
+          layers: STATION_INTERACTIVE_LAYER_IDS,
+        })
+        map.getCanvas().style.cursor = features.length ? 'pointer' : ''
+      }
+
+      const handleZoom = () => {
+        syncStationLayerEvent(false)
+      }
+
+      const handleViewportSettled = () => {
+        emitViewportChangeEvent()
+        syncStationLayerEvent(false)
+      }
+
+      map.on('click', handleClick)
+      map.on('mousemove', handlePointerMove)
+      map.on('zoom', handleZoom)
+      map.on('moveend', handleViewportSettled)
+      map.on('zoomend', handleViewportSettled)
+      map.on('load', () => {
+        ensureMapDataLayers(map)
+        setMapReady(true)
+        emitViewportChangeEvent()
+      })
+
+      mapRef.current = map
+      ;(window as Window & { __TOKYO_MAP__?: MapLibreMap }).__TOKYO_MAP__ = map
+
+      cleanup = () => {
+        map.off('click', handleClick)
+        map.off('mousemove', handlePointerMove)
+        map.off('zoom', handleZoom)
+        map.off('moveend', handleViewportSettled)
+        map.off('zoomend', handleViewportSettled)
+        map.getCanvas().style.cursor = ''
+        delete (window as Window & { __TOKYO_MAP__?: MapLibreMap }).__TOKYO_MAP__
+        map.remove()
+        mapRef.current = null
+      }
     })
 
-    mapRef.current = map
-    ;(window as Window & { __TOKYO_MAP__?: maplibregl.Map }).__TOKYO_MAP__ = map
-
     return () => {
-      map.off('click', handleClick)
-      map.off('mousemove', handlePointerMove)
-      map.off('zoom', handleZoom)
-      map.off('moveend', handleViewportSettled)
-      map.off('zoomend', handleViewportSettled)
-      map.getCanvas().style.cursor = ''
-      delete (window as Window & { __TOKYO_MAP__?: maplibregl.Map }).__TOKYO_MAP__
-      map.remove()
-      mapRef.current = null
+      cancelled = true
+      cleanup?.()
     }
   }, [])
 

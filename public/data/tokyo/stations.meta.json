@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-14T16:07:14Z",
+  "generatedAt": "2026-04-14T17:04:25Z",
   "stationCount": 589,
   "priceCoverageCount": 342,
   "landCoverageCount": 459,
@@ -9,7 +9,7 @@
   "populationCoverageCount": 492,
   "schoolsPointCount": 3284,
   "conveniencePointCount": 22765,
-  "hazardAreaCount": 64,
+  "hazardAreaCount": 426,
   "populationAreaCount": 456,
   "sources": {
     "price": "reinfolib transaction prices 2024 residential",
@@ -19,7 +19,7 @@
       "P04-20",
       "P05-22"
     ],
-    "hazard": "A31a-24_13_20",
+    "hazard": "A31a-24_13_20 + 东京液状化250m + A33-24_13",
     "population": "500m_mesh_2024_13"
   },
   "runtime": {
@@ -29,9 +29,9 @@
     "convenienceSummaryChunks": 4,
     "convenienceOverviewChunks": 13,
     "convenienceDetailChunks": 93,
-    "hazardSummaryChunks": 6,
-    "hazardOverviewChunks": 16,
-    "hazardDetailChunks": 16,
+    "hazardSummaryChunks": 9,
+    "hazardOverviewChunks": 27,
+    "hazardDetailChunks": 27,
     "populationSummaryChunks": 8,
     "populationOverviewChunks": 26,
     "populationDetailChunks": 26,
@@ -39,9 +39,9 @@
     "schoolsOverviewFeatures": 44,
     "convenienceSummaryFeatures": 9,
     "convenienceOverviewFeatures": 46,
-    "hazardSummaryGeometryPoints": 49369,
-    "hazardOverviewGeometryPoints": 63632,
-    "hazardDetailGeometryPoints": 148611,
+    "hazardSummaryGeometryPoints": 51157,
+    "hazardOverviewGeometryPoints": 65447,
+    "hazardDetailGeometryPoints": 150490,
     "populationSummaryGeometryPoints": 2280,
     "populationOverviewGeometryPoints": 2280
   }

@@ -12,6 +12,12 @@ const CHROME_BIN = process.env.CHROME_BIN || '/usr/bin/chromium-browser'
 
 const DESKTOP_VIEWPORT = { width: 1440, height: 960, mobile: false }
 const MOBILE_VIEWPORT = { width: 393, height: 852, mobile: true }
+const STATION_INTERACTIVE_LAYER_IDS = [
+  'station-hit',
+  'station-circle',
+  'station-badge',
+  'station-name',
+]
 const MODE_CASES = [
   { id: 'price', label: '房产均价', screenshotName: 'desktop-price-default.png' },
   { id: 'land', label: '公示地价', screenshotName: 'desktop-land-default.png' },
@@ -301,6 +307,31 @@ async function clickMapBlank(client, x, y) {
     button: 'left',
     clickCount: 1,
   })
+
+  await evaluate(
+    client,
+    `(() => {
+      const map = window.__TOKYO_MAP__
+      if (!map) {
+        return false
+      }
+
+      const rect = map.getCanvas().getBoundingClientRect()
+      const point = [${x} - rect.left, ${y} - rect.top]
+      map.fire('click', {
+        point,
+        lngLat: map.unproject(point),
+        originalEvent: new MouseEvent('click', {
+          clientX: ${x},
+          clientY: ${y},
+          bubbles: true,
+          cancelable: true,
+          view: window,
+        }),
+      })
+      return true
+    })()`,
+  )
 }
 
 async function findBlankMapPoint(client) {
@@ -318,7 +349,9 @@ async function findBlankMapPoint(client) {
         for (let yRatio = 0.16; yRatio <= 0.86; yRatio += 0.12) {
           const x = rect.width * xRatio
           const y = rect.height * yRatio
-          const features = map.queryRenderedFeatures([x, y])
+          const features = map.queryRenderedFeatures([x, y], {
+            layers: ${JSON.stringify(STATION_INTERACTIVE_LAYER_IDS)},
+          })
           if (!features.length) {
             return {
               x: Math.round(rect.left + x),
@@ -471,7 +504,19 @@ async function main() {
     await delay(1200)
     await setSearchQuery(client, '新宿')
     await pickFirstSearchResult(client)
-    await delay(1500)
+    await delay(1200)
+    try {
+      await waitForExpression(
+        client,
+        `(() => {
+          const map = window.__TOKYO_MAP__
+          return !!map && !map.isMoving()
+        })()`,
+        4000,
+      )
+    } catch {
+      // Fall through and capture the current station-open state.
+    }
 
     const stationOpenPath = resolve(artifactDir, 'desktop-station-open.png')
     await captureScreenshot(client, stationOpenPath)
@@ -489,10 +534,26 @@ async function main() {
 
     const blankPoint = await findBlankMapPoint(client)
     await clickMapBlank(client, blankPoint.x, blankPoint.y)
-    await delay(600)
+    try {
+      await waitForExpression(
+        client,
+        `(() => {
+          const panel = document.querySelector('.station-panel')
+          const url = new URL(window.location.href)
+          return !panel?.querySelector('.station-panel__ghost') && !url.searchParams.has('station')
+        })()`,
+        2500,
+      )
+    } catch {
+      // Fall through and capture the post-click state below.
+    }
     const stationPanelClosed = await evaluate(
       client,
-      `!document.querySelector('.station-panel')`,
+      `(() => {
+        const panel = document.querySelector('.station-panel')
+        const url = new URL(window.location.href)
+        return !panel?.querySelector('.station-panel__ghost') && !url.searchParams.has('station')
+      })()`,
     )
 
     await clickSelector(client, '[aria-label="打开数据说明"]')

@@ -112,7 +112,7 @@ export function IntroOverlay(props: IntroOverlayProps) {
             </article>
             <article>
               <strong>方法说明</strong>
-              <p>灾害当前只正式接入洪水浸水，生活便利度当前只用医疗与公共服务做代理指标。</p>
+              <p>灾害当前正式整合洪水、液状化和土砂三灾种，生活便利度当前只用医疗与公共服务做代理指标。</p>
             </article>
           </div>
 

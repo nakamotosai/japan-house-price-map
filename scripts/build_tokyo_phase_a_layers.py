@@ -83,6 +83,14 @@ DATASETS = {
         "url": "https://nlftp.mlit.go.jp/ksj/gml/data/A31a/A31a-24/A31a-24_13_20_GEOJSON.zip",
         "cache": CACHE_DIR / "A31a-24_13_20_GEOJSON.zip",
     },
+    "landslide": {
+        "url": "https://nlftp.mlit.go.jp/ksj/gml/data/A33/A33-24/A33-24_13_GEOJSON.zip",
+        "cache": CACHE_DIR / "A33-24_13_GEOJSON.zip",
+    },
+    "liquefaction": {
+        "url": "https://www.opendata.metro.tokyo.lg.jp/soumu/9_ekijyouka250m_tosinnnannbutyokka.csv",
+        "cache": CACHE_DIR / "tokyo-liquefaction-250m.csv",
+    },
     "population": {
         "url": "https://nlftp.mlit.go.jp/ksj/gml/data/m500r6/m500r6-24/500m_mesh_2024_13_GEOJSON.zip",
         "cache": CACHE_DIR / "500m_mesh_2024_13_GEOJSON.zip",
@@ -93,6 +101,7 @@ DATASETS = {
 SCHOOL_ASSIGN_DISTANCE_M = 1500
 CONVENIENCE_ASSIGN_DISTANCE_M = 1500
 LAND_ASSIGN_DISTANCE_M = 1200
+LANDSLIDE_ASSIGN_DISTANCE_M = 75
 
 WATER_DEPTH_LABELS = {
     1: "0-0.5m",
@@ -121,6 +130,8 @@ AREA_DETAIL_ZOOM_THRESHOLD = 12.3
 POINT_DETAIL_ZOOM_THRESHOLD = 12.8
 POINT_SUMMARY_ZOOM_THRESHOLD = 11.9
 AREA_SUMMARY_ZOOM_THRESHOLD = 11.8
+LIQUEFACTION_MESH_LON_STEP = 0.003125
+LIQUEFACTION_MESH_LAT_STEP = 0.002083333
 
 
 def parse_args() -> argparse.Namespace:
@@ -157,6 +168,11 @@ def download_if_needed(url: str, target: Path, force: bool = False) -> None:
 
 def load_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def load_csv_rows(path: Path, *, encoding: str = "utf-8-sig") -> list[dict[str, str]]:
+    with path.open("r", encoding=encoding, newline="") as handle:
+        return list(csv.DictReader(handle))
 
 
 def write_json(path: Path, payload: Any, *, indent: int | None = 2) -> None:
@@ -281,6 +297,22 @@ def geometry_bbox(geometry: dict[str, Any]) -> tuple[float, float, float, float]
     return min_x, min_y, max_x, max_y
 
 
+def expand_bbox_by_meters(
+    bbox: tuple[float, float, float, float],
+    padding_m: float,
+) -> tuple[float, float, float, float]:
+    min_x, min_y, max_x, max_y = bbox
+    center_lat = (min_y + max_y) / 2
+    lat_padding = padding_m / 111_000
+    lng_padding = padding_m / (111_000 * max(math.cos(math.radians(center_lat)), 0.01))
+    return (
+        min_x - lng_padding,
+        min_y - lat_padding,
+        max_x + lng_padding,
+        max_y + lat_padding,
+    )
+
+
 def station_points_in_bbox(
     stations: list[dict[str, Any]],
     bbox: tuple[float, float, float, float],
@@ -307,6 +339,126 @@ def nearest_station(
             nearest = station
             nearest_distance = distance
     return nearest
+
+
+def point_to_segment_distance_m(
+    lng: float,
+    lat: float,
+    start_lng: float,
+    start_lat: float,
+    end_lng: float,
+    end_lat: float,
+) -> float:
+    reference_lat = math.radians((lat + start_lat + end_lat) / 3)
+    scale_x = 111_000 * max(math.cos(reference_lat), 0.01)
+    scale_y = 111_000
+
+    point_x = lng * scale_x
+    point_y = lat * scale_y
+    start_x = start_lng * scale_x
+    start_y = start_lat * scale_y
+    end_x = end_lng * scale_x
+    end_y = end_lat * scale_y
+
+    segment_x = end_x - start_x
+    segment_y = end_y - start_y
+    segment_length_squared = segment_x**2 + segment_y**2
+
+    if segment_length_squared == 0:
+        return math.hypot(point_x - start_x, point_y - start_y)
+
+    projection = (
+        (point_x - start_x) * segment_x + (point_y - start_y) * segment_y
+    ) / segment_length_squared
+    projection = max(0.0, min(1.0, projection))
+
+    nearest_x = start_x + projection * segment_x
+    nearest_y = start_y + projection * segment_y
+    return math.hypot(point_x - nearest_x, point_y - nearest_y)
+
+
+def point_to_polygon_distance_m(
+    lng: float,
+    lat: float,
+    coordinates: list[list[list[float]]],
+) -> float:
+    if point_in_polygon(lng, lat, coordinates):
+        return 0.0
+
+    best_distance = float("inf")
+    for ring in coordinates:
+        ring_segments = zip(ring, ring[1:] + ring[:1])
+        for (start_lng, start_lat), (end_lng, end_lat) in ring_segments:
+            best_distance = min(
+                best_distance,
+                point_to_segment_distance_m(
+                    lng,
+                    lat,
+                    start_lng,
+                    start_lat,
+                    end_lng,
+                    end_lat,
+                ),
+            )
+    return best_distance
+
+
+def point_to_geometry_distance_m(
+    lng: float,
+    lat: float,
+    geometry: dict[str, Any],
+) -> float:
+    geometry_type = geometry["type"]
+    if geometry_type == "Polygon":
+        return point_to_polygon_distance_m(lng, lat, geometry["coordinates"])
+    if geometry_type == "MultiPolygon":
+        return min(
+            point_to_polygon_distance_m(lng, lat, polygon)
+            for polygon in geometry["coordinates"]
+        )
+    return float("inf")
+
+
+def matching_station_ids_for_geometry(
+    stations: list[dict[str, Any]],
+    tokyo_station_ids: set[str],
+    geometry: dict[str, Any],
+    *,
+    fallback_distance_m: float | None = None,
+) -> list[str]:
+    bbox = geometry_bbox(geometry)
+    candidate_bbox = (
+        expand_bbox_by_meters(bbox, fallback_distance_m)
+        if fallback_distance_m
+        else bbox
+    )
+    candidate_stations = [
+        station
+        for station in station_points_in_bbox(stations, candidate_bbox)
+        if station["id"] in tokyo_station_ids
+    ]
+
+    matching_station_ids = [
+        station["id"]
+        for station in candidate_stations
+        if point_in_geometry(station["lng"], station["lat"], geometry)
+    ]
+    if matching_station_ids or fallback_distance_m is None:
+        return matching_station_ids
+
+    nearest_station_id: str | None = None
+    nearest_distance = fallback_distance_m
+    for station in candidate_stations:
+        distance = point_to_geometry_distance_m(
+            station["lng"],
+            station["lat"],
+            geometry,
+        )
+        if distance <= nearest_distance:
+            nearest_station_id = station["id"]
+            nearest_distance = distance
+
+    return [nearest_station_id] if nearest_station_id else []
 
 
 def infer_school_category(name: str) -> tuple[str, str]:
@@ -373,6 +525,40 @@ def risk_level_from_depth_rank(rank: int | None) -> str:
     if rank >= 2:
         return "medium"
     return "low"
+
+
+def risk_level_from_liquefaction_pl(value: float) -> str:
+    if value >= 15:
+        return "high"
+    if value >= 5:
+        return "medium"
+    return "low"
+
+
+def higher_risk_level(left: str, right: str) -> str:
+    order = {"unknown": 0, "low": 1, "medium": 2, "high": 3}
+    return left if order.get(left, 0) >= order.get(right, 0) else right
+
+
+def rectangle_geometry(
+    lng: float,
+    lat: float,
+    *,
+    half_width: float,
+    half_height: float,
+) -> dict[str, Any]:
+    return {
+        "type": "Polygon",
+        "coordinates": [
+            [
+                [round(lng - half_width, 6), round(lat - half_height, 6)],
+                [round(lng + half_width, 6), round(lat - half_height, 6)],
+                [round(lng + half_width, 6), round(lat + half_height, 6)],
+                [round(lng - half_width, 6), round(lat + half_height, 6)],
+                [round(lng - half_width, 6), round(lat - half_height, 6)],
+            ]
+        ],
+    }
 
 
 def request_json(url: str, *, key: str | None = None, retries: int = 6) -> dict[str, Any]:
@@ -787,14 +973,16 @@ def build_population_areas(
     return areas
 
 
-def build_hazard_areas(
+def build_flood_hazard_areas(
     stations: list[dict[str, Any]],
     tokyo_station_ids: set[str],
     hazard_geojson_members: list[tuple[str, dict[str, Any]]],
 ) -> list[dict[str, Any]]:
     areas: list[dict[str, Any]] = []
 
-    for _, collection in hazard_geojson_members:
+    for member_name, collection in hazard_geojson_members:
+        if "A31a-20-" not in member_name:
+            continue
         for feature in collection["features"]:
             depth_rank = feature["properties"].get("A31a_205")
             if depth_rank is None:
@@ -834,15 +1022,137 @@ def build_hazard_areas(
                 if previous_rank is None or depth_rank_int > previous_rank:
                     station["metrics"]["hazardMaxDepthRank"] = depth_rank_int
                     station["metrics"]["hazard"]["flood"] = risk_level_from_depth_rank(depth_rank_int)
-                station["metrics"]["coverage"]["hazard"] = True
-
-    for station in stations:
-        if station["id"] in tokyo_station_ids and "hazardMaxDepthRank" not in station["metrics"]:
-            station["metrics"]["hazardMaxDepthRank"] = None
-            station["metrics"]["hazard"]["flood"] = "low"
-            station["metrics"]["coverage"]["hazard"] = True
 
     return areas
+
+
+def build_liquefaction_areas(
+    stations: list[dict[str, Any]],
+    tokyo_station_ids: set[str],
+    liquefaction_rows: list[dict[str, str]],
+) -> list[dict[str, Any]]:
+    areas: list[dict[str, Any]] = []
+
+    for row in liquefaction_rows:
+        lng = float(row["Lon（250mメッシュ中心経度）"])
+        lat = float(row["Lat（250mメッシュ中心緯度）"])
+        if not (
+            TOKYO_CORE_BOUNDS["west"] <= lng <= TOKYO_CORE_BOUNDS["east"]
+            and TOKYO_CORE_BOUNDS["south"] <= lat <= TOKYO_CORE_BOUNDS["north"]
+        ):
+            continue
+
+        pl_value = float(row["Plcorrecte（液状化危険度（PL値））"] or 0)
+        if pl_value <= 0:
+            continue
+
+        geometry = rectangle_geometry(
+            lng,
+            lat,
+            half_width=LIQUEFACTION_MESH_LON_STEP / 2,
+            half_height=LIQUEFACTION_MESH_LAT_STEP / 2,
+        )
+        matching_station_ids = matching_station_ids_for_geometry(
+            stations,
+            tokyo_station_ids,
+            geometry,
+        )
+        if not matching_station_ids:
+            continue
+
+        risk_level = risk_level_from_liquefaction_pl(pl_value)
+        areas.append(
+            {
+                "id": f"liquefaction-{row['250mメッシュコード']}",
+                "name": f"液状化 mesh {row['250mメッシュコード']}",
+                "categoryId": risk_level,
+                "categoryLabel": "液状化",
+                "summary": f"液状化危険度 PL値 {pl_value:.2f}",
+                "stationIds": matching_station_ids,
+                "metricValue": round(pl_value, 2),
+                "metricLabel": "PL值",
+                "geometry": geometry,
+            }
+        )
+
+        for station in stations:
+            if station["id"] not in matching_station_ids:
+                continue
+            station["metrics"]["hazard"]["liquefaction"] = higher_risk_level(
+                station["metrics"]["hazard"].get("liquefaction", "low"),
+                risk_level,
+            )
+
+    return areas
+
+
+def build_landslide_areas(
+    stations: list[dict[str, Any]],
+    tokyo_station_ids: set[str],
+    landslide_geojson: dict[str, Any],
+) -> list[dict[str, Any]]:
+    areas: list[dict[str, Any]] = []
+
+    for feature in landslide_geojson["features"]:
+        geometry = feature["geometry"]
+        matching_station_ids = matching_station_ids_for_geometry(
+            stations,
+            tokyo_station_ids,
+            geometry,
+            fallback_distance_m=LANDSLIDE_ASSIGN_DISTANCE_M,
+        )
+        if not matching_station_ids:
+            continue
+
+        is_special_warning = int(feature["properties"].get("A33_008") or 0) > 0
+        risk_level = "high" if is_special_warning else "medium"
+        area_name = feature["properties"].get("A33_006") or feature["properties"].get("A33_004") or "土砂災害警戒区域"
+        areas.append(
+            {
+                "id": f"landslide-{feature['properties'].get('A33_004', len(areas))}",
+                "name": area_name,
+                "categoryId": risk_level,
+                "categoryLabel": "土砂災害",
+                "summary": "土砂災害特別警戒区域" if is_special_warning else "土砂災害警戒区域",
+                "stationIds": matching_station_ids,
+                "metricValue": 2 if is_special_warning else 1,
+                "metricLabel": "警戒等级",
+                "geometry": geometry,
+            }
+        )
+
+        for station in stations:
+            if station["id"] not in matching_station_ids:
+                continue
+            station["metrics"]["hazard"]["landslide"] = higher_risk_level(
+                station["metrics"]["hazard"].get("landslide", "low"),
+                risk_level,
+            )
+
+    return areas
+
+
+def build_hazard_areas(
+    stations: list[dict[str, Any]],
+    tokyo_station_ids: set[str],
+    hazard_geojson_members: list[tuple[str, dict[str, Any]]],
+    landslide_geojson: dict[str, Any],
+    liquefaction_rows: list[dict[str, str]],
+) -> list[dict[str, Any]]:
+    flood_areas = build_flood_hazard_areas(stations, tokyo_station_ids, hazard_geojson_members)
+    liquefaction_areas = build_liquefaction_areas(stations, tokyo_station_ids, liquefaction_rows)
+    landslide_areas = build_landslide_areas(stations, tokyo_station_ids, landslide_geojson)
+
+    for station in stations:
+        if station["id"] not in tokyo_station_ids:
+            continue
+        station["metrics"]["hazardMaxDepthRank"] = station["metrics"].get("hazardMaxDepthRank")
+        station["metrics"]["hazard"]["flood"] = station["metrics"]["hazard"].get("flood", "low")
+        station["metrics"]["hazard"]["liquefaction"] = station["metrics"]["hazard"].get("liquefaction", "low")
+        station["metrics"]["hazard"]["landslide"] = station["metrics"]["hazard"].get("landslide", "low")
+        station["metrics"]["coverage"]["hazard"] = True
+
+    return flood_areas + liquefaction_areas + landslide_areas
 
 
 def enrich_station_copy(station: dict[str, Any]) -> None:
@@ -880,6 +1190,10 @@ def enrich_station_copy(station: dict[str, Any]) -> None:
             note_parts.append("当前未落入东京洪水浸水区")
         else:
             note_parts.append(f"洪水浸水深度 {WATER_DEPTH_LABELS.get(depth_rank, '待补')}")
+        if metrics["hazard"].get("liquefaction") in {"medium", "high"}:
+            note_parts.append(f"液状化风险 {metrics['hazard']['liquefaction']}")
+        if metrics["hazard"].get("landslide") in {"medium", "high"}:
+            note_parts.append(f"土砂风险 {metrics['hazard']['landslide']}")
 
     station["summary"] = " ".join(summary_parts) if summary_parts else "官方车站底座已接入，当前以正式图层聚合结果为主。"
     station["metrics"]["note"] = "；".join(note_parts) + "。"
@@ -914,7 +1228,7 @@ def build_metadata(
             "land": "L01-25",
             "schools": "P29-23",
             "convenience": ["P04-20", "P05-22"],
-            "hazard": "A31a-24_13_20",
+            "hazard": "A31a-24_13_20 + 东京液状化250m + A33-24_13",
             "population": "500m_mesh_2024_13",
         },
     }
@@ -1751,11 +2065,21 @@ def main() -> None:
         tokyo_station_ids,
         population_geojson["features"],
     )
+    landslide_geojson = load_geojson_member(
+        DATASETS["landslide"]["cache"],
+        "A33-24_13Polygon.geojson",
+    )
+    liquefaction_rows = load_csv_rows(
+        DATASETS["liquefaction"]["cache"],
+        encoding="cp932",
+    )
 
     hazard = build_hazard_areas(
         stations,
         tokyo_station_ids,
         iter_geojson_members(DATASETS["hazard"]["cache"]),
+        landslide_geojson,
+        liquefaction_rows,
     )
 
     for station in stations:

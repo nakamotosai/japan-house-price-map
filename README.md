@@ -6,8 +6,8 @@
 
 ## 当前状态
 
-- 状态：`Tokyo V1.5 bundle upgrade 已收口`
-- 当前版本：`单页东京地图 + 7 模式 + summary/overview/detail runtime + V1.3 area catalog streaming + V1.4 图例/验收补全 + V1.5 站点分享增强 + Tailnet 预览`
+- 状态：`Tokyo V1.6 edge closeout 已收口`
+- 当前版本：`单页东京地图 + 7 模式 + manifest/catalog runtime + V1.5 站点分享增强 + V1.6 MapLibre 脱主包 / 灾害三灾种收口 + Tailnet 预览`
 - 当前可用能力：
   - 直接进入东京地图，不做独立首页
   - Google Maps 风格启发的左侧边栏、左上搜索栏和顶部模式按钮
@@ -31,19 +31,20 @@
     - `summary`
     - `overview`
     - `detail`
-  - `hazard / population` 的三档 area runtime 已改成 `manifest + catalog + id chunk`，不再把同一块面数据重复塞进多个 chunk
-  - 当前 `runtime/` 目录约 `7.3M`，比上一轮约 `24M` 明显下降
+  - `hazard / population` 的三档 area runtime 已改成 `manifest + catalog + id chunk`，chunk 本体只传 feature id
+  - `MapLibre` 已从应用主包拆出，当前走 `/public/vendor/maplibre/` 本地 vendor 注入
+  - 当前 `runtime/` 目录约 `15M`，`public/vendor/maplibre/` 约 `1.1M`
   - `schools / convenience` 已补低缩放 `overview` 聚合层
   - 默认东京视口现在优先命中更粗的 `summary` 层，而不是直接打碎 `overview`
   - 页面内说明弹窗已回写真实口径、来源、年份、覆盖范围和当前边界
   - 移动端模式区已收成单行横向带，不再多行挤压地图
   - 移动端图例默认折叠，默认先把地图让出来
   - 说明弹窗已拆成懒加载 chunk，不再挤在首屏主包里
-  - build 已拆成 `vendor-react / vendor-maplibre / app entry`
+  - build 现在只保留 `vendor-react / app entry`，不再生成 `vendor-maplibre-*`
   - URL 现在支持 `?mode=<mode>&station=<stationId>` 直达和分享
   - 站点面板现在有“分享这站”入口，优先 Web Share，失败时回退复制链接
   - 7 个模式的图例脚注和固定验收报告都已补成可读文本
-  - UI 可见 `Tokyo V1.5` 和数据更新时间
+  - UI 可见 `Tokyo V1.6` 和数据更新时间
   - 固定前台验收现在会额外产出 `console / network / interaction / live screenshot`
   - 固定 Tailnet HTTPS 预览入口可直接从 Windows 访问
 
@@ -82,10 +83,12 @@
   - 原始点位：`22765`
   - 低缩放总览：`13` 个 chunk / `46` 个聚合点
 - 灾害风险：
-  - 来源：`A31a-24_13_20`
-  - 当前正式口径：`洪水浸水`
+  - 来源：`A31a-24_13_20 + 东京液状化250m + A33-24_13`
+  - 当前正式口径：`洪水浸水 + 液状化 + 土砂災害`
   - 覆盖站点：`505`
-  - 区域数：`64`
+  - 区域数：`426`
+  - 其中土砂：`15` 个区域 / `11` 个站点
+  - 归属方式：`洪水 / 液状化按站点落面；土砂在站点点位未压中 polygon 时按 75m 最近站点归属`
 - 人口趋势：
   - 来源：`500m_mesh_2024_13`
   - 口径：`2020 -> 2040 推计人口变化率`
@@ -126,9 +129,9 @@
 - `convenienceSummaryChunks`: `4`
 - `convenienceOverviewChunks`: `13`
 - `convenienceDetailChunks`: `93`
-- `hazardSummaryChunks`: `6`
-- `hazardOverviewChunks`: `16`
-- `hazardDetailChunks`: `16`
+- `hazardSummaryChunks`: `9`
+- `hazardOverviewChunks`: `27`
+- `hazardDetailChunks`: `27`
 - `populationSummaryChunks`: `8`
 - `populationOverviewChunks`: `26`
 - `populationDetailChunks`: `26`
@@ -153,7 +156,7 @@
 - 图例继续自动收起，但 7 个模式都能显示稳定脚注和当前层级命中状态
 - 移动端模式区固定为单行横向滚动，不再堆成多行按钮墙
 - 移动端默认先显示折叠图例，需要时再展开
-- 左侧边栏底部可看到 `Tokyo V1.5` 与数据更新时间简写
+- 左侧边栏底部可看到 `Tokyo V1.6` 与数据更新时间简写
 
 ## 运行与构建
 
@@ -249,33 +252,34 @@ https://vps-jp.tail4b5213.ts.net:8443/
   - 当前 build 产物已拆出：
     - `dist/assets/index-*.js`
     - `dist/assets/vendor-react-*.js`
-    - `dist/assets/vendor-maplibre-*.js`
+    - `/public/vendor/maplibre/maplibre-gl.js`
     - `dist/assets/IntroOverlay-*.js`
 - `npm run acceptance:tokyo-v1` 通过
   - 最新验收产物：
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T161536Z/desktop-price-default.png`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T161536Z/desktop-schools-summary.png`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T161536Z/desktop-convenience-summary.png`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T161536Z/desktop-hazard-summary.png`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T161536Z/desktop-population-summary.png`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T161536Z/mobile-price-default.png`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T161536Z/live-default.png`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T161536Z/report.json`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T161536Z/console-report.json`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T161536Z/network-report.json`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T161536Z/interaction-summary.json`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T172535Z/desktop-price-default.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T172535Z/desktop-schools-summary.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T172535Z/desktop-convenience-summary.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T172535Z/desktop-hazard-summary.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T172535Z/desktop-population-summary.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T172535Z/mobile-price-default.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T172535Z/live-default.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T172535Z/report.json`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T172535Z/console-report.json`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T172535Z/network-report.json`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T172535Z/interaction-summary.json`
   - 验收报告确认：
     - `schools / convenience / hazard / population` 都已进入三档 manifest 矩阵
     - 默认东京视口：
       - `schools` 命中 `summary.manifest.json + 4 个 summary chunks`
       - `convenience` 命中 `summary.manifest.json + 4 个 summary chunks`
-      - `hazard` 命中 `summary.manifest.json + 6 个 summary chunks + summary.catalog.json`
-      - `population` 命中 `summary.manifest.json + 8 个 summary chunks + summary.catalog.json`
+      - `hazard` 命中 `summary.manifest.json + 3 个 summary chunks + summary.catalog.json`
+      - `population` 命中 `summary.manifest.json + 3 个 summary chunks + summary.catalog.json`
     - `price / land / heat / schools / convenience / hazard / population` 的 `legendText` 全部非空
     - 菜单按钮已可打开地图菜单
     - 搜索零结果态已覆盖
     - 站点打开态已确认分享按钮可见
     - 站点选择后 URL 会保留 `station` 与当前 `mode`
+    - 站点退选后 URL 会清掉 `station`，分享按钮也会消失
     - live 入口已拿到真实浏览器截图
     - 点击空白区域可以收起站点卡片
     - price 默认态已经能看到热门站点 detail shard 预取请求
@@ -286,10 +290,10 @@ https://vps-jp.tail4b5213.ts.net:8443/
 
 - 当前只做东京，不扩到其他城市
 - 站点是核心锚点，不做房源级列表
-- 灾害模式当前只正式接入洪水浸水，不代表全灾种完成
+- 灾害模式当前正式整合 `洪水浸水 + 液状化 + 土砂災害`，但还没接 `高潮 / 津波 / 内水`
 - 便利度模式当前只是“医疗 + 公共服务”的第一版官方代理指标
 - 还没有独立站点详情页和 AI 功能
-- 当前前台验收使用 `Chromium + SwiftShader`，用于无头环境下验证 MapLibre 页面可用
+- 当前前台验收使用 `Chromium + SwiftShader`，用于无头环境下验证 MapLibre 页面可用；MapLibre 脚本本体已移到本地 vendor，不再进入应用主包
 
 ## 仓库卫生要求
 

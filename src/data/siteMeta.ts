@@ -1,8 +1,8 @@
 import type { ModeId } from '../types'
 
 export const TOKYO_SITE_RELEASE = {
-  versionLabel: 'Tokyo V1.5',
-  shortVersionLabel: 'V1.5',
+  versionLabel: 'Tokyo V1.6',
+  shortVersionLabel: 'V1.6',
   scopeLabel: '东京工具版',
   runtimeLabel: 'MapLibre + manifest/catalog runtime',
 }
@@ -47,10 +47,10 @@ export const TOKYO_MODE_METHODS: Record<
     boundary: '当前不是完整生活便利度，只是第一版官方代理口径。',
   },
   hazard: {
-    source: '国土数值信息 A31a-24_13_20',
-    period: '想定最大规模洪水浸水',
-    method: '低缩放看简化总览面，高缩放再看细节面。',
-    boundary: '当前正式只做洪水浸水，不含液化和土砂灾害。',
+    source: '国土数值信息 A31a-24_13_20 + A33-24_13 + 东京都液状化250m',
+    period: '洪水浸水 + 土砂災害警戒区域 + 都心南部直下地震液状化',
+    method: '综合洪水、液状化和土砂三灾种；土砂在站点点位未压中 polygon 时按 75m 最近站点归属。',
+    boundary: '当前正式做东京三灾种整合，不含高潮、津波和内水；土砂仍是站点级近邻归属，不等于完整坡面研判。',
   },
   population: {
     source: '国土数值信息 500m_mesh_2024_13',

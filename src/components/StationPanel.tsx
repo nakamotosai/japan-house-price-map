@@ -415,23 +415,29 @@ function ModeBody(props: {
           <strong>{riskLabel(station.metrics.hazard.flood)}</strong>
         </article>
         <article className="metric-card">
+          <span>液状化风险</span>
+          <strong>{riskLabel(station.metrics.hazard.liquefaction)}</strong>
+        </article>
+        <article className="metric-card">
+          <span>土砂风险</span>
+          <strong>{riskLabel(station.metrics.hazard.landslide)}</strong>
+        </article>
+        <article className="metric-card">
           <span>最大浸水深</span>
           <strong>{depthRankLabel(station.metrics.hazardMaxDepthRank)}</strong>
-        </article>
-        <article className="metric-card">
-          <span>当前灾种</span>
-          <strong>洪水浸水</strong>
-        </article>
-        <article className="metric-card">
-          <span>口径边界</span>
-          <strong>暂不含液化/土砂</strong>
         </article>
         <article className="metric-card metric-card--wide">
           <span>命中风险区域</span>
           <PreviewList
-            emptyText="当前站点不在已接入的洪水浸水区里。"
-            items={hazardMatches.slice(0, 6).map((hazard) => hazard.name)}
+            emptyText="当前站点不在已接入的风险区域里。"
+            items={hazardMatches
+              .slice(0, 6)
+              .map((hazard) => `${hazard.categoryLabel} · ${hazard.name}`)}
           />
+        </article>
+        <article className="metric-card metric-card--wide">
+          <span>当前口径</span>
+          <p>当前灾害模式正式整合洪水、液状化和土砂三灾种，但还不含高潮、津波和内水。</p>
         </article>
       </div>
     )

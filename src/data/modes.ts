@@ -76,12 +76,12 @@ export const MODES: Record<ModeId, ModeDefinition> = {
     label: '灾害风险',
     shortLabel: '风险',
     category: 'area',
-    description: '当前正式只显示东京洪水浸水风险面，低缩放先看总览，放大再看细节。',
-    panelTitle: '洪水风险摘要',
+    description: '综合显示东京洪水、液状化和土砂风险，低缩放先看总览，放大再看细节。',
+    panelTitle: '综合风险摘要',
     legend: [
-      { label: '高风险', color: '#d62828', note: '浸水深 rank 3+' },
-      { label: '中风险', color: '#f77f00', note: '浸水深 rank 2' },
-      { label: '低风险/未落区', color: '#2a9d8f', note: 'rank 1 或未命中浸水区' },
+      { label: '高风险', color: '#d62828', note: '深水浸水、高液状化或特別警戒区' },
+      { label: '中风险', color: '#f77f00', note: '中等浸水、液状化或警戒区' },
+      { label: '低风险/未落区', color: '#2a9d8f', note: '轻度风险或未命中特定灾害区' },
     ],
   },
   population: {
