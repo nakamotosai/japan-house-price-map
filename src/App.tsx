@@ -6,30 +6,36 @@ import { ModeChips } from './components/ModeChips'
 import { StationPanel } from './components/StationPanel'
 import { TokyoMap } from './components/TokyoMap'
 import { TopSearchBar } from './components/TopSearchBar'
-import { useTokyoData } from './hooks/useTokyoData'
 import { MODES } from './data/modes'
+import { useTokyoData } from './hooks/useTokyoData'
 import { searchStations } from './lib/search'
-import type { ModeId } from './types'
+import type { MapViewport, ModeId, TokyoOverlayData } from './types'
+
+const EMPTY_OVERLAYS: TokyoOverlayData = {
+  schools: [],
+  convenience: [],
+  hazards: [],
+  population: [],
+}
 
 export default function App() {
   const [activeMode, setActiveMode] = useState<ModeId>('price')
   const [selectedStationId, setSelectedStationId] = useState<string | null>(null)
+  const [viewport, setViewport] = useState<MapViewport | null>(null)
   const [query, setQuery] = useState('')
   const [resetToken, setResetToken] = useState(0)
   const [showIntro, setShowIntro] = useState(false)
   const [legendCollapsed, setLegendCollapsed] = useState(false)
-  const dataState = useTokyoData()
+  const dataState = useTokyoData({ activeMode, viewport, selectedStationId })
 
-  const stations = dataState.status === 'ready' ? dataState.data.stations : []
-  const schools = dataState.status === 'ready' ? dataState.data.schools : []
-  const convenience = dataState.status === 'ready' ? dataState.data.convenience : []
-  const hazards = dataState.status === 'ready' ? dataState.data.hazards : []
-  const population = dataState.status === 'ready' ? dataState.data.population : []
-
+  const stationBases = dataState.stationBases
+  const overlays = dataState.status === 'ready' ? dataState.overlays : EMPTY_OVERLAYS
   const deferredQuery = useDeferredValue(query)
-  const searchResults = searchStations(deferredQuery, stations)
-  const selectedStation =
-    stations.find((station) => station.id === selectedStationId) ?? null
+  const searchResults = searchStations(deferredQuery, stationBases)
+  const selectedStationBase =
+    stationBases.find((station) => station.id === selectedStationId) ?? null
+  const selectedStationDetail =
+    dataState.status === 'ready' ? dataState.selectedStationDetail : null
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -45,12 +51,7 @@ export default function App() {
     startTransition(() => {
       setSelectedStationId(stationId)
     })
-
-    if (stationId === null) {
-      setQuery('')
-    } else {
-      setQuery('')
-    }
+    setQuery('')
   }
 
   function handleResetView() {
@@ -68,21 +69,22 @@ export default function App() {
     <div className="app-shell">
       <TokyoMap
         activeMode={activeMode}
-        convenience={convenience}
-        hazards={hazards}
+        convenience={overlays.convenience}
+        hazards={overlays.hazards}
         onSelectStation={handleSelectStation}
-        population={population}
+        onViewportChange={setViewport}
+        population={overlays.population}
         resetToken={resetToken}
-        schools={schools}
+        schools={overlays.schools}
         selectedStationId={selectedStationId}
-        stations={stations}
+        stations={stationBases}
       />
 
       <LeftRail
         activeModeLabel={MODES[activeMode].shortLabel}
         onOpenIntro={() => setShowIntro(true)}
         onResetView={handleResetView}
-        stationCount={stations.length}
+        stationCount={stationBases.length}
       />
 
       <TopSearchBar
@@ -96,15 +98,24 @@ export default function App() {
 
       <StationPanel
         activeMode={activeMode}
-        convenience={convenience}
+        convenience={overlays.convenience}
+        detailErrorMessage={
+          dataState.status === 'ready' ? dataState.stationDetailErrorMessage : undefined
+        }
+        detailStatus={dataState.stationDetailStatus}
         errorMessage={dataState.status === 'error' ? dataState.message : undefined}
-        hazards={hazards}
+        hazards={overlays.hazards}
         modes={MODES}
         onClose={() => setSelectedStationId(null)}
         onOpenIntro={() => setShowIntro(true)}
-        population={population}
-        schools={schools}
-        selectedStation={selectedStation}
+        overlayErrorMessage={
+          dataState.status === 'ready' ? dataState.overlayErrorMessage : undefined
+        }
+        overlayStatus={dataState.overlayStatus}
+        population={overlays.population}
+        schools={overlays.schools}
+        selectedStation={selectedStationDetail}
+        selectedStationBase={selectedStationBase}
         status={dataState.status}
       />
 

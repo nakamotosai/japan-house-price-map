@@ -1,8 +1,8 @@
-import type { Station } from '../types'
+import type { StationBase } from '../types'
 
 type TopSearchBarProps = {
   query: string
-  results: Station[]
+  results: StationBase[]
   onChangeQuery: (query: string) => void
   onPickStation: (stationId: string) => void
 }

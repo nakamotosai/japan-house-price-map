@@ -8,6 +8,7 @@ import io
 import json
 import math
 import os
+import shutil
 import statistics
 import subprocess
 import sys
@@ -23,6 +24,7 @@ from typing import Any
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = PROJECT_ROOT / "public" / "data" / "tokyo"
+RUNTIME_DIR = DATA_DIR / "runtime"
 CACHE_DIR = PROJECT_ROOT / ".cache" / "phase5-core-layers"
 
 TOKYO_CORE_BOUNDS = {
@@ -101,6 +103,12 @@ WATER_DEPTH_LABELS = {
     6: "20m+",
 }
 
+RUNTIME_POINT_CHUNK_LON = 0.035
+RUNTIME_POINT_CHUNK_LAT = 0.025
+RUNTIME_AREA_CHUNK_LON = 0.07
+RUNTIME_AREA_CHUNK_LAT = 0.05
+AREA_DETAIL_ZOOM_THRESHOLD = 12.3
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -138,10 +146,14 @@ def load_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def write_json(path: Path, payload: Any) -> None:
+def write_json(path: Path, payload: Any, *, indent: int | None = 2) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
+    if indent is None:
+        text = json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n"
+    else:
+        text = json.dumps(payload, ensure_ascii=False, indent=indent) + "\n"
     path.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+        text,
         encoding="utf-8",
     )
 
@@ -895,6 +907,544 @@ def build_metadata(
     }
 
 
+def to_public_path(path: Path) -> str:
+    return "/" + path.relative_to(PROJECT_ROOT / "public").as_posix()
+
+
+def clamp_int(value: int, lower: int, upper: int) -> int:
+    return max(lower, min(upper, value))
+
+
+def chunk_grid_dimensions(step_lon: float, step_lat: float) -> tuple[int, int]:
+    cols = math.ceil((TOKYO_CORE_BOUNDS["east"] - TOKYO_CORE_BOUNDS["west"]) / step_lon)
+    rows = math.ceil((TOKYO_CORE_BOUNDS["north"] - TOKYO_CORE_BOUNDS["south"]) / step_lat)
+    return cols, rows
+
+
+def chunk_bounds_for_key(
+    chunk_x: int,
+    chunk_y: int,
+    *,
+    step_lon: float,
+    step_lat: float,
+) -> dict[str, float]:
+    west = TOKYO_CORE_BOUNDS["west"] + chunk_x * step_lon
+    south = TOKYO_CORE_BOUNDS["south"] + chunk_y * step_lat
+    east = min(TOKYO_CORE_BOUNDS["east"], west + step_lon)
+    north = min(TOKYO_CORE_BOUNDS["north"], south + step_lat)
+    return {
+        "west": round(west, 6),
+        "south": round(south, 6),
+        "east": round(east, 6),
+        "north": round(north, 6),
+    }
+
+
+def bounds_intersect(left: dict[str, float], right: dict[str, float]) -> bool:
+    return not (
+        left["east"] < right["west"]
+        or left["west"] > right["east"]
+        or left["north"] < right["south"]
+        or left["south"] > right["north"]
+    )
+
+
+def point_chunk_key(lng: float, lat: float, *, step_lon: float, step_lat: float) -> tuple[int, int]:
+    cols, rows = chunk_grid_dimensions(step_lon, step_lat)
+    chunk_x = clamp_int(
+        int((lng - TOKYO_CORE_BOUNDS["west"]) / step_lon),
+        0,
+        cols - 1,
+    )
+    chunk_y = clamp_int(
+        int((lat - TOKYO_CORE_BOUNDS["south"]) / step_lat),
+        0,
+        rows - 1,
+    )
+    return chunk_x, chunk_y
+
+
+def geometry_point_count(geometry: dict[str, Any]) -> int:
+    geometry_type = geometry["type"]
+    if geometry_type == "Polygon":
+        return sum(len(ring) for ring in geometry["coordinates"])
+    if geometry_type == "MultiPolygon":
+        return sum(len(ring) for polygon in geometry["coordinates"] for ring in polygon)
+    return 0
+
+
+def squared_distance(point_a: list[float], point_b: list[float]) -> float:
+    delta_x = point_a[0] - point_b[0]
+    delta_y = point_a[1] - point_b[1]
+    return delta_x * delta_x + delta_y * delta_y
+
+
+def perpendicular_distance(
+    point: list[float],
+    line_start: list[float],
+    line_end: list[float],
+) -> float:
+    if line_start == line_end:
+        return math.sqrt(squared_distance(point, line_start))
+
+    x0, y0 = point
+    x1, y1 = line_start
+    x2, y2 = line_end
+
+    numerator = abs((y2 - y1) * x0 - (x2 - x1) * y0 + x2 * y1 - y2 * x1)
+    denominator = math.sqrt((y2 - y1) ** 2 + (x2 - x1) ** 2)
+    return numerator / (denominator or 1e-12)
+
+
+def rdp_simplify(points: list[list[float]], tolerance: float) -> list[list[float]]:
+    if len(points) <= 2:
+        return points[:]
+
+    max_distance = -1.0
+    split_index = 0
+    for index in range(1, len(points) - 1):
+        distance = perpendicular_distance(points[index], points[0], points[-1])
+        if distance > max_distance:
+            max_distance = distance
+            split_index = index
+
+    if max_distance <= tolerance:
+        return [points[0], points[-1]]
+
+    left = rdp_simplify(points[: split_index + 1], tolerance)
+    right = rdp_simplify(points[split_index:], tolerance)
+    return left[:-1] + right
+
+
+def simplify_ring(ring: list[list[float]], tolerance: float, digits: int) -> list[list[float]]:
+    if len(ring) <= 4:
+        return [
+            [round(point[0], digits), round(point[1], digits)]
+            for point in ring
+        ]
+
+    core_points = ring[:-1] if ring[0] == ring[-1] else ring[:]
+    simplified = rdp_simplify(core_points, tolerance)
+    if len(simplified) < 3:
+        simplified = core_points[:3]
+
+    simplified = [
+        [round(point[0], digits), round(point[1], digits)]
+        for point in simplified
+    ]
+    if simplified[0] != simplified[-1]:
+        simplified.append(simplified[0])
+
+    while len(simplified) < 4:
+        simplified.insert(-1, simplified[-2])
+
+    return simplified
+
+
+def simplify_geometry(
+    geometry: dict[str, Any],
+    *,
+    tolerance: float,
+    digits: int,
+) -> dict[str, Any]:
+    geometry_type = geometry["type"]
+    if geometry_type == "Polygon":
+        return {
+            "type": "Polygon",
+            "coordinates": [
+                simplify_ring(ring, tolerance, digits) for ring in geometry["coordinates"]
+            ],
+        }
+    if geometry_type == "MultiPolygon":
+        return {
+            "type": "MultiPolygon",
+            "coordinates": [
+                [simplify_ring(ring, tolerance, digits) for ring in polygon]
+                for polygon in geometry["coordinates"]
+            ],
+        }
+    return geometry
+
+
+def station_base_copy(station: dict[str, Any]) -> dict[str, Any]:
+    metrics = station["metrics"]
+    return {
+        "id": station["id"],
+        "name": station["name"],
+        "nameJa": station["nameJa"],
+        "nameEn": station["nameEn"],
+        "lat": station["lat"],
+        "lng": station["lng"],
+        "operator": station["operator"],
+        "lines": station["lines"],
+        "ward": station["ward"],
+        "labelTier": station["labelTier"],
+        "metrics": {
+            "district": metrics.get("district", ""),
+            "medianPriceMJPY": metrics.get("medianPriceMJPY", 0),
+            "medianPriceManPerSqm": metrics.get("medianPriceManPerSqm", 0),
+            "landValueManPerSqm": metrics.get("landValueManPerSqm", 0),
+            "ridershipDaily": metrics.get("ridershipDaily", 0),
+            "heatScore": metrics.get("heatScore", 0),
+            "transferLines": metrics.get("transferLines", 1),
+            "schoolsNearby": metrics.get("schoolsNearby", 0),
+            "convenienceScore": metrics.get("convenienceScore", 0),
+            "populationTrend": metrics.get("populationTrend", "待补"),
+            "hazardMaxDepthRank": metrics.get("hazardMaxDepthRank"),
+            "hazard": metrics.get(
+                "hazard",
+                {
+                    "flood": "unknown",
+                    "liquefaction": "unknown",
+                    "landslide": "unknown",
+                },
+            ),
+            "coverage": metrics.get(
+                "coverage",
+                {
+                    "price": False,
+                    "land": False,
+                    "ridership": False,
+                    "schools": False,
+                    "convenience": False,
+                    "population": False,
+                    "hazard": False,
+                },
+            ),
+        },
+    }
+
+
+def build_station_runtime_payloads(stations: list[dict[str, Any]]) -> dict[str, Any]:
+    station_bases = [station_base_copy(station) for station in stations]
+    station_bases.sort(key=lambda item: item["name"])
+
+    shard_size = 40
+    detail_shards: list[dict[str, Any]] = []
+    station_to_shard: dict[str, str] = {}
+    sorted_stations = sorted(stations, key=lambda item: item["id"])
+    for index in range(0, len(sorted_stations), shard_size):
+        shard_stations = sorted_stations[index : index + shard_size]
+        shard_id = f"shard-{index // shard_size:02d}"
+        detail_map = {
+            station["id"]: station
+            for station in shard_stations
+        }
+        detail_shards.append(
+            {
+                "id": shard_id,
+                "path": f"stations/details/{shard_id}.json",
+                "payload": detail_map,
+                "stationCount": len(shard_stations),
+            }
+        )
+        for station in shard_stations:
+            station_to_shard[station["id"]] = shard_id
+
+    manifest = {
+        "generatedAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "shardCount": len(detail_shards),
+        "stationToShard": station_to_shard,
+        "shards": [
+            {
+                "id": shard["id"],
+                "path": f"/data/tokyo/runtime/{shard['path']}",
+                "stationCount": shard["stationCount"],
+            }
+            for shard in detail_shards
+        ],
+    }
+
+    return {
+        "stationsBase": station_bases,
+        "detailsManifest": manifest,
+        "detailShards": detail_shards,
+    }
+
+
+def build_point_chunk_manifest(
+    points: list[dict[str, Any]],
+    *,
+    mode_id: str,
+) -> dict[str, Any]:
+    chunk_map: dict[tuple[int, int], list[dict[str, Any]]] = defaultdict(list)
+    for point in points:
+        chunk_map[
+            point_chunk_key(
+                point["lng"],
+                point["lat"],
+                step_lon=RUNTIME_POINT_CHUNK_LON,
+                step_lat=RUNTIME_POINT_CHUNK_LAT,
+            )
+        ].append(point)
+
+    chunks: list[dict[str, Any]] = []
+    chunk_dir = RUNTIME_DIR / mode_id / "chunks"
+    for chunk_key in sorted(chunk_map):
+        chunk_x, chunk_y = chunk_key
+        chunk_id = f"{chunk_x:02d}-{chunk_y:02d}"
+        chunk_path = chunk_dir / f"{chunk_id}.json"
+        payload = sorted(
+            chunk_map[chunk_key],
+            key=lambda item: (item["categoryId"], item["name"]),
+        )
+        write_json(chunk_path, payload, indent=None)
+        chunks.append(
+            {
+                "id": chunk_id,
+                "path": to_public_path(chunk_path),
+                "bounds": chunk_bounds_for_key(
+                    chunk_x,
+                    chunk_y,
+                    step_lon=RUNTIME_POINT_CHUNK_LON,
+                    step_lat=RUNTIME_POINT_CHUNK_LAT,
+                ),
+                "featureCount": len(payload),
+            }
+        )
+
+    manifest_path = RUNTIME_DIR / mode_id / "manifest.json"
+    manifest = {
+        "generatedAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "modeId": mode_id,
+        "kind": "point",
+        "chunkCount": len(chunks),
+        "featureCount": len(points),
+        "chunks": chunks,
+    }
+    write_json(manifest_path, manifest, indent=None)
+    return manifest
+
+
+def build_area_chunk_manifest(
+    areas: list[dict[str, Any]],
+    *,
+    mode_id: str,
+    level: str,
+    tolerance: float,
+    digits: int,
+) -> dict[str, Any]:
+    chunk_map: dict[tuple[int, int], dict[str, dict[str, Any]]] = defaultdict(dict)
+    cols, rows = chunk_grid_dimensions(RUNTIME_AREA_CHUNK_LON, RUNTIME_AREA_CHUNK_LAT)
+    simplified_areas: list[dict[str, Any]] = []
+
+    for area in areas:
+        area_copy = {
+            **area,
+            "geometry": simplify_geometry(
+                area["geometry"],
+                tolerance=tolerance,
+                digits=digits,
+            ),
+        }
+        simplified_areas.append(area_copy)
+        min_x, min_y, max_x, max_y = geometry_bbox(area_copy["geometry"])
+        chunk_x_start = clamp_int(
+            int((min_x - TOKYO_CORE_BOUNDS["west"]) / RUNTIME_AREA_CHUNK_LON),
+            0,
+            cols - 1,
+        )
+        chunk_x_end = clamp_int(
+            int((max_x - TOKYO_CORE_BOUNDS["west"]) / RUNTIME_AREA_CHUNK_LON),
+            0,
+            cols - 1,
+        )
+        chunk_y_start = clamp_int(
+            int((min_y - TOKYO_CORE_BOUNDS["south"]) / RUNTIME_AREA_CHUNK_LAT),
+            0,
+            rows - 1,
+        )
+        chunk_y_end = clamp_int(
+            int((max_y - TOKYO_CORE_BOUNDS["south"]) / RUNTIME_AREA_CHUNK_LAT),
+            0,
+            rows - 1,
+        )
+
+        for chunk_x in range(chunk_x_start, chunk_x_end + 1):
+            for chunk_y in range(chunk_y_start, chunk_y_end + 1):
+                chunk_bounds = chunk_bounds_for_key(
+                    chunk_x,
+                    chunk_y,
+                    step_lon=RUNTIME_AREA_CHUNK_LON,
+                    step_lat=RUNTIME_AREA_CHUNK_LAT,
+                )
+                area_bounds = {
+                    "west": min_x,
+                    "south": min_y,
+                    "east": max_x,
+                    "north": max_y,
+                }
+                if bounds_intersect(area_bounds, chunk_bounds):
+                    chunk_map[(chunk_x, chunk_y)][area_copy["id"]] = area_copy
+
+    chunks: list[dict[str, Any]] = []
+    chunk_dir = RUNTIME_DIR / mode_id / level / "chunks"
+    for chunk_key in sorted(chunk_map):
+        chunk_x, chunk_y = chunk_key
+        chunk_id = f"{chunk_x:02d}-{chunk_y:02d}"
+        chunk_path = chunk_dir / f"{chunk_id}.json"
+        payload = sorted(
+            chunk_map[chunk_key].values(),
+            key=lambda item: item["id"],
+        )
+        write_json(chunk_path, payload, indent=None)
+        chunks.append(
+            {
+                "id": chunk_id,
+                "path": to_public_path(chunk_path),
+                "bounds": chunk_bounds_for_key(
+                    chunk_x,
+                    chunk_y,
+                    step_lon=RUNTIME_AREA_CHUNK_LON,
+                    step_lat=RUNTIME_AREA_CHUNK_LAT,
+                ),
+                "featureCount": len(payload),
+            }
+        )
+
+    manifest_path = RUNTIME_DIR / mode_id / f"{level}.manifest.json"
+    manifest = {
+        "generatedAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "modeId": mode_id,
+        "kind": "area",
+        "level": level,
+        "chunkCount": len(chunks),
+        "featureCount": len(simplified_areas),
+        "geometryPointCount": sum(
+            geometry_point_count(area["geometry"]) for area in simplified_areas
+        ),
+        "chunks": chunks,
+    }
+    write_json(manifest_path, manifest, indent=None)
+    return manifest
+
+
+def write_runtime_payloads(
+    stations: list[dict[str, Any]],
+    schools: list[dict[str, Any]],
+    convenience: list[dict[str, Any]],
+    hazards: list[dict[str, Any]],
+    population: list[dict[str, Any]],
+    metadata: dict[str, Any],
+) -> dict[str, Any]:
+    if RUNTIME_DIR.exists():
+        shutil.rmtree(RUNTIME_DIR)
+
+    station_payloads = build_station_runtime_payloads(stations)
+    write_json(RUNTIME_DIR / "stations.base.json", station_payloads["stationsBase"], indent=None)
+    write_json(
+        RUNTIME_DIR / "stations" / "details" / "manifest.json",
+        station_payloads["detailsManifest"],
+        indent=None,
+    )
+    for shard in station_payloads["detailShards"]:
+        write_json(RUNTIME_DIR / shard["path"], shard["payload"], indent=None)
+
+    schools_manifest = build_point_chunk_manifest(schools, mode_id="schools")
+    convenience_manifest = build_point_chunk_manifest(convenience, mode_id="convenience")
+    hazard_overview_manifest = build_area_chunk_manifest(
+        hazards,
+        mode_id="hazard",
+        level="overview",
+        tolerance=0.00022,
+        digits=5,
+    )
+    hazard_detail_manifest = build_area_chunk_manifest(
+        hazards,
+        mode_id="hazard",
+        level="detail",
+        tolerance=0.00006,
+        digits=6,
+    )
+    population_overview_manifest = build_area_chunk_manifest(
+        population,
+        mode_id="population",
+        level="overview",
+        tolerance=0.00018,
+        digits=5,
+    )
+    population_detail_manifest = build_area_chunk_manifest(
+        population,
+        mode_id="population",
+        level="detail",
+        tolerance=0.00001,
+        digits=6,
+    )
+
+    runtime_index = {
+        "generatedAt": metadata["generatedAt"],
+        "stationCount": metadata["stationCount"],
+        "stations": {
+            "basePath": "/data/tokyo/runtime/stations.base.json",
+            "detailsManifestPath": "/data/tokyo/runtime/stations/details/manifest.json",
+        },
+        "modes": {
+            "schools": {
+                "kind": "point",
+                "manifests": [
+                    {
+                        "path": "/data/tokyo/runtime/schools/manifest.json",
+                        "minZoom": 9,
+                        "maxZoom": 16.5,
+                    }
+                ],
+            },
+            "convenience": {
+                "kind": "point",
+                "manifests": [
+                    {
+                        "path": "/data/tokyo/runtime/convenience/manifest.json",
+                        "minZoom": 9,
+                        "maxZoom": 16.5,
+                    }
+                ],
+            },
+            "hazard": {
+                "kind": "area",
+                "manifests": [
+                    {
+                        "path": "/data/tokyo/runtime/hazard/overview.manifest.json",
+                        "minZoom": 9,
+                        "maxZoom": AREA_DETAIL_ZOOM_THRESHOLD,
+                    },
+                    {
+                        "path": "/data/tokyo/runtime/hazard/detail.manifest.json",
+                        "minZoom": AREA_DETAIL_ZOOM_THRESHOLD,
+                        "maxZoom": 16.5,
+                    },
+                ],
+            },
+            "population": {
+                "kind": "area",
+                "manifests": [
+                    {
+                        "path": "/data/tokyo/runtime/population/overview.manifest.json",
+                        "minZoom": 9,
+                        "maxZoom": AREA_DETAIL_ZOOM_THRESHOLD,
+                    },
+                    {
+                        "path": "/data/tokyo/runtime/population/detail.manifest.json",
+                        "minZoom": AREA_DETAIL_ZOOM_THRESHOLD,
+                        "maxZoom": 16.5,
+                    },
+                ],
+            },
+        },
+        "summary": {
+            "schoolsChunks": schools_manifest["chunkCount"],
+            "convenienceChunks": convenience_manifest["chunkCount"],
+            "hazardOverviewChunks": hazard_overview_manifest["chunkCount"],
+            "hazardDetailChunks": hazard_detail_manifest["chunkCount"],
+            "populationOverviewChunks": population_overview_manifest["chunkCount"],
+            "populationDetailChunks": population_detail_manifest["chunkCount"],
+            "hazardOverviewGeometryPoints": hazard_overview_manifest["geometryPointCount"],
+            "hazardDetailGeometryPoints": hazard_detail_manifest["geometryPointCount"],
+        },
+    }
+    write_json(RUNTIME_DIR / "index.json", runtime_index, indent=None)
+    return runtime_index
+
+
 def main() -> None:
     args = parse_args()
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
@@ -970,13 +1520,26 @@ def main() -> None:
         enrich_station_copy(station)
 
     metadata = build_metadata(stations, schools, convenience, hazard, population)
+    runtime_index = write_runtime_payloads(
+        stations,
+        schools,
+        convenience,
+        hazard,
+        population,
+        metadata,
+    )
+    metadata["runtime"] = runtime_index["summary"]
 
     write_json(DATA_DIR / "stations.json", stations)
     write_json(DATA_DIR / "stations.meta.json", metadata)
-    write_json(DATA_DIR / "schools.json", schools)
-    write_json(DATA_DIR / "convenience.json", convenience)
-    write_json(DATA_DIR / "hazards.json", hazard)
-    write_json(DATA_DIR / "population.json", population)
+
+    for legacy_path in [
+        DATA_DIR / "schools.json",
+        DATA_DIR / "convenience.json",
+        DATA_DIR / "hazards.json",
+        DATA_DIR / "population.json",
+    ]:
+        legacy_path.unlink(missing_ok=True)
 
     print(
         json.dumps(
@@ -984,10 +1547,7 @@ def main() -> None:
                 "stationCount": metadata["stationCount"],
                 "priceCoverageCount": metadata["priceCoverageCount"],
                 "landCoverageCount": metadata["landCoverageCount"],
-                "schoolsPointCount": metadata["schoolsPointCount"],
-                "conveniencePointCount": metadata["conveniencePointCount"],
-                "hazardAreaCount": metadata["hazardAreaCount"],
-                "populationAreaCount": metadata["populationAreaCount"],
+                "runtimeSummary": metadata["runtime"],
             },
             ensure_ascii=False,
         )

@@ -13,6 +13,20 @@ export type RiskLevel = 'low' | 'medium' | 'high' | 'unknown'
 
 export type PopulationTrend = '增长' | '稳定' | '收缩' | '待补'
 
+export type AsyncStatus = 'idle' | 'loading' | 'ready' | 'error'
+
+export type Bounds = {
+  west: number
+  south: number
+  east: number
+  north: number
+}
+
+export type MapViewport = {
+  bounds: Bounds
+  zoom: number
+}
+
 export type ModeDefinition = {
   id: ModeId
   label: string
@@ -27,7 +41,39 @@ export type ModeDefinition = {
   }>
 }
 
-export type Station = {
+export type StationCoverage = {
+  price: boolean
+  land: boolean
+  ridership: boolean
+  schools: boolean
+  convenience: boolean
+  population: boolean
+  hazard: boolean
+}
+
+export type StationHazard = {
+  flood: RiskLevel
+  liquefaction: RiskLevel
+  landslide: RiskLevel
+}
+
+export type StationMetricsBase = {
+  district: string
+  medianPriceMJPY: number
+  medianPriceManPerSqm: number
+  landValueManPerSqm: number
+  ridershipDaily: number
+  heatScore: number
+  transferLines: number
+  schoolsNearby: number
+  convenienceScore: number
+  populationTrend: PopulationTrend
+  hazardMaxDepthRank: number | null
+  hazard: StationHazard
+  coverage: StationCoverage
+}
+
+export type StationBase = {
   id: string
   name: string
   nameJa: string
@@ -38,43 +84,24 @@ export type Station = {
   lines: string[]
   ward: string
   labelTier: 'major' | 'minor'
-  summary: string
-  metrics: {
-    district: string
-    medianPriceMJPY: number
-    medianPriceManPerSqm: number
-    priceSampleCount: number
-    landValueManPerSqm: number
-    landSampleCount: number
-    ridershipDaily: number
-    heatScore: number
-    transferLines: number
-    schoolsNearby: number
-    convenienceNearby: number
-    convenienceScore: number
-    convenienceBreakdown: {
-      medical: number
-      publicService: number
-    }
-    populationTrend: PopulationTrend
-    populationChangeRate: number | null
-    hazardMaxDepthRank: number | null
-    hazard: {
-      flood: RiskLevel
-      liquefaction: RiskLevel
-      landslide: RiskLevel
-    }
-    coverage: {
-      price: boolean
-      land: boolean
-      ridership: boolean
-      schools: boolean
-      convenience: boolean
-      population: boolean
-      hazard: boolean
-    }
-    note: string
+  metrics: StationMetricsBase
+}
+
+export type StationMetrics = StationMetricsBase & {
+  priceSampleCount: number
+  landSampleCount: number
+  convenienceNearby: number
+  convenienceBreakdown: {
+    medical: number
+    publicService: number
   }
+  populationChangeRate: number | null
+  note: string
+}
+
+export type Station = StationBase & {
+  summary: string
+  metrics: StationMetrics
 }
 
 export type PointLayerFeature = {
@@ -103,10 +130,57 @@ export type AreaLayerFeature = {
   }
 }
 
-export type TokyoMapData = {
-  stations: Station[]
+export type TokyoOverlayData = {
   schools: PointLayerFeature[]
   convenience: PointLayerFeature[]
   hazards: AreaLayerFeature[]
   population: AreaLayerFeature[]
 }
+
+export type RuntimeModeManifestRef = {
+  path: string
+  minZoom: number
+  maxZoom: number
+}
+
+export type RuntimeModeIndex = {
+  kind: 'point' | 'area'
+  manifests: RuntimeModeManifestRef[]
+}
+
+export type RuntimeIndex = {
+  stations: {
+    basePath: string
+    detailsManifestPath: string
+  }
+  modes: Partial<
+    Record<'schools' | 'convenience' | 'hazard' | 'population', RuntimeModeIndex>
+  >
+  summary: Record<string, number>
+}
+
+export type ChunkManifestItem = {
+  id: string
+  path: string
+  bounds: Bounds
+  featureCount: number
+}
+
+export type ChunkManifest = {
+  generatedAt: string
+  modeId: string
+  kind: 'point' | 'area'
+  level?: 'overview' | 'detail'
+  chunkCount: number
+  featureCount: number
+  geometryPointCount?: number
+  chunks: ChunkManifestItem[]
+}
+
+export type StationDetailManifest = {
+  generatedAt: string
+  shardCount: number
+  stationToShard: Record<string, string>
+}
+
+export type StationDetailShard = Record<string, Station>

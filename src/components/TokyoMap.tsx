@@ -11,8 +11,17 @@ import {
   syncStationLayer,
   TOKYO_MAP_STYLE,
 } from '../lib/mapLayers'
-import { getVisibleStationIds, getVisibilityBandForZoom } from '../lib/stationVisibility'
-import type { AreaLayerFeature, ModeId, PointLayerFeature, Station } from '../types'
+import {
+  getVisibilityBandForZoom,
+  selectStationRenderSelection,
+} from '../lib/stationVisibility'
+import type {
+  AreaLayerFeature,
+  MapViewport,
+  ModeId,
+  PointLayerFeature,
+  StationBase,
+} from '../types'
 
 type TokyoMapProps = {
   activeMode: ModeId
@@ -20,11 +29,14 @@ type TokyoMapProps = {
   hazards: AreaLayerFeature[]
   population: AreaLayerFeature[]
   schools: PointLayerFeature[]
-  stations: Station[]
+  stations: StationBase[]
   selectedStationId: string | null
   resetToken: number
   onSelectStation: (stationId: string | null) => void
+  onViewportChange: (viewport: MapViewport) => void
 }
+
+const DEFAULT_TOKYO_ZOOM = 11.55
 
 export function TokyoMap(props: TokyoMapProps) {
   const {
@@ -32,6 +44,7 @@ export function TokyoMap(props: TokyoMapProps) {
     convenience,
     hazards,
     onSelectStation,
+    onViewportChange,
     population,
     resetToken,
     schools,
@@ -43,6 +56,25 @@ export function TokyoMap(props: TokyoMapProps) {
   const lastStationSignatureRef = useRef('')
   const [mapReady, setMapReady] = useState(false)
   const onSelectStationEvent = useEffectEvent(onSelectStation)
+  const onViewportChangeEvent = useEffectEvent(onViewportChange)
+
+  const emitViewportChangeEvent = useEffectEvent(() => {
+    const map = mapRef.current
+    if (!map) {
+      return
+    }
+
+    const bounds = map.getBounds()
+    onViewportChangeEvent({
+      zoom: map.getZoom(),
+      bounds: {
+        west: bounds.getWest(),
+        south: bounds.getSouth(),
+        east: bounds.getEast(),
+        north: bounds.getNorth(),
+      },
+    })
+  })
 
   const syncStationLayerEvent = useEffectEvent((force = false) => {
     const map = mapRef.current
@@ -51,11 +83,16 @@ export function TokyoMap(props: TokyoMapProps) {
     }
 
     const zoom = map.getZoom()
+    const bounds = map.getBounds()
     const visibilityBand = getVisibilityBandForZoom(zoom)
     const signature = [
       activeMode,
       selectedStationId ?? 'none',
       visibilityBand,
+      bounds.getWest().toFixed(3),
+      bounds.getSouth().toFixed(3),
+      bounds.getEast().toFixed(3),
+      bounds.getNorth().toFixed(3),
       zoom >= 9.8 ? 'label-on' : 'label-off',
       stations.length,
     ].join(':')
@@ -64,15 +101,24 @@ export function TokyoMap(props: TokyoMapProps) {
       return
     }
 
-    const visibleStationIds = getVisibleStationIds({
+    const renderSelection = selectStationRenderSelection({
+      bounds: {
+        west: bounds.getWest(),
+        south: bounds.getSouth(),
+        east: bounds.getEast(),
+        north: bounds.getNorth(),
+      },
+      project: (station) => map.project([station.lng, station.lat]),
       stations,
       mode: activeMode,
       zoom,
       selectedStationId,
     })
-    const visibleStations = stations.filter((station) => visibleStationIds.has(station.id))
+    const visibleStations = stations.filter((station) =>
+      renderSelection.anchorIds.has(station.id),
+    )
 
-    syncStationLayer(map, visibleStations, activeMode, selectedStationId, zoom)
+    syncStationLayer(map, visibleStations, activeMode, selectedStationId, renderSelection)
     lastStationSignatureRef.current = signature
   })
 
@@ -104,7 +150,7 @@ export function TokyoMap(props: TokyoMapProps) {
       container: containerRef.current,
       style: TOKYO_MAP_STYLE,
       center: getTokyoCenter(),
-      zoom: 10.4,
+      zoom: DEFAULT_TOKYO_ZOOM,
       minZoom: 9,
       maxZoom: 16.5,
       pitchWithRotate: false,
@@ -150,12 +196,20 @@ export function TokyoMap(props: TokyoMapProps) {
       syncStationLayerEvent(false)
     }
 
+    const handleViewportSettled = () => {
+      emitViewportChangeEvent()
+      syncStationLayerEvent(false)
+    }
+
     map.on('click', handleClick)
     map.on('mousemove', handlePointerMove)
     map.on('zoom', handleZoom)
+    map.on('moveend', handleViewportSettled)
+    map.on('zoomend', handleViewportSettled)
     map.on('load', () => {
       ensureMapDataLayers(map)
       setMapReady(true)
+      emitViewportChangeEvent()
     })
 
     mapRef.current = map
@@ -165,6 +219,8 @@ export function TokyoMap(props: TokyoMapProps) {
       map.off('click', handleClick)
       map.off('mousemove', handlePointerMove)
       map.off('zoom', handleZoom)
+      map.off('moveend', handleViewportSettled)
+      map.off('zoomend', handleViewportSettled)
       map.getCanvas().style.cursor = ''
       delete (window as Window & { __TOKYO_MAP__?: maplibregl.Map }).__TOKYO_MAP__
       map.remove()
@@ -225,7 +281,7 @@ export function TokyoMap(props: TokyoMapProps) {
 
     map.flyTo({
       center: getTokyoCenter(),
-      zoom: 10.4,
+      zoom: DEFAULT_TOKYO_ZOOM,
       speed: 0.7,
       essential: true,
     })

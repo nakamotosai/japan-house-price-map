@@ -1,4 +1,4 @@
-import type { Station } from '../types'
+import type { StationBase } from '../types'
 
 const NORMALIZE_MAP: Record<string, string> = {
   線: '线',
@@ -19,7 +19,7 @@ function normalize(value: string) {
     .replaceAll('地下铁', '地铁')
 }
 
-function stationHaystack(station: Station) {
+function stationHaystack(station: StationBase) {
   return normalize(
     [
       station.name,
@@ -35,7 +35,7 @@ function stationHaystack(station: Station) {
   )
 }
 
-export function searchStations(query: string, stations: Station[], limit = 6) {
+export function searchStations(query: string, stations: StationBase[], limit = 6) {
   const keyword = normalize(query)
 
   if (!keyword) {

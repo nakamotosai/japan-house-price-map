@@ -5,7 +5,7 @@ import type {
   Map as MapLibreMap,
   StyleSpecification,
 } from 'maplibre-gl'
-import { shouldShowStationName, shouldShowStationPrice } from './stationVisibility'
+import type { StationRenderSelection } from './stationVisibility'
 import type {
   AreaLayerFeature,
   ModeId,
@@ -13,6 +13,7 @@ import type {
   PopulationTrend,
   RiskLevel,
   Station,
+  StationBase,
 } from '../types'
 
 const TOKYO_CENTER: [number, number] = [139.767125, 35.681236]
@@ -147,7 +148,7 @@ function populationColor(trend: PopulationTrend) {
   return '#94a3b8'
 }
 
-export function getStationMarkerColor(station: Station, mode: ModeId) {
+export function getStationMarkerColor(station: StationBase | Station, mode: ModeId) {
   if (mode === 'price') {
     if (!station.metrics.coverage.price) {
       return '#94a3b8'
@@ -235,18 +236,24 @@ export function formatMarkerPrice(value: number) {
 }
 
 function buildStationFeatureCollection(
-  stations: Station[],
+  stations: StationBase[],
   activeMode: ModeId,
   selectedStationId: string | null,
-  zoom: number,
+  selection: StationRenderSelection,
 ): FeatureCollection<Point, GeoJsonProperties> {
   return {
     type: 'FeatureCollection',
     features: stations.map((station) => {
-      const showPrice = shouldShowStationPrice({ station, mode: activeMode })
-      const showName = shouldShowStationName({ station, zoom })
       const isSelected = station.id === selectedStationId
-      const markerRadius = showPrice ? (station.labelTier === 'major' ? 24 : 21) : station.labelTier === 'major' ? 8 : 5
+      const showBadge = selection.badgeIds.has(station.id)
+      const showName = selection.nameIds.has(station.id)
+      const markerRadius = showBadge
+        ? station.labelTier === 'major'
+          ? 24
+          : 21
+        : station.labelTier === 'major'
+          ? 8
+          : 5
 
       return {
         type: 'Feature' as const,
@@ -261,8 +268,11 @@ function buildStationFeatureCollection(
           markerColor: getStationMarkerColor(station, activeMode),
           markerRadius,
           isSelected,
-          badgeText: showPrice ? formatMarkerPrice(station.metrics.medianPriceMJPY) : '',
-          badgeSize: showPrice ? (station.labelTier === 'major' ? 12 : 11) : 0,
+          badgeText:
+            showBadge && activeMode === 'price'
+              ? formatMarkerPrice(station.metrics.medianPriceMJPY)
+              : '',
+          badgeSize: showBadge ? (station.labelTier === 'major' ? 12 : 11) : 0,
           nameLabel: showName ? station.name : '',
           nameSize: station.labelTier === 'major' ? 13 : 12,
         },
@@ -481,6 +491,7 @@ export function ensureMapDataLayers(map: MapLibreMap) {
       id: 'schools-unclustered',
       type: 'circle',
       source: SCHOOL_SOURCE_ID,
+      minzoom: 13,
       filter: ['!', ['has', 'point_count']],
       paint: {
         'circle-color': [
@@ -549,6 +560,7 @@ export function ensureMapDataLayers(map: MapLibreMap) {
       id: 'convenience-unclustered',
       type: 'circle',
       source: CONVENIENCE_SOURCE_ID,
+      minzoom: 13,
       filter: ['!', ['has', 'point_count']],
       paint: {
         'circle-color': [
@@ -663,15 +675,15 @@ export function ensureMapDataLayers(map: MapLibreMap) {
 
 export function syncStationLayer(
   map: MapLibreMap,
-  stations: Station[],
+  stations: StationBase[],
   activeMode: ModeId,
   selectedStationId: string | null,
-  zoom: number,
+  selection: StationRenderSelection,
 ) {
   updateSource(
     map,
     STATION_SOURCE_ID,
-    buildStationFeatureCollection(stations, activeMode, selectedStationId, zoom),
+    buildStationFeatureCollection(stations, activeMode, selectedStationId, selection),
   )
 }
 

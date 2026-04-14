@@ -1,25 +1,32 @@
 import { getAreaMatches, getPointMatches } from '../lib/mapLayers'
 import type {
   AreaLayerFeature,
+  AsyncStatus,
   ModeDefinition,
   ModeId,
   PointLayerFeature,
   RiskLevel,
   Station,
+  StationBase,
 } from '../types'
 
 type StationPanelProps = {
   activeMode: ModeId
   convenience: PointLayerFeature[]
+  detailErrorMessage?: string
+  detailStatus: AsyncStatus
+  errorMessage?: string
   hazards: AreaLayerFeature[]
   modes: Record<ModeId, ModeDefinition>
   onClose: () => void
   onOpenIntro: () => void
+  overlayErrorMessage?: string
+  overlayStatus: AsyncStatus
   population: AreaLayerFeature[]
   schools: PointLayerFeature[]
   selectedStation: Station | null
+  selectedStationBase: StationBase | null
   status?: 'ready' | 'loading' | 'error'
-  errorMessage?: string
 }
 
 function formatTotalPrice(value: number) {
@@ -97,6 +104,65 @@ function PendingCard(props: { title: string; body: string }) {
       <strong>待补</strong>
       <p>{body}</p>
     </article>
+  )
+}
+
+function LoadingBody(props: {
+  activeMode: ModeId
+  detailErrorMessage?: string
+  detailStatus: AsyncStatus
+  overlayErrorMessage?: string
+  overlayStatus: AsyncStatus
+  station: StationBase
+}) {
+  const { activeMode, detailErrorMessage, detailStatus, overlayErrorMessage, overlayStatus, station } =
+    props
+
+  const detailBody =
+    detailStatus === 'loading'
+      ? '正在按点击站点补这一小份详情数据，地图本身已经可用。'
+      : detailStatus === 'error'
+        ? `站点详情加载失败：${detailErrorMessage ?? 'unknown_error'}`
+        : '正在准备站点详情。'
+
+  const overlayBody =
+    overlayStatus === 'loading'
+      ? '当前视口图层正在补数据，面板会沿用已经到位的结果。'
+      : overlayStatus === 'error'
+        ? `当前模式图层加载失败：${overlayErrorMessage ?? 'unknown_error'}`
+        : '当前模式图层会跟着地图视口按需加载。'
+
+  return (
+    <div className="panel-grid">
+      <article className="metric-card">
+        <span>参考总价</span>
+        <strong>
+          {station.metrics.coverage.price ? formatTotalPrice(station.metrics.medianPriceMJPY) : '待补'}
+        </strong>
+      </article>
+      <article className="metric-card">
+        <span>公示地价</span>
+        <strong>
+          {station.metrics.coverage.land
+            ? formatManPerSqm(station.metrics.landValueManPerSqm)
+            : '待补'}
+        </strong>
+      </article>
+      <article className="metric-card">
+        <span>乘降客数</span>
+        <strong>{formatDailyRidership(station.metrics.ridershipDaily)}</strong>
+      </article>
+      <article className="metric-card">
+        <span>换乘线路</span>
+        <strong>{station.metrics.transferLines} 条</strong>
+      </article>
+      <PendingCard title={`${activeMode} 详情`} body={detailBody} />
+      <article className="metric-card metric-card--wide">
+        <span>图层状态</span>
+        <strong>{overlayStatus === 'error' ? '视口数据异常' : '视口数据流正常'}</strong>
+        <p>{overlayBody}</p>
+      </article>
+    </div>
   )
 }
 
@@ -364,23 +430,52 @@ function ModeBody(props: {
   )
 }
 
+function CrossModeSummary(props: { station: Station | StationBase }) {
+  const { station } = props
+  return (
+    <ul className="inline-list">
+      <li>
+        房价 {station.metrics.coverage.price ? formatTotalPrice(station.metrics.medianPriceMJPY) : '待补'}
+      </li>
+      <li>
+        地价 {station.metrics.coverage.land ? formatManPerSqm(station.metrics.landValueManPerSqm) : '待补'}
+      </li>
+      <li>
+        热度 {station.metrics.coverage.ridership ? station.metrics.heatScore : '待补'}
+      </li>
+      <li>
+        便利 {station.metrics.coverage.convenience ? station.metrics.convenienceScore : '待补'}
+      </li>
+      <li>
+        人口 {'populationChangeRate' in station.metrics ? formatPercent(station.metrics.populationChangeRate) : station.metrics.populationTrend}
+      </li>
+    </ul>
+  )
+}
+
 export function StationPanel(props: StationPanelProps) {
   const {
     activeMode,
     convenience,
+    detailErrorMessage,
+    detailStatus,
     errorMessage,
     hazards,
     modes,
     onClose,
     onOpenIntro,
+    overlayErrorMessage,
+    overlayStatus,
     population,
     schools,
     selectedStation,
+    selectedStationBase,
     status = 'ready',
   } = props
   const activeModeMeta = modes[activeMode]
+  const stationSnapshot = selectedStation ?? selectedStationBase
 
-  if (!selectedStation) {
+  if (!selectedStationBase) {
     if (status === 'ready') {
       return null
     }
@@ -391,14 +486,14 @@ export function StationPanel(props: StationPanelProps) {
           <span className="station-panel__eyebrow">东京地图工具</span>
           <h1>
             {status === 'loading'
-              ? '正在装载东京地图数据。'
+              ? '正在装载东京地图底座。'
               : status === 'error'
-                ? '地图底座已打开，但数据加载失败。'
+                ? '地图底座已打开，但基础数据加载失败。'
                 : '打开就是地图，不做多余页面。'}
           </h1>
           <p>
             {status === 'loading'
-              ? '正在读取东京车站、学校、便利度、风险和人口图层。'
+              ? '先加载车站底座，其他图层会跟着模式和视口逐步补齐。'
               : status === 'error'
                 ? `当前错误：${errorMessage ?? 'unknown_error'}`
                 : '现在的站点锚点、点图层和区域图层都已经按统一 schema 管理。'}
@@ -411,7 +506,7 @@ export function StationPanel(props: StationPanelProps) {
 
           <div className="station-panel__bullet-box">
             <strong>怎么用</strong>
-            <p>直接点站，或者先搜索站点；切模式时地图会保留同一张东京底图，只切换图层和站点表达。</p>
+            <p>直接点站，或者先搜索站点；切模式时只换图层，不换页面。</p>
           </div>
 
           <button className="primary-button" onClick={onOpenIntro} type="button">
@@ -426,12 +521,12 @@ export function StationPanel(props: StationPanelProps) {
     <aside className="station-panel">
       <div className="station-panel__header">
         <div>
-          <span className="station-panel__eyebrow">{selectedStation.ward || '官方车站主表'}</span>
-          <h2>{selectedStation.name}</h2>
+          <span className="station-panel__eyebrow">{selectedStationBase.ward || '官方车站主表'}</span>
+          <h2>{selectedStationBase.name}</h2>
           <p>
-            {selectedStation.nameEn
-              ? `${selectedStation.nameJa} / ${selectedStation.nameEn}`
-              : selectedStation.nameJa}
+            {selectedStationBase.nameEn
+              ? `${selectedStationBase.nameJa} / ${selectedStationBase.nameEn}`
+              : selectedStationBase.nameJa}
           </p>
         </div>
         <button className="station-panel__close" onClick={onClose} type="button">
@@ -442,11 +537,11 @@ export function StationPanel(props: StationPanelProps) {
       <div className="station-panel__summary">
         <article>
           <span>运营方</span>
-          <strong>{selectedStation.operator}</strong>
+          <strong>{selectedStationBase.operator}</strong>
         </article>
         <article>
           <span>线路数</span>
-          <strong>{selectedStation.metrics.transferLines}</strong>
+          <strong>{selectedStationBase.metrics.transferLines}</strong>
         </article>
       </div>
 
@@ -455,39 +550,41 @@ export function StationPanel(props: StationPanelProps) {
           <strong>{activeModeMeta.panelTitle}</strong>
           <span>{activeModeMeta.label}</span>
         </div>
-        <ModeBody
-          activeMode={activeMode}
-          convenience={convenience}
-          hazards={hazards}
-          population={population}
-          schools={schools}
-          station={selectedStation}
-        />
+
+        {selectedStation ? (
+          <ModeBody
+            activeMode={activeMode}
+            convenience={convenience}
+            hazards={hazards}
+            population={population}
+            schools={schools}
+            station={selectedStation}
+          />
+        ) : (
+          <LoadingBody
+            activeMode={activeMode}
+            detailErrorMessage={detailErrorMessage}
+            detailStatus={detailStatus}
+            overlayErrorMessage={overlayErrorMessage}
+            overlayStatus={overlayStatus}
+            station={selectedStationBase}
+          />
+        )}
       </section>
 
       <section className="station-panel__section">
         <div className="station-panel__section-head">
           <strong>跨模式摘要</strong>
-          <span>{selectedStation.metrics.district}</span>
+          <span>{stationSnapshot?.metrics.district}</span>
         </div>
-        <ul className="inline-list">
-          <li>
-            房价 {selectedStation.metrics.coverage.price ? formatTotalPrice(selectedStation.metrics.medianPriceMJPY) : '待补'}
-          </li>
-          <li>
-            地价 {selectedStation.metrics.coverage.land ? formatManPerSqm(selectedStation.metrics.landValueManPerSqm) : '待补'}
-          </li>
-          <li>
-            热度 {selectedStation.metrics.coverage.ridership ? selectedStation.metrics.heatScore : '待补'}
-          </li>
-          <li>
-            便利 {selectedStation.metrics.coverage.convenience ? selectedStation.metrics.convenienceScore : '待补'}
-          </li>
-          <li>
-            人口 {selectedStation.metrics.coverage.population ? formatPercent(selectedStation.metrics.populationChangeRate) : '待补'}
-          </li>
-        </ul>
-        <p className="station-panel__note">{selectedStation.metrics.note}</p>
+        {stationSnapshot ? <CrossModeSummary station={stationSnapshot} /> : null}
+        {selectedStation ? (
+          <p className="station-panel__note">{selectedStation.metrics.note}</p>
+        ) : (
+          <p className="station-panel__note">
+            这块会在站点详情 shard 到位后补样本量、便利度构成、人口变化率和说明文字。
+          </p>
+        )}
       </section>
     </aside>
   )

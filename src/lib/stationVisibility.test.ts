@@ -1,17 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import {
   getStationPriorityScore,
-  getStationTargetCountForZoom,
-  getStationVisibilityBand,
   getVisibilityBandForZoom,
-  getVisibleStationIds,
-  shouldShowStationName,
-  shouldShowStationPrice,
+  selectStationRenderSelection,
 } from './stationVisibility'
-import type { Station } from '../types'
+import type { Bounds, StationBase } from '../types'
 
-function createStation(partial: Partial<Station> = {}): Station {
-  const baseStation: Station = {
+function createStation(partial: Partial<StationBase> = {}): StationBase {
+  const baseStation: StationBase = {
     id: 'sample',
     name: '样本站',
     nameJa: 'サンプル',
@@ -22,26 +18,17 @@ function createStation(partial: Partial<Station> = {}): Station {
     lines: ['山手線'],
     ward: '',
     labelTier: 'minor',
-    summary: '',
     metrics: {
       district: '样本区',
       medianPriceMJPY: 0,
       medianPriceManPerSqm: 0,
-      priceSampleCount: 0,
       landValueManPerSqm: 0,
-      landSampleCount: 0,
       ridershipDaily: 50_000,
       heatScore: 60,
       transferLines: 1,
       schoolsNearby: 0,
-      convenienceNearby: 0,
       convenienceScore: 0,
-      convenienceBreakdown: {
-        medical: 0,
-        publicService: 0,
-      },
       populationTrend: '待补',
-      populationChangeRate: null,
       hazardMaxDepthRank: null,
       hazard: {
         flood: 'unknown',
@@ -57,7 +44,6 @@ function createStation(partial: Partial<Station> = {}): Station {
         population: false,
         hazard: false,
       },
-      note: '',
     },
   }
 
@@ -67,23 +53,38 @@ function createStation(partial: Partial<Station> = {}): Station {
     metrics: {
       ...baseStation.metrics,
       ...partial.metrics,
+      hazard: {
+        ...baseStation.metrics.hazard,
+        ...partial.metrics?.hazard,
+      },
+      coverage: {
+        ...baseStation.metrics.coverage,
+        ...partial.metrics?.coverage,
+      },
     },
   }
 }
 
+const VIEWPORT: Bounds = {
+  west: 139.68,
+  south: 35.62,
+  east: 139.82,
+  north: 35.74,
+}
+
+function project(station: StationBase) {
+  return {
+    x: (station.lng - VIEWPORT.west) * 10_000,
+    y: (VIEWPORT.north - station.lat) * 10_000,
+  }
+}
+
 describe('stationVisibility', () => {
-  it('maps zoom levels to progressively wider visibility bands and target counts', () => {
+  it('maps zoom levels to progressively wider visibility bands', () => {
     expect(getVisibilityBandForZoom(10.4)).toBe(1)
     expect(getVisibilityBandForZoom(11.2)).toBe(2)
     expect(getVisibilityBandForZoom(12.2)).toBe(3)
     expect(getVisibilityBandForZoom(13.0)).toBe(4)
-    expect(getStationTargetCountForZoom(10.4)).toBe(28)
-    expect(getStationTargetCountForZoom(11.2)).toBe(72)
-  })
-
-  it('treats major stations as the highest priority band', () => {
-    const majorStation = createStation({ labelTier: 'major' })
-    expect(getStationVisibilityBand(majorStation)).toBe(1)
   })
 
   it('boosts price-covered stations in price mode', () => {
@@ -91,7 +92,6 @@ describe('stationVisibility', () => {
       metrics: {
         ...createStation().metrics,
         medianPriceMJPY: 96,
-        priceSampleCount: 12,
         coverage: {
           price: true,
           land: false,
@@ -108,33 +108,78 @@ describe('stationVisibility', () => {
     expect(getStationPriorityScore(pricedStation, 'price')).toBeGreaterThan(
       getStationPriorityScore(localStation, 'price'),
     )
-    expect(shouldShowStationPrice({ station: pricedStation, mode: 'price' })).toBe(true)
   })
 
-  it('always keeps the selected station visible even if it falls outside the zoom quota', () => {
-    const stations = Array.from({ length: 40 }, (_, index) =>
+  it('keeps the selected station visible even when it falls outside the viewport', () => {
+    const stations = [
+      createStation({ id: 'inside', labelTier: 'major' }),
+      createStation({ id: 'outside', lng: 140.12, lat: 35.95 }),
+    ]
+
+    const selection = selectStationRenderSelection({
+      bounds: VIEWPORT,
+      mode: 'heat',
+      project: (station) => ({ x: station.lng * 10, y: station.lat * 10 }),
+      selectedStationId: 'outside',
+      stations,
+      zoom: 10.4,
+    })
+
+    expect(selection.anchorIds.has('outside')).toBe(true)
+  })
+
+  it('compresses dense price badges in the same screen area', () => {
+    const stations = Array.from({ length: 20 }, (_, index) =>
       createStation({
         id: `station-${index}`,
-        name: `站点-${index}`,
+        labelTier: 'major',
+        lng: 139.72 + index * 0.002,
+        lat: 35.67 + index * 0.001,
         metrics: {
           ...createStation().metrics,
-          ridershipDaily: 300_000 - index * 5_000,
+          medianPriceMJPY: 90 + index,
+          ridershipDaily: 600_000 - index * 5_000,
+          transferLines: 4,
+          coverage: {
+            price: true,
+            land: false,
+            ridership: true,
+            schools: false,
+            convenience: false,
+            population: false,
+            hazard: false,
+          },
         },
       }),
     )
 
-    const visibleIds = getVisibleStationIds({
+    const selection = selectStationRenderSelection({
+      bounds: VIEWPORT,
+      mode: 'price',
+      project,
+      selectedStationId: null,
       stations,
-      mode: 'heat',
       zoom: 10.4,
-      selectedStationId: 'station-39',
     })
 
-    expect(visibleIds.has('station-39')).toBe(true)
+    expect(selection.anchorIds.size).toBeLessThan(stations.length)
+    expect(selection.badgeIds.size).toBeLessThanOrEqual(9)
   })
 
-  it('only shows station names for major stations', () => {
-    expect(shouldShowStationName({ station: createStation({ labelTier: 'major' }), zoom: 10.2 })).toBe(true)
-    expect(shouldShowStationName({ station: createStation(), zoom: 12.8 })).toBe(false)
+  it('keeps low-zoom hazard labels focused on major stations', () => {
+    const selection = selectStationRenderSelection({
+      bounds: VIEWPORT,
+      mode: 'hazard',
+      project,
+      selectedStationId: null,
+      stations: [
+        createStation({ id: 'major', labelTier: 'major' }),
+        createStation({ id: 'minor', labelTier: 'minor', lng: 139.73, lat: 35.69 }),
+      ],
+      zoom: 10.4,
+    })
+
+    expect(selection.nameIds.has('major')).toBe(true)
+    expect(selection.nameIds.has('minor')).toBe(false)
   })
 })
