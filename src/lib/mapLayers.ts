@@ -16,10 +16,10 @@ import type {
 } from '../types'
 import { buildTokyoBasemapStyle } from './protomapsStyle'
 
-const TOKYO_CENTER: [number, number] = [139.767125, 35.681236]
+const TOKYO_CENTER: [number, number] = [139.7574, 35.6852]
 const TOKYO_FOCUS_BOUNDS = {
-  west: 139.18,
-  south: 35.52,
+  west: 139.52,
+  south: 35.55,
   east: 139.96,
   north: 35.84,
 } as const

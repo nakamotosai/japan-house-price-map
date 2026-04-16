@@ -65,6 +65,120 @@ button {
   height: 100%;
 }
 
+.map-preview {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 52% 46%, rgba(255, 255, 255, 0.92), transparent 28%),
+    linear-gradient(180deg, #eef4f8 0%, #d7e2ea 100%);
+}
+
+.map-preview__grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(108, 132, 163, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(108, 132, 163, 0.08) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0.28));
+}
+
+.map-preview__roads,
+.map-preview__roads::before,
+.map-preview__roads::after {
+  position: absolute;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82);
+  content: '';
+  box-shadow: 0 10px 26px rgba(53, 73, 101, 0.08);
+}
+
+.map-preview__roads--primary {
+  width: 42vw;
+  height: 18px;
+  left: 33vw;
+  top: 38vh;
+  transform: rotate(-10deg);
+}
+
+.map-preview__roads--primary::before {
+  width: 26vw;
+  height: 12px;
+  left: -9vw;
+  top: 10vh;
+  transform: rotate(67deg);
+}
+
+.map-preview__roads--primary::after {
+  width: 12vw;
+  height: 10px;
+  right: -2vw;
+  top: -9vh;
+  transform: rotate(58deg);
+}
+
+.map-preview__roads--secondary {
+  width: 22vw;
+  height: 12px;
+  left: 48vw;
+  top: 55vh;
+  transform: rotate(24deg);
+  opacity: 0.72;
+}
+
+.map-preview__roads--secondary::before {
+  width: 15vw;
+  height: 9px;
+  left: -6vw;
+  top: -12vh;
+  transform: rotate(-62deg);
+}
+
+.map-preview__roads--secondary::after {
+  width: 11vw;
+  height: 9px;
+  right: -2vw;
+  top: 7vh;
+  transform: rotate(-54deg);
+}
+
+.map-preview__focus {
+  position: absolute;
+  left: calc(50% + 18px);
+  top: calc(50% - 18px);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: var(--card-shadow);
+  color: #23314d;
+}
+
+.map-preview__focus strong,
+.map-preview__focus span {
+  display: block;
+}
+
+.map-preview__focus strong {
+  font-size: 1rem;
+}
+
+.map-preview__focus span {
+  color: #61708c;
+  font-size: 0.9rem;
+}
+
+.map-preview__dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: #1f4b99;
+  box-shadow: 0 0 0 10px rgba(31, 75, 153, 0.12);
+}
+
 .map-init-error {
   position: absolute;
   inset: 0;

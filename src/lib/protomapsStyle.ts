@@ -14,8 +14,6 @@ const PROTOMAPS_BASEMAP_SOURCE_ID = 'protomaps'
 const PROTOMAPS_PROTOCOL_ID = 'pmtiles'
 const PROTOMAPS_THEME_NAME = 'white'
 const PROTOMAPS_LABEL_LANGUAGE = 'en'
-const DEFAULT_PROTOMAPS_SPRITE_PATH =
-  `/vendor/protomaps/sprites/v4/${PROTOMAPS_THEME_NAME}`
 
 let protomapsProtocolRegistered = false
 
@@ -45,11 +43,6 @@ function getConfiguredGlyphsUrl() {
   return resolveBrowserUrl(configuredUrl || DEFAULT_PROTOMAPS_GLYPHS_PATH)
 }
 
-function getConfiguredSpriteUrl() {
-  const configuredUrl = import.meta.env.VITE_PROTOMAPS_SPRITE_URL?.trim()
-  return resolveBrowserUrl(configuredUrl || DEFAULT_PROTOMAPS_SPRITE_PATH)
-}
-
 export function ensurePmtilesProtocol(maplibre: typeof MapLibreNS) {
   if (protomapsProtocolRegistered) {
     return
@@ -61,10 +54,13 @@ export function ensurePmtilesProtocol(maplibre: typeof MapLibreNS) {
 }
 
 export function buildTokyoBasemapStyle(): StyleSpecification {
+  const baseLayers = layers(PROTOMAPS_BASEMAP_SOURCE_ID, namedFlavor(PROTOMAPS_THEME_NAME), {
+    lang: PROTOMAPS_LABEL_LANGUAGE,
+  }) as StyleSpecification['layers']
+
   return {
     version: 8,
     glyphs: getConfiguredGlyphsUrl(),
-    sprite: getConfiguredSpriteUrl(),
     sources: {
       [PROTOMAPS_BASEMAP_SOURCE_ID]: {
         type: 'vector',
@@ -72,9 +68,9 @@ export function buildTokyoBasemapStyle(): StyleSpecification {
         attribution: PROTOMAPS_ATTRIBUTION,
       },
     },
-    layers: layers(PROTOMAPS_BASEMAP_SOURCE_ID, namedFlavor(PROTOMAPS_THEME_NAME), {
-      lang: PROTOMAPS_LABEL_LANGUAGE,
-    }) as StyleSpecification['layers'],
+    // Keep the white flavor but drop basemap symbol layers to avoid first-load
+    // glyph and sprite churn; station labels remain as the primary readable layer.
+    layers: baseLayers.filter((layer) => layer.type !== 'symbol'),
   }
 }
 

@@ -38,7 +38,7 @@ type TokyoMapProps = {
   onViewportChange: (viewport: MapViewport) => void
 }
 
-const DEFAULT_TOKYO_ZOOM = 11.6
+const DEFAULT_TOKYO_ZOOM = 12.2
 const WEBGL_ERROR_PATTERN = /(Failed to initialize WebGL|webglcontextcreationerror|WebGL)/i
 
 const TOKYO_MAX_BOUNDS: [[number, number], [number, number]] = [
@@ -104,6 +104,7 @@ export function TokyoMap(props: TokyoMapProps) {
   const mapRef = useRef<MapLibreMap | null>(null)
   const lastStationSignatureRef = useRef('')
   const [mapReady, setMapReady] = useState(false)
+  const [mapPainted, setMapPainted] = useState(false)
   const [mapInitError, setMapInitError] = useState<{
     title: string
     detail: string
@@ -211,6 +212,7 @@ export function TokyoMap(props: TokyoMapProps) {
 
         try {
           ensurePmtilesProtocol(maplibre)
+          setMapPainted(false)
 
           const map = new maplibre.Map({
             container: containerRef.current,
@@ -265,8 +267,14 @@ export function TokyoMap(props: TokyoMapProps) {
             syncStationLayerEvent(false)
           }
 
+          const handleFirstRender = () => {
+            setMapPainted(true)
+            map.off('render', handleFirstRender)
+          }
+
           map.on('click', handleClick)
           map.on('mousemove', handlePointerMove)
+          map.on('render', handleFirstRender)
           map.on('zoom', handleZoom)
           map.on('moveend', handleViewportSettled)
           map.on('zoomend', handleViewportSettled)
@@ -283,6 +291,7 @@ export function TokyoMap(props: TokyoMapProps) {
           cleanup = () => {
             map.off('click', handleClick)
             map.off('mousemove', handlePointerMove)
+            map.off('render', handleFirstRender)
             map.off('zoom', handleZoom)
             map.off('moveend', handleViewportSettled)
             map.off('zoomend', handleViewportSettled)
@@ -293,6 +302,7 @@ export function TokyoMap(props: TokyoMapProps) {
           }
         } catch (error) {
           if (!cancelled) {
+            setMapPainted(false)
             setMapReady(false)
             setMapInitError(getMapInitErrorMessage(error))
           }
@@ -300,6 +310,7 @@ export function TokyoMap(props: TokyoMapProps) {
       })
       .catch((error) => {
         if (!cancelled) {
+          setMapPainted(false)
           setMapReady(false)
           setMapInitError(getMapInitErrorMessage(error))
         }
@@ -373,6 +384,20 @@ export function TokyoMap(props: TokyoMapProps) {
   return (
     <>
       <div className="map-canvas" ref={containerRef} />
+      {!mapPainted && !mapInitError ? (
+        <section className="map-preview" aria-hidden="true">
+          <div className="map-preview__grid" />
+          <div className="map-preview__roads map-preview__roads--primary" />
+          <div className="map-preview__roads map-preview__roads--secondary" />
+          <div className="map-preview__focus">
+            <span className="map-preview__dot" />
+            <div>
+              <strong>东京核心区</strong>
+              <span>正在载入 Protomaps 底图与当前视口站点。</span>
+            </div>
+          </div>
+        </section>
+      ) : null}
       {mapInitError ? (
         <section className="map-init-error" aria-live="polite">
           <div className="map-init-error__card">

@@ -1,4 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
+import {
+  getPrimedInitialStationsPromise,
+  getPrimedRuntimeIndexPromise,
+  getPrimedStationsMetaPromise,
+} from '../lib/appBootstrap'
 import {
   loadAreaCatalog,
   loadAreaChunk,
@@ -48,6 +53,8 @@ const DETAIL_CACHE_LIMIT = 20
 const AREA_CATALOG_CACHE_LIMIT = 12
 const PREFETCH_DETAIL_SHARD_LIMIT = 4
 const PERSISTENT_RUNTIME_CACHE = { persistent: true } as const
+const BACKGROUND_STATION_EXPAND_DELAY_MS = 420
+const BACKGROUND_DETAIL_MANIFEST_DELAY_MS = 520
 
 type OverlayModeId = 'schools' | 'convenience' | 'hazard' | 'population'
 type ChunkPayload = PointLayerFeature[] | AreaLayerFeature[] | string[]
@@ -190,6 +197,42 @@ function intersectsBounds(left: Bounds, right: Bounds) {
     || left.north < right.south
     || left.south > right.north
   )
+}
+
+function containsBounds(outer: Bounds, inner: Bounds) {
+  return (
+    inner.west >= outer.west
+    && inner.south >= outer.south
+    && inner.east <= outer.east
+    && inner.north <= outer.north
+  )
+}
+
+function getInitialStationPath(runtimeIndex: RuntimeIndex) {
+  return runtimeIndex.stations.initialPath ?? runtimeIndex.stations.basePath
+}
+
+function getFullStationPath(runtimeIndex: RuntimeIndex) {
+  return runtimeIndex.stations.fullPath ?? runtimeIndex.stations.basePath
+}
+
+function scheduleBackgroundTask(callback: () => void, timeoutMs: number) {
+  if (typeof window === 'undefined') {
+    callback()
+    return () => {}
+  }
+
+  if (typeof window.requestIdleCallback === 'function') {
+    const idleId = window.requestIdleCallback(() => callback(), { timeout: timeoutMs })
+    return () => {
+      window.cancelIdleCallback(idleId)
+    }
+  }
+
+  const timeoutId = window.setTimeout(callback, timeoutMs)
+  return () => {
+    window.clearTimeout(timeoutId)
+  }
 }
 
 function chunkKey(mode: OverlayModeId, manifestPath: string, chunkIds: string[]) {
@@ -354,6 +397,8 @@ export function useTokyoData(args: UseTokyoDataArgs): TokyoDataState {
   const chunkCacheRef = useRef(new Map<string, ChunkPayload>())
   const areaCatalogCacheRef = useRef(new Map<string, AreaCatalog>())
   const detailShardCacheRef = useRef(new Map<string, StationDetailShard>())
+  const fullStationLoadPromiseRef = useRef<Promise<StationBase[]> | null>(null)
+  const detailManifestLoadPromiseRef = useRef<Promise<StationDetailManifest | null> | null>(null)
   const prefetchedShardIdsRef = useRef(new Set<string>())
   const lastOverlayKeyRef = useRef<Record<OverlayModeId, string>>({
     schools: '',
@@ -361,43 +406,120 @@ export function useTokyoData(args: UseTokyoDataArgs): TokyoDataState {
     hazard: '',
     population: '',
   })
+  const [hasFullStationBases, setHasFullStationBases] = useState(false)
+  const [detailManifestReadyToken, setDetailManifestReadyToken] = useState(0)
+
+  const ensureFullStationBasesEvent = useEffectEvent(async () => {
+    const runtimeIndex = runtimeIndexRef.current
+    if (!runtimeIndex) {
+      return stationBases
+    }
+
+    const fullPath = getFullStationPath(runtimeIndex)
+    const initialPath = getInitialStationPath(runtimeIndex)
+    if (fullPath === initialPath) {
+      if (!hasFullStationBases) {
+        setHasFullStationBases(true)
+      }
+      return stationBases
+    }
+
+    if (hasFullStationBases) {
+      return stationBases
+    }
+
+    if (!fullStationLoadPromiseRef.current) {
+      fullStationLoadPromiseRef.current = loadStationBases(
+        fullPath,
+        undefined,
+        undefined,
+        {
+          ...PERSISTENT_RUNTIME_CACHE,
+          cacheVersion: runtimeGeneratedAt,
+        },
+      )
+        .then((bases) => {
+          setStationBases(bases)
+          setHasFullStationBases(true)
+          return bases
+        })
+        .finally(() => {
+          fullStationLoadPromiseRef.current = null
+        })
+    }
+
+    return fullStationLoadPromiseRef.current
+  })
+
+  const ensureDetailManifestEvent = useEffectEvent(async () => {
+    if (detailManifestRef.current) {
+      return detailManifestRef.current
+    }
+
+    const runtimeIndex = runtimeIndexRef.current
+    if (!runtimeIndex) {
+      return null
+    }
+
+    if (!detailManifestLoadPromiseRef.current) {
+      detailManifestLoadPromiseRef.current = loadStationDetailManifest(
+        runtimeIndex.stations.detailsManifestPath,
+        undefined,
+        undefined,
+        {
+          ...PERSISTENT_RUNTIME_CACHE,
+          cacheVersion: runtimeGeneratedAt,
+        },
+      )
+        .then((detailManifest) => {
+          detailManifestRef.current = detailManifest
+          setDetailManifestReadyToken((value) => value + 1)
+          return detailManifest
+        })
+        .finally(() => {
+          detailManifestLoadPromiseRef.current = null
+        })
+    }
+
+    return detailManifestLoadPromiseRef.current
+  })
 
   useEffect(() => {
     const controller = new AbortController()
 
     async function run() {
       try {
-        const runtimeIndex = await loadRuntimeIndex(undefined, controller.signal)
-        const [bases, detailManifest, stationsMeta] = await Promise.all([
-          loadStationBases(runtimeIndex.stations.basePath, undefined, controller.signal, {
-            ...PERSISTENT_RUNTIME_CACHE,
-            cacheVersion: runtimeIndex.generatedAt,
-          }),
-          loadStationDetailManifest(
-            runtimeIndex.stations.detailsManifestPath,
-            undefined,
-            controller.signal,
-            {
+        const primedRuntimeIndexPromise = getPrimedRuntimeIndexPromise()
+        const runtimeIndex = primedRuntimeIndexPromise
+          ? await primedRuntimeIndexPromise
+          : await loadRuntimeIndex(undefined, controller.signal)
+        const initialPath = getInitialStationPath(runtimeIndex)
+        const fullPath = getFullStationPath(runtimeIndex)
+        const primedInitialStationsPromise = getPrimedInitialStationsPromise()
+        const primedStationsMetaPromise = getPrimedStationsMetaPromise()
+        const [bases, stationsMeta] = await Promise.all([
+          primedInitialStationsPromise
+            ?? loadStationBases(initialPath, undefined, controller.signal, {
               ...PERSISTENT_RUNTIME_CACHE,
               cacheVersion: runtimeIndex.generatedAt,
-            },
-          ),
-          loadTokyoStationsMeta(
-            runtimeIndex.metadataPath ?? '/data/tokyo/stations.meta.json',
-            undefined,
-            controller.signal,
-            {
-              ...PERSISTENT_RUNTIME_CACHE,
-              cacheVersion: runtimeIndex.generatedAt,
-            },
-          ),
+            }),
+          primedStationsMetaPromise
+            ?? loadTokyoStationsMeta(
+              runtimeIndex.metadataPath ?? '/data/tokyo/stations.meta.json',
+              undefined,
+              controller.signal,
+              {
+                ...PERSISTENT_RUNTIME_CACHE,
+                cacheVersion: runtimeIndex.generatedAt,
+              },
+            ),
         ])
 
         runtimeIndexRef.current = runtimeIndex
-        detailManifestRef.current = detailManifest
         setStationBases(bases)
         setMetadata(stationsMeta)
         setRuntimeGeneratedAt(runtimeIndex.generatedAt)
+        setHasFullStationBases(initialPath === fullPath)
         setStatus('ready')
         setMessage(undefined)
       } catch (error) {
@@ -416,6 +538,51 @@ export function useTokyoData(args: UseTokyoDataArgs): TokyoDataState {
       controller.abort()
     }
   }, [])
+
+  useEffect(() => {
+    if (status !== 'ready' || hasFullStationBases) {
+      return
+    }
+
+    return scheduleBackgroundTask(() => {
+      void ensureFullStationBasesEvent()
+    }, BACKGROUND_STATION_EXPAND_DELAY_MS)
+  }, [hasFullStationBases, status])
+
+  useEffect(() => {
+    if (status !== 'ready' || detailManifestRef.current) {
+      return
+    }
+
+    return scheduleBackgroundTask(() => {
+      void ensureDetailManifestEvent()
+    }, BACKGROUND_DETAIL_MANIFEST_DELAY_MS)
+  }, [detailManifestReadyToken, status])
+
+  useEffect(() => {
+    if (status !== 'ready' || hasFullStationBases || !viewport) {
+      return
+    }
+
+    const bootstrapBounds = runtimeIndexRef.current?.stations.bootstrapBounds
+    if (!bootstrapBounds || containsBounds(bootstrapBounds, viewport.bounds)) {
+      return
+    }
+
+    void ensureFullStationBasesEvent()
+  }, [hasFullStationBases, status, viewport])
+
+  useEffect(() => {
+    if (status !== 'ready' || !selectedStationId) {
+      return
+    }
+
+    if (stationBases.some((station) => station.id === selectedStationId)) {
+      return
+    }
+
+    void ensureFullStationBasesEvent()
+  }, [selectedStationId, stationBases, status])
 
   useEffect(() => {
     if (status !== 'ready' || !stationBases.length || !detailManifestRef.current) {
@@ -465,7 +632,7 @@ export function useTokyoData(args: UseTokyoDataArgs): TokyoDataState {
         window.clearTimeout(timeoutId)
       }
     }
-  }, [runtimeGeneratedAt, stationBases, status])
+  }, [detailManifestReadyToken, runtimeGeneratedAt, stationBases, status])
 
   useEffect(() => {
     if (status !== 'ready') {
@@ -476,12 +643,16 @@ export function useTokyoData(args: UseTokyoDataArgs): TokyoDataState {
       return
     }
 
-    const detailManifest = detailManifestRef.current
     const controller = new AbortController()
     const activeStationId = selectedStationId
-    const shardId = detailManifest?.stationToShard[activeStationId]
 
     async function run() {
+      const detailManifest = await ensureDetailManifestEvent()
+      if (controller.signal.aborted) {
+        return
+      }
+
+      const shardId = detailManifest?.stationToShard[activeStationId]
       if (!shardId) {
         setSelectedStationDetail(null)
         setStationDetailStatus('error')

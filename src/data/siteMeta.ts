@@ -1,10 +1,10 @@
 import type { ModeId } from '../types'
 
 export const TOKYO_SITE_RELEASE = {
-  versionLabel: 'Tokyo V1.10',
-  shortVersionLabel: 'V1.10',
-  scopeLabel: '关东视角版',
-  runtimeLabel: 'MapLibre + Protomaps same-origin proxy + WebGL failure surface',
+  versionLabel: 'Tokyo V1.12',
+  shortVersionLabel: 'V1.12',
+  scopeLabel: '东京极速首屏版',
+  runtimeLabel: 'HTML shell + MapLibre early warmup + Tokyo bootstrap runtime',
 }
 
 export const TOKYO_MODE_METHODS: Record<

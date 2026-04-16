@@ -34,6 +34,13 @@ TOKYO_CORE_BOUNDS = {
     "north": 35.82,
 }
 
+TOKYO_BOOTSTRAP_BOUNDS = {
+    "west": 139.69,
+    "east": 139.83,
+    "south": 35.65,
+    "north": 35.72,
+}
+
 TRANSACTION_API_BASE = "https://www.reinfolib.mlit.go.jp/in-api"
 TRANSACTION_CSV_API = (
     f"{TRANSACTION_API_BASE}/api-aur/aur/csv/transactionPrices"
@@ -1520,6 +1527,18 @@ def station_base_copy(station: dict[str, Any]) -> dict[str, Any]:
 def build_station_runtime_payloads(stations: list[dict[str, Any]]) -> dict[str, Any]:
     station_bases = [station_base_copy(station) for station in stations]
     station_bases.sort(key=lambda item: item["name"])
+    bootstrap_station_ids = {
+        station["id"]
+        for station in stations
+        if station["labelTier"] == "major"
+        or (
+            TOKYO_BOOTSTRAP_BOUNDS["west"] <= station["lng"] <= TOKYO_BOOTSTRAP_BOUNDS["east"]
+            and TOKYO_BOOTSTRAP_BOUNDS["south"] <= station["lat"] <= TOKYO_BOOTSTRAP_BOUNDS["north"]
+        )
+    }
+    bootstrap_station_bases = [
+        station for station in station_bases if station["id"] in bootstrap_station_ids
+    ]
 
     shard_size = 40
     detail_shards: list[dict[str, Any]] = []
@@ -1558,6 +1577,7 @@ def build_station_runtime_payloads(stations: list[dict[str, Any]]) -> dict[str, 
     }
 
     return {
+        "stationsBootstrap": bootstrap_station_bases,
         "stationsBase": station_bases,
         "detailsManifest": manifest,
         "detailShards": detail_shards,
@@ -1749,6 +1769,11 @@ def write_runtime_payloads(
         shutil.rmtree(RUNTIME_DIR)
 
     station_payloads = build_station_runtime_payloads(stations)
+    write_json(
+        RUNTIME_DIR / "stations.bootstrap.json",
+        station_payloads["stationsBootstrap"],
+        indent=None,
+    )
     write_json(RUNTIME_DIR / "stations.base.json", station_payloads["stationsBase"], indent=None)
     write_json(
         RUNTIME_DIR / "stations" / "details" / "manifest.json",
@@ -1888,7 +1913,10 @@ def write_runtime_payloads(
         "stationCount": metadata["stationCount"],
         "stations": {
             "basePath": "/data/tokyo/runtime/stations.base.json",
+            "initialPath": "/data/tokyo/runtime/stations.bootstrap.json",
+            "fullPath": "/data/tokyo/runtime/stations.base.json",
             "detailsManifestPath": "/data/tokyo/runtime/stations/details/manifest.json",
+            "bootstrapBounds": TOKYO_BOOTSTRAP_BOUNDS,
         },
         "metadataPath": "/data/tokyo/stations.meta.json",
         "modes": {

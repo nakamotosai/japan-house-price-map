@@ -41,6 +41,10 @@ export async function loadMapLibreRuntime() {
     window.__maplibreRuntimePromise = new Promise<MapLibreModule>((resolve, reject) => {
       const existing = document.getElementById(MAPLIBRE_SCRIPT_ID) as HTMLScriptElement | null
       if (existing) {
+        if (window.maplibregl) {
+          resolve(window.maplibregl)
+          return
+        }
         existing.addEventListener('load', () => {
           if (window.maplibregl) {
             resolve(window.maplibregl)
@@ -56,7 +60,7 @@ export async function loadMapLibreRuntime() {
       const script = document.createElement('script')
       script.id = MAPLIBRE_SCRIPT_ID
       script.src = MAPLIBRE_SCRIPT_PATH
-      script.async = true
+      script.defer = true
       script.onload = () => {
         if (window.maplibregl) {
           resolve(window.maplibregl)

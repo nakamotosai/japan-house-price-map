@@ -157,7 +157,10 @@ export type RuntimeIndex = {
   stationCount: number
   stations: {
     basePath: string
+    initialPath?: string
+    fullPath?: string
     detailsManifestPath: string
+    bootstrapBounds?: Bounds
   }
   metadataPath?: string
   modes: Partial<

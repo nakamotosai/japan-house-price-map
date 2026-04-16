@@ -17,6 +17,7 @@ type CacheOptions = {
 }
 
 const RUNTIME_CACHE_NAME = 'tokyo-map-runtime-v1'
+const inflightJsonRequests = new Map<string, Promise<unknown>>()
 
 function appendCacheVersion(resource: string, cacheVersion?: string | null) {
   if (!cacheVersion) {
@@ -68,6 +69,7 @@ async function readJson<T>(
 ): Promise<T> {
   const resolvedResource = appendCacheVersion(resource, options.cacheVersion)
   const usePersistentCache = options.persistent && canUsePersistentCache(fetcher)
+  const canShareInflightRequest = fetcher === fetch
 
   if (usePersistentCache) {
     const cached = await readJsonFromPersistentCache<T>(resolvedResource)
@@ -76,17 +78,38 @@ async function readJson<T>(
     }
   }
 
-  const response = await fetcher(resolvedResource, { signal })
-
-  if (!response.ok) {
-    throw new Error(`failed_to_load:${resource}:${response.status}`)
+  if (canShareInflightRequest) {
+    const pending = inflightJsonRequests.get(resolvedResource)
+    if (pending) {
+      return pending as Promise<T>
+    }
   }
 
-  if (usePersistentCache) {
-    await writeJsonToPersistentCache(resolvedResource, response.clone())
+  const requestPromise = (async () => {
+    const response = await fetcher(resolvedResource, { signal })
+
+    if (!response.ok) {
+      throw new Error(`failed_to_load:${resource}:${response.status}`)
+    }
+
+    if (usePersistentCache) {
+      await writeJsonToPersistentCache(resolvedResource, response.clone())
+    }
+
+    return (await response.json()) as T
+  })()
+
+  if (canShareInflightRequest) {
+    inflightJsonRequests.set(resolvedResource, requestPromise)
   }
 
-  return (await response.json()) as T
+  try {
+    return await requestPromise
+  } finally {
+    if (canShareInflightRequest) {
+      inflightJsonRequests.delete(resolvedResource)
+    }
+  }
 }
 
 export async function loadRuntimeIndex(

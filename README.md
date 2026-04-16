@@ -6,9 +6,10 @@
 
 ## 当前状态
 
-- 状态：`Tokyo V1.11 Tokyo-first viewport + runtime persistent cache + faster first paint 已收口`
-- 当前版本：`单页东京地图 + 7 模式 + Protomaps white 浅色底图 + 东京默认视角 + 东京数据不扩城 + Protomaps 同域代理交付 + WebGL 初始化失败显式提示 + manifest/catalog runtime + runtime 版本化缓存 + 资源缓存头 + Cloudflare 正式域名 + Tailnet 预览`
+- 状态：`Tokyo V1.12 HTML shell + MapLibre early warmup + Tokyo bootstrap runtime 已收口`
+- 当前版本：`单页东京地图 + 7 模式 + Protomaps white 浅色底图 + 东京核心默认视角 + HTML 首屏骨架 + MapLibre 提前预热 + Tokyo bootstrap station runtime + 后台扩展全量 station base + runtime 版本化缓存 + 资源缓存头 + Cloudflare 正式域名 + Tailnet 预览`
 - 当前可用能力：
+  - 页面刚打开时会先直接显示 HTML 级地图壳层与东京骨架，不再先给纯白空页
   - 直接进入东京地图，不做独立首页
   - Google Maps 风格启发的左侧边栏、左上搜索栏和顶部模式按钮
   - 左上菜单按钮已经变成真实入口：
@@ -33,12 +34,17 @@
     - `detail`
   - `hazard / population` 的三档 area runtime 已改成 `manifest + catalog + id chunk`，chunk 本体只传 feature id
   - `MapLibre` 已从应用主包拆出，当前走 `/public/vendor/maplibre/` 本地 vendor 注入
+  - `MapLibre` runtime 现在会在应用挂载前和 runtime index 并行预热，不再等到地图组件 effect 才开始拉
   - 正式底图已从 `地理院 pale raster` 切到 `Protomaps white` 浅色向量底图
   - 当前浏览器底图走同域 `pmtiles://<origin>/vendor/protomaps/openstreetmap-v4.pmtiles`
-  - 底图 glyphs / sprite 走同域 `/vendor/protomaps/fonts/...` 与 `/vendor/protomaps/sprites/v4/white`
+  - 首屏底图当前会保留白色 Protomaps flavor，但先去掉 basemap symbol layer，优先让底色、道路和站点层更快到位
   - 当前 `runtime/` 目录约 `15M`，`public/vendor/maplibre/` 约 `1.1M`
   - `schools / convenience` 已补低缩放 `overview` 聚合层
-  - 默认首屏改成东京皇居附近视角，不再先把用户丢到关东远景
+  - 默认首屏改成东京皇居附近核心视角：`center 139.7574,35.6852 / zoom 12.2`
+  - 首屏 station runtime 已切成两段：
+    - `stations.bootstrap.json`：约 `105KB`，只承载东京默认视口和 major station
+    - `stations.base.json`：约 `390KB`，改为后台扩展并进入缓存
+  - 首屏请求链已经去掉 `runtime/index.json` / `stations.bootstrap.json` 重复请求
   - 已访问过的 runtime manifest / chunk / station detail shard 会按版本化 URL 进入浏览器持久缓存；刷新后优先复用缓存，不再每次全量重拉
   - 预览静态服务已补 `Cache-Control`：
     - `runtime/index.json` 走 `no-cache`
@@ -52,10 +58,24 @@
   - URL 现在支持 `?mode=<mode>&station=<stationId>` 直达和分享
   - 站点面板现在有“分享这站”入口，优先 Web Share，失败时回退复制链接
   - 7 个模式的图例脚注和固定验收报告都已补成可读文本
-  - UI 可见 `Tokyo V1.10` 和数据更新时间
+  - UI 可见 `Tokyo V1.12` 和数据更新时间
   - 当浏览器无法创建 WebGL 时，前台不再静默空白，而会显示明确错误卡片
   - 固定前台验收现在会额外产出 `console / network / interaction / live screenshot / map canvas screenshot`
   - 固定 Tailnet HTTPS 预览入口可直接从 Windows 访问
+
+## 本轮加速结果
+
+- 旧基线真相：
+  - 2026-04-16 早前 profiling 里，冷启动 `shell visible` 约 `489.8ms`，`window.maplibregl` 可用约 `839.6ms`
+  - 同一轮里首屏还会直接拉整份 `stations.base.json`，体积约 `390KB`
+- V1.12 实测真相：
+  - 当前 HTML 首屏骨架在最新 profiling 中约 `101.7-107.5ms` 即可见
+  - 最新 cold profile 请求链：`runtime/index.json -> stations.bootstrap.json -> stations.base.json(后台扩展) -> details/manifest(后台扩展)`
+  - 说明首屏必需 station 底座已从 `390KB` 降到约 `105KB`
+  - 最新 live 前台验收产物：`2026-04-16T115759Z`
+    - 默认东京核心视角正确
+    - live 截图和 canvas 截图都已产出
+    - console / network 无关键报错
 
 ## 当前底图真相
 
@@ -63,13 +83,13 @@
 - 正式底图：`Protomaps white`
 - 当前浏览器底图入口：`/vendor/protomaps/openstreetmap-v4.pmtiles`
 - 当前上游底图源：`https://data.source.coop/protomaps/openstreetmap/v4.pmtiles`
-- 当前地图边界：`东京默认视角 + 东京范围优先`
+- 当前地图边界：`东京核心默认视角 + 东京范围优先`
 - 当前数据边界：`东京`
 - 当前标签与样式资产：
   - glyphs：`/vendor/protomaps/fonts/{fontstack}/{range}.pbf`
-  - sprite：`/vendor/protomaps/sprites/v4/white`
+  - sprite：`当前首屏不再依赖 basemap sprite；站点文本仍走 glyphs`
 - 当前空白地图根因真相：
-  - 若页面能看到 `V1.10`、菜单和模式按钮，但地图区没有任何底图、站点和右下角 MapLibre 控件，根因更可能是浏览器没能创建 WebGL，而不是站点没有更新
+  - 若页面能看到 `V1.12`、菜单和模式按钮，但地图区没有任何底图、站点和右下角 MapLibre 控件，根因更可能是浏览器没能创建 WebGL，而不是站点没有更新
   - 若页面能看到菜单和模式按钮、也没有“地图未启动”错误卡片，但地图区域仍整块发白，根因更可能是地图容器尺寸 / 定位异常，而不是数据层没有返回
   - 当前前台已把这类失败显式显示为“地图未启动 / 当前浏览器没有可用的地图渲染能力”
 - 当前边界：
@@ -130,9 +150,12 @@
 
 - `runtime/index.json`
   - 运行时总入口
-  - 记录 `stations.basePath`、`detailsManifestPath`、`metadataPath`、各模式 manifest
+  - 记录 `stations.basePath / initialPath / fullPath / bootstrapBounds`、`detailsManifestPath`、`metadataPath`、各模式 manifest
+- `runtime/stations.bootstrap.json`
+  - 首屏默认东京视口和 major station 所需底座
 - `runtime/stations.base.json`
-  - 首屏地图、搜索、站点排序必须字段
+  - 全量东京 station base
+  - 当前改成后台扩展和缓存预热，不再压在首屏必经链路上
 - `runtime/stations/details/manifest.json`
   - `stationId -> shardId`
 - `runtime/stations/details/shard-xx.json`
@@ -167,8 +190,9 @@
 
 ## 当前前台行为
 
-- 默认进入东京皇居附近视角：`center 139.767125,35.681236 / zoom 11.6`
+- 默认进入东京皇居附近视角：`center 139.7574,35.6852 / zoom 12.2`
 - 默认底图是 `Protomaps white` 浅色主题
+- 首屏先显示 HTML 骨架与地图占位，再平滑切到真实地图 canvas
 - 默认房产均价模式继续优先显示大站和核心价格 badge
 - 左上菜单按钮现在会打开地图菜单，不再是死控件
 - 直达链接支持把当前 `mode + station` 保留在 URL 里
@@ -186,7 +210,7 @@
 - 图例继续自动收起，但 7 个模式都能显示稳定脚注和当前层级命中状态
 - 移动端模式区固定为单行横向滚动，不再堆成多行按钮墙
 - 移动端默认先显示折叠图例，需要时再展开
-- 左侧边栏底部可看到 `Tokyo V1.10` 与数据更新时间简写
+- 左侧边栏底部可看到 `Tokyo V1.12` 与数据更新时间简写
 
 ## 运行与构建
 
@@ -209,6 +233,13 @@ npm run build
 
 ```bash
 npm run acceptance:tokyo-v1
+```
+
+固定首屏 profiling：
+
+```bash
+node scripts/profile_page_load.mjs --label cold
+node scripts/profile_page_load.mjs --label warm
 ```
 
 重建官方车站底座：
@@ -305,48 +336,36 @@ https://vps-jp.tail4b5213.ts.net:8443/
 
 - `python3 scripts/build_tokyo_phase_a_layers.py --skip-station-master` 通过
 - `npm test` 通过
-- `npm run lint` 通过
 - `npm run build` 通过
-  - 当前 build 产物已拆出：
-    - `dist/assets/index-*.js`
-    - `dist/assets/vendor-react-*.js`
-    - `/public/vendor/maplibre/maplibre-gl.js`
-    - `dist/assets/IntroOverlay-*.js`
 - `npm run acceptance:tokyo-v1` 通过
   - 最新验收产物：
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T042356Z/desktop-price-default.png`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T042356Z/desktop-price-canvas.png`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T042356Z/desktop-schools-summary.png`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T042356Z/desktop-convenience-summary.png`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T042356Z/desktop-hazard-summary.png`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T042356Z/desktop-population-summary.png`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T042356Z/mobile-price-default.png`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T042356Z/live-default.png`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T042356Z/live-default-canvas.png`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T042356Z/report.json`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T042356Z/console-report.json`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T042356Z/network-report.json`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T042356Z/interaction-summary.json`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T115759Z/desktop-price-default.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T115759Z/desktop-price-canvas.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T115759Z/desktop-schools-summary.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T115759Z/desktop-convenience-summary.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T115759Z/desktop-hazard-summary.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T115759Z/desktop-population-summary.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T115759Z/mobile-price-default.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T115759Z/live-default.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T115759Z/live-default-canvas.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T115759Z/report.json`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T115759Z/console-report.json`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T115759Z/network-report.json`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T115759Z/interaction-summary.json`
   - 验收报告确认：
-    - `interaction-summary.json` 已记录默认视角，当前默认缩放已从东京核心近景降到关东范围
-    - `desktop-price-canvas.png` 与 `live-default-canvas.png` 已给出 WebGL map canvas 真相图，不再只依赖 headless 页面截图
-    - `2026-04-16T051932Z` 这轮 same-origin live 验收已确认 Protomaps 底图请求：
-      - `http://127.0.0.1:4173/vendor/protomaps/openstreetmap-v4.pmtiles`
-      - `http://127.0.0.1:4173/vendor/protomaps/sprites/v4/white.json`
-      - `http://127.0.0.1:4173/vendor/protomaps/sprites/v4/white.png`
-      - `http://127.0.0.1:4173/vendor/protomaps/fonts/Noto Sans .../*.pbf`
-    - `2026-04-16T0521Z` 这轮 no-WebGL 对照截图已确认：
-      - UI 壳层仍会显示 `V1.10`
-      - `window.__TOKYO_MAP__ = false`
-      - `navControls = 0`
-      - 前台会显示“当前浏览器没有可用的地图渲染能力”
-    - `schools / convenience / hazard / population` 都已进入三档 manifest 矩阵
-    - 默认关东视角：
-      - `schools` 命中 `summary.manifest.json + 4 个 summary chunks`
-      - `convenience` 命中 `summary.manifest.json + 4 个 summary chunks`
-      - `hazard` 命中 `summary.manifest.json + 9 个 summary chunks + summary.catalog.json`
-      - `population` 命中 `summary.manifest.json + 8 个 summary chunks + summary.catalog.json`
+    - `interaction-summary.json` 已记录默认视角为 `center 139.7574,35.6852 / zoom 12.2`
+    - `desktop-price-canvas.png` 与 `live-default-canvas.png` 已给出当前 WebGL map canvas 真相图
+    - `stationPanelClosedByBlankClick / shareButtonVisible / introOpened / zeroResultsShown / urlStatePreserved / mobileMenuOpened / liveDomReady` 全部为 `true`
     - `price / land / heat / schools / convenience / hazard / population` 的 `legendText` 全部非空
+- `node scripts/profile_page_load.mjs --label after-cold-final` 通过
+  - 产物：`/home/ubuntu/codex/日本房价地图/.artifacts/load-profiles/2026-04-16T115712Z/report.json`
+  - 首屏链路已确认：
+    - `runtime/index.json`
+    - `stations.bootstrap.json`
+    - `stations.base.json`
+    - `stations/details/manifest.json`
+- `node scripts/profile_page_load.mjs --label after-warm-final` 通过
+  - 产物：`/home/ubuntu/codex/日本房价地图/.artifacts/load-profiles/2026-04-16T115713Z/report.json`
     - 菜单按钮已可打开地图菜单
     - 搜索零结果态已覆盖
     - 站点打开态已确认分享按钮可见

@@ -99,6 +99,15 @@ export default function App() {
   const updatedLabel = formatShortDateLabel(
     dataState.runtimeGeneratedAt ?? metadata?.generatedAt,
   )
+  const stationCount = metadata?.stationCount ?? stationBases.length
+
+  useEffect(() => {
+    document.documentElement.dataset.appMounted = 'true'
+
+    return () => {
+      delete document.documentElement.dataset.appMounted
+    }
+  }, [])
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -190,7 +199,7 @@ export default function App() {
         onResetView={handleResetView}
         onToggleMenu={() => setShowMenu((value) => !value)}
         releaseLabel={TOKYO_SITE_RELEASE.shortVersionLabel}
-        stationCount={stationBases.length}
+        stationCount={stationCount}
         updatedLabel={updatedLabel}
       />
 
