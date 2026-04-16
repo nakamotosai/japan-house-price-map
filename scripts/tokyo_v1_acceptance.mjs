@@ -18,6 +18,10 @@ const STATION_INTERACTIVE_LAYER_IDS = [
   'station-badge',
   'station-name',
 ]
+const PROTOMAPS_REQUEST_PATTERNS = [
+  'data.source.coop/protomaps/openstreetmap/',
+  'protomaps.github.io/basemaps-assets/',
+]
 const MODE_CASES = [
   { id: 'price', label: '房产均价', screenshotName: 'desktop-price-default.png' },
   { id: 'land', label: '公示地价', screenshotName: 'desktop-land-default.png' },
@@ -58,6 +62,23 @@ async function waitForJson(url, timeoutMs = 15000) {
   }
 
   throw new Error(`timeout_waiting_for:${url}`)
+}
+
+async function waitForHttpOk(url, timeoutMs = 15000) {
+  const startedAt = Date.now()
+  while (Date.now() - startedAt < timeoutMs) {
+    try {
+      const response = await fetch(url, { method: 'HEAD' })
+      if (response.ok) {
+        return
+      }
+    } catch {
+      // Wait for preview or live entry to come up.
+    }
+    await delay(200)
+  }
+
+  throw new Error(`timeout_waiting_for_http_ok:${url}`)
 }
 
 class CDPClient {
@@ -179,6 +200,26 @@ async function captureScreenshot(client, outputPath) {
     captureBeyondViewport: true,
   })
   await writeFile(outputPath, Buffer.from(data, 'base64'))
+}
+
+async function exportMapCanvas(client, outputPath) {
+  const dataUrl = await evaluate(
+    client,
+    `(() => {
+      const map = window.__TOKYO_MAP__
+      if (!map) {
+        return null
+      }
+      return map.getCanvas().toDataURL('image/png')
+    })()`,
+  )
+
+  if (typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image/png;base64,')) {
+    throw new Error(`map_canvas_export_failed:${outputPath}`)
+  }
+
+  const base64 = dataUrl.slice('data:image/png;base64,'.length)
+  await writeFile(outputPath, Buffer.from(base64, 'base64'))
 }
 
 async function clickSelector(client, selector) {
@@ -372,6 +413,18 @@ function extractRuntimeRequests(entries) {
   ]
 }
 
+function extractBasemapRequests(entries) {
+  return [
+    ...new Set(
+      entries
+        .map((item) => item.url)
+        .filter((item) =>
+          PROTOMAPS_REQUEST_PATTERNS.some((pattern) => item.includes(pattern)),
+        ),
+    ),
+  ]
+}
+
 async function waitForMapReady(client) {
   await waitForExpression(
     client,
@@ -380,9 +433,19 @@ async function waitForMapReady(client) {
   await delay(1000)
 }
 
+async function waitForMapRenderComplete(client, timeoutMs = 20000) {
+  await waitForExpression(
+    client,
+    `(() => {
+      const map = window.__TOKYO_MAP__
+      return !!map && map.loaded() && map.isStyleLoaded() && map.areTilesLoaded()
+    })()`,
+    timeoutMs,
+  )
+}
+
 async function navigateAndWait(client, url) {
   await client.send('Page.navigate', { url })
-  await client.waitFor('Page.loadEventFired')
   await waitForMapReady(client)
 }
 
@@ -436,6 +499,8 @@ async function main() {
   }
 
   try {
+    await waitForHttpOk(args.url)
+
     const versionInfo = await waitForJson(`http://127.0.0.1:${debugPort}/json/version`)
     const targets = await waitForJson(`http://127.0.0.1:${debugPort}/json/list`)
     const pageTarget = targets.find((item) => item.type === 'page')
@@ -493,6 +558,11 @@ async function main() {
       DESKTOP_VIEWPORT.mobile,
     )
     await navigateAndWait(client, args.url)
+    const basemapRequests = extractBasemapRequests(requestLog)
+    if (!basemapRequests.length) {
+      throw new Error('protomaps_basemap_requests_missing')
+    }
+    await waitForMapRenderComplete(client)
 
     const modeResults = []
     modeResults.push(await collectModeResult(client, requestLog, MODE_CASES[0], artifactDir, false))
@@ -519,6 +589,8 @@ async function main() {
     }
 
     const stationOpenPath = resolve(artifactDir, 'desktop-station-open.png')
+    const mapCanvasPath = resolve(artifactDir, 'desktop-price-canvas.png')
+    await exportMapCanvas(client, mapCanvasPath)
     await captureScreenshot(client, stationOpenPath)
     const shareButtonVisible = await evaluate(
       client,
@@ -582,7 +654,6 @@ async function main() {
       MOBILE_VIEWPORT.mobile,
     )
     await client.send('Page.reload', { ignoreCache: true })
-    await client.waitFor('Page.loadEventFired')
     await waitForMapReady(client)
     const mobileDefaultPath = resolve(artifactDir, 'mobile-price-default.png')
     await captureScreenshot(client, mobileDefaultPath)
@@ -616,9 +687,12 @@ async function main() {
           DESKTOP_VIEWPORT.mobile,
         )
         await navigateAndWait(client, args.tailnetUrl)
+        await waitForMapRenderComplete(client)
         liveCheck.domReady = true
         liveCheck.screenshotPath = resolve(artifactDir, 'live-default.png')
         await captureScreenshot(client, liveCheck.screenshotPath)
+        liveCheck.canvasPath = resolve(artifactDir, 'live-default-canvas.png')
+        await exportMapCanvas(client, liveCheck.canvasPath)
       } catch (error) {
         liveCheck.error = error instanceof Error ? error.message : 'unknown_live_error'
       }
@@ -629,6 +703,7 @@ async function main() {
       exceptionEntries,
     }
     const networkReport = {
+      basemapRequests,
       modeResults: modeResults.map((item) => ({
         id: item.id,
         label: item.label,
@@ -672,6 +747,7 @@ async function main() {
       networkReportPath: resolve(artifactDir, 'network-report.json'),
       interactionSummaryPath: resolve(artifactDir, 'interaction-summary.json'),
       screenshots: {
+        mapCanvasPath,
         stationOpenPath,
         introOpenPath,
         searchEmptyPath,

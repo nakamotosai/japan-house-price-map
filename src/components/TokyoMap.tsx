@@ -15,6 +15,7 @@ import {
   getVisibilityBandForZoom,
   selectStationRenderSelection,
 } from '../lib/stationVisibility'
+import { ensurePmtilesProtocol } from '../lib/protomapsStyle'
 import type {
   AreaLayerFeature,
   MapViewport,
@@ -153,6 +154,8 @@ export function TokyoMap(props: TokyoMapProps) {
       if (cancelled || !containerRef.current) {
         return
       }
+
+      ensurePmtilesProtocol(maplibre)
 
       const map = new maplibre.Map({
         container: containerRef.current,

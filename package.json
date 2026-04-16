@@ -13,7 +13,9 @@
     "acceptance:tokyo-v1": "./scripts/run_tokyo_v1_acceptance.sh"
   },
   "dependencies": {
+    "@protomaps/basemaps": "^5.7.2",
     "maplibre-gl": "^5.23.0",
+    "pmtiles": "^4.4.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },

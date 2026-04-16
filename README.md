@@ -6,8 +6,8 @@
 
 ## 当前状态
 
-- 状态：`Tokyo V1.6 edge closeout 已收口`
-- 当前版本：`单页东京地图 + 7 模式 + manifest/catalog runtime + V1.5 站点分享增强 + V1.6 MapLibre 脱主包 / 灾害三灾种收口 + Cloudflare 正式域名 + Tailnet 预览`
+- 状态：`Tokyo V1.7 Protomaps basemap switch 已收口`
+- 当前版本：`单页东京地图 + 7 模式 + Protomaps white 浅色底图 + manifest/catalog runtime + V1.5 站点分享增强 + V1.6 MapLibre 脱主包 / 灾害三灾种收口 + V1.7 PMTiles protocol / basemap sprite-glyph / canvas 验收补强 + Cloudflare 正式域名 + Tailnet 预览`
 - 当前可用能力：
   - 直接进入东京地图，不做独立首页
   - Google Maps 风格启发的左侧边栏、左上搜索栏和顶部模式按钮
@@ -33,6 +33,9 @@
     - `detail`
   - `hazard / population` 的三档 area runtime 已改成 `manifest + catalog + id chunk`，chunk 本体只传 feature id
   - `MapLibre` 已从应用主包拆出，当前走 `/public/vendor/maplibre/` 本地 vendor 注入
+  - 正式底图已从 `地理院 pale raster` 切到 `Protomaps white` 浅色向量底图
+  - 当前底图走 `pmtiles://https://data.source.coop/protomaps/openstreetmap/v4.pmtiles`
+  - 底图 glyphs / sprite 走 `protomaps/basemaps-assets`
   - 当前 `runtime/` 目录约 `15M`，`public/vendor/maplibre/` 约 `1.1M`
   - `schools / convenience` 已补低缩放 `overview` 聚合层
   - 默认东京视口现在优先命中更粗的 `summary` 层，而不是直接打碎 `overview`
@@ -44,9 +47,22 @@
   - URL 现在支持 `?mode=<mode>&station=<stationId>` 直达和分享
   - 站点面板现在有“分享这站”入口，优先 Web Share，失败时回退复制链接
   - 7 个模式的图例脚注和固定验收报告都已补成可读文本
-  - UI 可见 `Tokyo V1.6` 和数据更新时间
-  - 固定前台验收现在会额外产出 `console / network / interaction / live screenshot`
+  - UI 可见 `Tokyo V1.7` 和数据更新时间
+  - 固定前台验收现在会额外产出 `console / network / interaction / live screenshot / map canvas screenshot`
   - 固定 Tailnet HTTPS 预览入口可直接从 Windows 访问
+
+## 当前底图真相
+
+- 渲染层：`MapLibre GL`
+- 正式底图：`Protomaps white`
+- 当前底图源：`https://data.source.coop/protomaps/openstreetmap/v4.pmtiles`
+- 当前标签与样式资产：
+  - glyphs：`https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf`
+  - sprite：`https://protomaps.github.io/basemaps-assets/sprites/v4/white`
+- 当前边界：
+  - 生产入口已经切到 Protomaps 底图
+  - 但底图仍依赖公开 PMTiles 源，不是本仓自托管
+  - 若后续要追求更强 SLA 或更低外部依赖，应再切到自有镜像或自托管 PMTiles
 
 ## 当前数据口径
 
@@ -139,6 +155,7 @@
 ## 当前前台行为
 
 - 默认进入东京核心视角：`zoom 11.55`
+- 默认底图是 `Protomaps white` 浅色主题
 - 默认房产均价模式继续优先显示大站和核心价格 badge
 - 左上菜单按钮现在会打开地图菜单，不再是死控件
 - 直达链接支持把当前 `mode + station` 保留在 URL 里
@@ -156,7 +173,7 @@
 - 图例继续自动收起，但 7 个模式都能显示稳定脚注和当前层级命中状态
 - 移动端模式区固定为单行横向滚动，不再堆成多行按钮墙
 - 移动端默认先显示折叠图例，需要时再展开
-- 左侧边栏底部可看到 `Tokyo V1.6` 与数据更新时间简写
+- 左侧边栏底部可看到 `Tokyo V1.7` 与数据更新时间简写
 
 ## 运行与构建
 
@@ -273,18 +290,25 @@ https://vps-jp.tail4b5213.ts.net:8443/
     - `dist/assets/IntroOverlay-*.js`
 - `npm run acceptance:tokyo-v1` 通过
   - 最新验收产物：
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T175526Z/desktop-price-default.png`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T175526Z/desktop-schools-summary.png`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T175526Z/desktop-convenience-summary.png`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T175526Z/desktop-hazard-summary.png`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T175526Z/desktop-population-summary.png`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T175526Z/mobile-price-default.png`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T175526Z/live-default.png`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T175526Z/report.json`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T175526Z/console-report.json`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T175526Z/network-report.json`
-    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-14T175526Z/interaction-summary.json`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T042356Z/desktop-price-default.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T042356Z/desktop-price-canvas.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T042356Z/desktop-schools-summary.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T042356Z/desktop-convenience-summary.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T042356Z/desktop-hazard-summary.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T042356Z/desktop-population-summary.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T042356Z/mobile-price-default.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T042356Z/live-default.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T042356Z/live-default-canvas.png`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T042356Z/report.json`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T042356Z/console-report.json`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T042356Z/network-report.json`
+    - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T042356Z/interaction-summary.json`
   - 验收报告确认：
+    - `desktop-price-canvas.png` 与 `live-default-canvas.png` 已给出 WebGL map canvas 真相图，不再只依赖 headless 页面截图
+    - `network-report.json` 已确认 Protomaps 底图请求：
+      - `https://data.source.coop/protomaps/openstreetmap/v4.pmtiles`
+      - `https://protomaps.github.io/basemaps-assets/sprites/v4/white.json`
+      - `https://protomaps.github.io/basemaps-assets/sprites/v4/white.png`
     - `schools / convenience / hazard / population` 都已进入三档 manifest 矩阵
     - 默认东京视口：
       - `schools` 命中 `summary.manifest.json + 4 个 summary chunks`
@@ -311,7 +335,8 @@ https://vps-jp.tail4b5213.ts.net:8443/
 - 灾害模式当前正式整合 `洪水浸水 + 液状化 + 土砂災害`，但还没接 `高潮 / 津波 / 内水`
 - 便利度模式当前只是“医疗 + 公共服务”的第一版官方代理指标
 - 还没有独立站点详情页和 AI 功能
-- 当前前台验收使用 `Chromium + SwiftShader`，用于无头环境下验证 MapLibre 页面可用；MapLibre 脚本本体已移到本地 vendor，不再进入应用主包
+- 当前前台验收使用 `Chromium + SwiftShader`；对 WebGL 地图面，页面截图只作为壳层证据，map canvas 导出图才是地图像素真相
+- 当前 Protomaps 底图仍依赖公开 PMTiles 源和官方 basemaps-assets，不是本仓自托管
 - 正式域名当前通过现有 Cloudflare Tunnel 反向接到本机 `4173` 预览服务；Cloudflare Pages `tokyohouse-2xk.pages.dev` 已建成，后续可作为静态托管备选面
 
 ## 仓库卫生要求

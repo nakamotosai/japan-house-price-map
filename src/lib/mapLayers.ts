@@ -3,7 +3,6 @@ import type {
   AddLayerObject,
   GeoJSONSource,
   Map as MapLibreMap,
-  StyleSpecification,
 } from 'maplibre-gl'
 import type { StationRenderSelection } from './stationVisibility'
 import type {
@@ -15,12 +14,9 @@ import type {
   Station,
   StationBase,
 } from '../types'
+import { buildTokyoBasemapStyle } from './protomapsStyle'
 
 const TOKYO_CENTER: [number, number] = [139.767125, 35.681236]
-const GLYPHS_URL = 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf'
-
-const TILE_ATTRIBUTION =
-  '<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noreferrer">地理院タイル</a>'
 
 const STATION_SOURCE_ID = 'stations-source'
 const SCHOOL_SOURCE_ID = 'schools-source'
@@ -50,25 +46,7 @@ const ALL_OVERLAY_LAYER_IDS = [
   ...POPULATION_LAYER_IDS,
 ]
 
-export const TOKYO_MAP_STYLE: StyleSpecification = {
-  version: 8,
-  glyphs: GLYPHS_URL,
-  sources: {
-    gsi: {
-      type: 'raster',
-      tiles: ['https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png'],
-      tileSize: 256,
-      attribution: TILE_ATTRIBUTION,
-    },
-  },
-  layers: [
-    {
-      id: 'gsi-base',
-      type: 'raster',
-      source: 'gsi',
-    },
-  ],
-}
+export const TOKYO_MAP_STYLE = buildTokyoBasemapStyle()
 
 export function getTokyoCenter() {
   return TOKYO_CENTER
