@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "preview:tailnet": "vite preview --host 127.0.0.1 --port 4173",
+    "preview:tailnet": "HOST=127.0.0.1 PORT=4173 node ./scripts/serve_dist_with_protomaps_proxy.mjs",
     "test": "vitest run",
     "acceptance:tokyo-v1": "./scripts/run_tokyo_v1_acceptance.sh"
   },

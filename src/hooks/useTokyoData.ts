@@ -128,17 +128,28 @@ function touchCacheEntry<K, V>(cache: Map<K, V>, key: K, value: V, limit: number
   }
 }
 
-function pickRuntimeManifest(
+export function pickRuntimeManifest(
   runtimeIndex: RuntimeIndex | null,
   mode: OverlayModeId,
   zoom: number,
 ): RuntimeModeManifestRef | null {
   const candidates = runtimeIndex?.modes[mode]?.manifests ?? []
-  return (
-    candidates.find((manifest) => zoom >= manifest.minZoom && zoom < manifest.maxZoom)
-    ?? candidates.at(-1)
-    ?? null
+  if (!candidates.length) {
+    return null
+  }
+
+  const matchedManifest = candidates.find(
+    (manifest) => zoom >= manifest.minZoom && zoom < manifest.maxZoom,
   )
+  if (matchedManifest) {
+    return matchedManifest
+  }
+
+  if (zoom < candidates[0].minZoom) {
+    return candidates[0]
+  }
+
+  return candidates.at(-1) ?? null
 }
 
 function getViewportPaddingMultiplier(level: RuntimeLayerLevel, zoom: number) {

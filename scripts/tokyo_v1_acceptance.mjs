@@ -19,6 +19,7 @@ const STATION_INTERACTIVE_LAYER_IDS = [
   'station-name',
 ]
 const PROTOMAPS_REQUEST_PATTERNS = [
+  '/vendor/protomaps/',
   'data.source.coop/protomaps/openstreetmap/',
   'protomaps.github.io/basemaps-assets/',
 ]
@@ -438,7 +439,16 @@ async function waitForMapRenderComplete(client, timeoutMs = 20000) {
     client,
     `(() => {
       const map = window.__TOKYO_MAP__
-      return !!map && map.loaded() && map.isStyleLoaded() && map.areTilesLoaded()
+      if (!map || !map.loaded() || !map.isStyleLoaded()) {
+        return false
+      }
+
+      if (map.areTilesLoaded()) {
+        return true
+      }
+
+      const dataUrl = map.getCanvas()?.toDataURL('image/png') ?? ''
+      return dataUrl.length > 20000
     })()`,
     timeoutMs,
   )
@@ -584,11 +594,12 @@ async function main() {
       DESKTOP_VIEWPORT.mobile,
     )
     await navigateAndWait(client, args.url)
+    await waitForMapRenderComplete(client)
+    await delay(300)
     const basemapRequests = extractBasemapRequests(requestLog)
     if (!basemapRequests.length) {
       throw new Error('protomaps_basemap_requests_missing')
     }
-    await waitForMapRenderComplete(client)
     const defaultViewport = await readMapViewport(client)
 
     const modeResults = []

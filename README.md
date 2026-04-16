@@ -6,8 +6,8 @@
 
 ## 当前状态
 
-- 状态：`Tokyo V1.8 Kanto frame + Protomaps basemap 已收口`
-- 当前版本：`单页东京地图 + 7 模式 + Protomaps white 浅色底图 + 关东范围底图框架 + 东京数据不扩城 + manifest/catalog runtime + V1.5 站点分享增强 + V1.6 MapLibre 脱主包 / 灾害三灾种收口 + V1.7 PMTiles protocol / basemap sprite-glyph / canvas 验收补强 + Cloudflare 正式域名 + Tailnet 预览`
+- 状态：`Tokyo V1.9 Kanto frame + Protomaps same-origin delivery 已收口`
+- 当前版本：`单页东京地图 + 7 模式 + Protomaps white 浅色底图 + 关东范围底图框架 + 东京数据不扩城 + Protomaps 同域代理交付 + manifest/catalog runtime + V1.5 站点分享增强 + V1.6 MapLibre 脱主包 / 灾害三灾种收口 + V1.7 PMTiles protocol / basemap sprite-glyph / canvas 验收补强 + Cloudflare 正式域名 + Tailnet 预览`
 - 当前可用能力：
   - 直接进入东京地图，不做独立首页
   - Google Maps 风格启发的左侧边栏、左上搜索栏和顶部模式按钮
@@ -34,11 +34,11 @@
   - `hazard / population` 的三档 area runtime 已改成 `manifest + catalog + id chunk`，chunk 本体只传 feature id
   - `MapLibre` 已从应用主包拆出，当前走 `/public/vendor/maplibre/` 本地 vendor 注入
   - 正式底图已从 `地理院 pale raster` 切到 `Protomaps white` 浅色向量底图
-  - 当前底图走 `pmtiles://https://data.source.coop/protomaps/openstreetmap/v4.pmtiles`
-  - 底图 glyphs / sprite 走 `protomaps/basemaps-assets`
+  - 当前浏览器底图走同域 `pmtiles://<origin>/vendor/protomaps/openstreetmap-v4.pmtiles`
+  - 底图 glyphs / sprite 走同域 `/vendor/protomaps/fonts/...` 与 `/vendor/protomaps/sprites/v4/white`
   - 当前 `runtime/` 目录约 `15M`，`public/vendor/maplibre/` 约 `1.1M`
   - `schools / convenience` 已补低缩放 `overview` 聚合层
-  - 默认东京视口现在优先命中更粗的 `summary` 层，而不是直接打碎 `overview`
+  - 默认关东视角下 `schools / convenience / hazard / population` 都会先命中更粗的 `summary` 层，而不是误打 `detail`
   - 页面内说明弹窗已回写真实口径、来源、年份、覆盖范围和当前边界
   - 移动端模式区已收成单行横向带，不再多行挤压地图
   - 移动端图例默认折叠，默认先把地图让出来
@@ -47,7 +47,7 @@
   - URL 现在支持 `?mode=<mode>&station=<stationId>` 直达和分享
   - 站点面板现在有“分享这站”入口，优先 Web Share，失败时回退复制链接
   - 7 个模式的图例脚注和固定验收报告都已补成可读文本
-  - UI 可见 `Tokyo V1.8` 和数据更新时间
+  - UI 可见 `Tokyo V1.9` 和数据更新时间
   - 固定前台验收现在会额外产出 `console / network / interaction / live screenshot / map canvas screenshot`
   - 固定 Tailnet HTTPS 预览入口可直接从 Windows 访问
 
@@ -55,15 +55,16 @@
 
 - 渲染层：`MapLibre GL`
 - 正式底图：`Protomaps white`
-- 当前底图源：`https://data.source.coop/protomaps/openstreetmap/v4.pmtiles`
+- 当前浏览器底图入口：`/vendor/protomaps/openstreetmap-v4.pmtiles`
+- 当前上游底图源：`https://data.source.coop/protomaps/openstreetmap/v4.pmtiles`
 - 当前地图边界：`关东范围`
 - 当前数据边界：`东京`
 - 当前标签与样式资产：
-  - glyphs：`https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf`
-  - sprite：`https://protomaps.github.io/basemaps-assets/sprites/v4/white`
+  - glyphs：`/vendor/protomaps/fonts/{fontstack}/{range}.pbf`
+  - sprite：`/vendor/protomaps/sprites/v4/white`
 - 当前边界：
-  - 生产入口已经切到 Protomaps 底图
-  - 但底图仍依赖公开 PMTiles 源，不是本仓自托管
+  - 生产入口已经切到 Protomaps 底图，用户浏览器不再直连外部 `source.coop / github.io`
+  - 但 `4173` 预览服务当前仍是“同域代理上游公开 PMTiles / basemaps-assets”，不是本仓完整自托管
   - 若后续要追求更强 SLA 或更低外部依赖，应再切到自有镜像或自托管 PMTiles
 
 ## 当前数据口径
@@ -162,12 +163,12 @@
 - 左上菜单按钮现在会打开地图菜单，不再是死控件
 - 直达链接支持把当前 `mode + station` 保留在 URL 里
 - `schools / convenience`
-  - 默认东京视口先用 `summary`
-  - 低缩放先用 `overview`
+  - 默认关东视角先用 `summary`
+  - `11.9+` 先切到 `overview`
   - 放大到 `12.8+` 才切 `detail`
 - `hazard / population`
-  - 默认东京视口先用 `summary`
-  - 低缩放先用 `overview`
+  - 默认关东视角先用 `summary`
+  - `11.8+` 先切到 `overview`
   - 放大到 `12.3+` 才切 `detail`
   - 会额外补一次对应 level 的 `catalog.json`，chunk 本体只传 feature id
 - 说明按钮继续做成透明弹窗，不做独立说明页
@@ -175,7 +176,7 @@
 - 图例继续自动收起，但 7 个模式都能显示稳定脚注和当前层级命中状态
 - 移动端模式区固定为单行横向滚动，不再堆成多行按钮墙
 - 移动端默认先显示折叠图例，需要时再展开
-- 左侧边栏底部可看到 `Tokyo V1.8` 与数据更新时间简写
+- 左侧边栏底部可看到 `Tokyo V1.9` 与数据更新时间简写
 
 ## 运行与构建
 
@@ -308,16 +309,17 @@ https://vps-jp.tail4b5213.ts.net:8443/
   - 验收报告确认：
     - `interaction-summary.json` 已记录默认视角，当前默认缩放已从东京核心近景降到关东范围
     - `desktop-price-canvas.png` 与 `live-default-canvas.png` 已给出 WebGL map canvas 真相图，不再只依赖 headless 页面截图
-    - `network-report.json` 已确认 Protomaps 底图请求：
-      - `https://data.source.coop/protomaps/openstreetmap/v4.pmtiles`
-      - `https://protomaps.github.io/basemaps-assets/sprites/v4/white.json`
-      - `https://protomaps.github.io/basemaps-assets/sprites/v4/white.png`
+    - `2026-04-16T050009Z` 这轮 same-origin 验收已确认 Protomaps 底图请求：
+      - `http://127.0.0.1:4173/vendor/protomaps/openstreetmap-v4.pmtiles`
+      - `http://127.0.0.1:4173/vendor/protomaps/sprites/v4/white.json`
+      - `http://127.0.0.1:4173/vendor/protomaps/sprites/v4/white.png`
+      - `http://127.0.0.1:4173/vendor/protomaps/fonts/Noto Sans .../*.pbf`
     - `schools / convenience / hazard / population` 都已进入三档 manifest 矩阵
-    - 默认东京视口：
+    - 默认关东视角：
       - `schools` 命中 `summary.manifest.json + 4 个 summary chunks`
       - `convenience` 命中 `summary.manifest.json + 4 个 summary chunks`
-      - `hazard` 命中 `summary.manifest.json + 3 个 summary chunks + summary.catalog.json`
-      - `population` 命中 `summary.manifest.json + 3 个 summary chunks + summary.catalog.json`
+      - `hazard` 命中 `summary.manifest.json + 9 个 summary chunks + summary.catalog.json`
+      - `population` 命中 `summary.manifest.json + 8 个 summary chunks + summary.catalog.json`
     - `price / land / heat / schools / convenience / hazard / population` 的 `legendText` 全部非空
     - 菜单按钮已可打开地图菜单
     - 搜索零结果态已覆盖
@@ -340,7 +342,7 @@ https://vps-jp.tail4b5213.ts.net:8443/
 - 便利度模式当前只是“医疗 + 公共服务”的第一版官方代理指标
 - 还没有独立站点详情页和 AI 功能
 - 当前前台验收使用 `Chromium + SwiftShader`；对 WebGL 地图面，页面截图只作为壳层证据，map canvas 导出图才是地图像素真相
-- 当前 Protomaps 底图仍依赖公开 PMTiles 源和官方 basemaps-assets，不是本仓自托管
+- 当前 Protomaps 底图对用户已收成同域代理，但上游仍依赖公开 PMTiles 源和官方 basemaps-assets，不是本仓完整自托管
 - 正式域名当前通过现有 Cloudflare Tunnel 反向接到本机 `4173` 预览服务；Cloudflare Pages `tokyohouse-2xk.pages.dev` 已建成，后续可作为静态托管备选面
 
 ## 仓库卫生要求
