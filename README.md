@@ -366,14 +366,6 @@ https://vps-jp.tail4b5213.ts.net:8443/
     - `stations/details/manifest.json`
 - `node scripts/profile_page_load.mjs --label after-warm-final` 通过
   - 产物：`/home/ubuntu/codex/日本房价地图/.artifacts/load-profiles/2026-04-16T115713Z/report.json`
-    - 菜单按钮已可打开地图菜单
-    - 搜索零结果态已覆盖
-    - 站点打开态已确认分享按钮可见
-    - 站点选择后 URL 会保留 `station` 与当前 `mode`
-    - 站点退选后 URL 会清掉 `station`，分享按钮也会消失
-    - live 入口已拿到真实浏览器截图
-    - 点击空白区域可以收起站点卡片
-    - price 默认态已经能看到热门站点 detail shard 预取请求
 - `curl -I http://127.0.0.1:4173/` 返回 `HTTP 200`
 - `curl -I https://tokyohouse.saaaai.com/` 返回 `HTTP 200`
 - `curl -I https://vps-jp.tail4b5213.ts.net:8443/` 返回 `HTTP 200`
@@ -381,7 +373,7 @@ https://vps-jp.tail4b5213.ts.net:8443/
 ## 当前边界
 
 - 当前只做东京，不扩到其他城市
-- 当前地图只能在关东范围内拖拽，不再把用户带到无关区域
+- 当前地图只能在东京聚焦范围内拖拽，不再把用户带到无关区域
 - 站点是核心锚点，不做房源级列表
 - 灾害模式当前正式整合 `洪水浸水 + 液状化 + 土砂災害`，但还没接 `高潮 / 津波 / 内水`
 - 便利度模式当前只是“医疗 + 公共服务”的第一版官方代理指标
