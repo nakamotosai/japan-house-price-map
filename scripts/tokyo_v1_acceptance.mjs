@@ -426,10 +426,11 @@ function extractBasemapRequests(entries) {
   ]
 }
 
-async function waitForMapReady(client) {
+async function waitForMapReady(client, timeoutMs = 30000) {
   await waitForExpression(
     client,
-    `document.querySelectorAll('.mode-chip').length >= 7 && !!window.__TOKYO_MAP__`,
+    `document.querySelectorAll('.mode-chip').length >= 7 && (!!window.__TOKYO_MAP__ || !!document.querySelector('.map-init-error__card'))`,
+    timeoutMs,
   )
   await delay(1000)
 }
@@ -594,6 +595,13 @@ async function main() {
       DESKTOP_VIEWPORT.mobile,
     )
     await navigateAndWait(client, args.url)
+    const mapInitErrorText = await evaluate(
+      client,
+      `document.querySelector('.map-init-error__card')?.innerText ?? null`,
+    )
+    if (typeof mapInitErrorText === 'string' && mapInitErrorText.trim()) {
+      throw new Error(`map_init_error:${mapInitErrorText}`)
+    }
     await waitForMapRenderComplete(client)
     await delay(300)
     const basemapRequests = extractBasemapRequests(requestLog)

@@ -6,8 +6,8 @@
 
 ## 当前状态
 
-- 状态：`Tokyo V1.9 Kanto frame + Protomaps same-origin delivery 已收口`
-- 当前版本：`单页东京地图 + 7 模式 + Protomaps white 浅色底图 + 关东范围底图框架 + 东京数据不扩城 + Protomaps 同域代理交付 + manifest/catalog runtime + V1.5 站点分享增强 + V1.6 MapLibre 脱主包 / 灾害三灾种收口 + V1.7 PMTiles protocol / basemap sprite-glyph / canvas 验收补强 + Cloudflare 正式域名 + Tailnet 预览`
+- 状态：`Tokyo V1.10 WebGL failure surface + Protomaps same-origin delivery 已收口`
+- 当前版本：`单页东京地图 + 7 模式 + Protomaps white 浅色底图 + 关东范围底图框架 + 东京数据不扩城 + Protomaps 同域代理交付 + WebGL 初始化失败显式提示 + manifest/catalog runtime + V1.5 站点分享增强 + V1.6 MapLibre 脱主包 / 灾害三灾种收口 + V1.7 PMTiles protocol / basemap sprite-glyph / canvas 验收补强 + Cloudflare 正式域名 + Tailnet 预览`
 - 当前可用能力：
   - 直接进入东京地图，不做独立首页
   - Google Maps 风格启发的左侧边栏、左上搜索栏和顶部模式按钮
@@ -47,7 +47,8 @@
   - URL 现在支持 `?mode=<mode>&station=<stationId>` 直达和分享
   - 站点面板现在有“分享这站”入口，优先 Web Share，失败时回退复制链接
   - 7 个模式的图例脚注和固定验收报告都已补成可读文本
-  - UI 可见 `Tokyo V1.9` 和数据更新时间
+  - UI 可见 `Tokyo V1.10` 和数据更新时间
+  - 当浏览器无法创建 WebGL 时，前台不再静默空白，而会显示明确错误卡片
   - 固定前台验收现在会额外产出 `console / network / interaction / live screenshot / map canvas screenshot`
   - 固定 Tailnet HTTPS 预览入口可直接从 Windows 访问
 
@@ -62,6 +63,9 @@
 - 当前标签与样式资产：
   - glyphs：`/vendor/protomaps/fonts/{fontstack}/{range}.pbf`
   - sprite：`/vendor/protomaps/sprites/v4/white`
+- 当前空白地图根因真相：
+  - 若页面能看到 `V1.10`、菜单和模式按钮，但地图区没有任何底图、站点和右下角 MapLibre 控件，根因更可能是浏览器没能创建 WebGL，而不是站点没有更新
+  - 当前前台已把这类失败显式显示为“地图未启动 / 当前浏览器没有可用的地图渲染能力”
 - 当前边界：
   - 生产入口已经切到 Protomaps 底图，用户浏览器不再直连外部 `source.coop / github.io`
   - 但 `4173` 预览服务当前仍是“同域代理上游公开 PMTiles / basemaps-assets”，不是本仓完整自托管
@@ -176,7 +180,7 @@
 - 图例继续自动收起，但 7 个模式都能显示稳定脚注和当前层级命中状态
 - 移动端模式区固定为单行横向滚动，不再堆成多行按钮墙
 - 移动端默认先显示折叠图例，需要时再展开
-- 左侧边栏底部可看到 `Tokyo V1.9` 与数据更新时间简写
+- 左侧边栏底部可看到 `Tokyo V1.10` 与数据更新时间简写
 
 ## 运行与构建
 
@@ -309,11 +313,16 @@ https://vps-jp.tail4b5213.ts.net:8443/
   - 验收报告确认：
     - `interaction-summary.json` 已记录默认视角，当前默认缩放已从东京核心近景降到关东范围
     - `desktop-price-canvas.png` 与 `live-default-canvas.png` 已给出 WebGL map canvas 真相图，不再只依赖 headless 页面截图
-    - `2026-04-16T050009Z` 这轮 same-origin 验收已确认 Protomaps 底图请求：
+    - `2026-04-16T051932Z` 这轮 same-origin live 验收已确认 Protomaps 底图请求：
       - `http://127.0.0.1:4173/vendor/protomaps/openstreetmap-v4.pmtiles`
       - `http://127.0.0.1:4173/vendor/protomaps/sprites/v4/white.json`
       - `http://127.0.0.1:4173/vendor/protomaps/sprites/v4/white.png`
       - `http://127.0.0.1:4173/vendor/protomaps/fonts/Noto Sans .../*.pbf`
+    - `2026-04-16T0521Z` 这轮 no-WebGL 对照截图已确认：
+      - UI 壳层仍会显示 `V1.10`
+      - `window.__TOKYO_MAP__ = false`
+      - `navControls = 0`
+      - 前台会显示“当前浏览器没有可用的地图渲染能力”
     - `schools / convenience / hazard / population` 都已进入三档 manifest 矩阵
     - 默认关东视角：
       - `schools` 命中 `summary.manifest.json + 4 个 summary chunks`
@@ -342,6 +351,7 @@ https://vps-jp.tail4b5213.ts.net:8443/
 - 便利度模式当前只是“医疗 + 公共服务”的第一版官方代理指标
 - 还没有独立站点详情页和 AI 功能
 - 当前前台验收使用 `Chromium + SwiftShader`；对 WebGL 地图面，页面截图只作为壳层证据，map canvas 导出图才是地图像素真相
+- 当前用户截图里那种“UI 正常但整块地图发灰空白”的失败面，已经通过禁用 WebGL 的 Chromium 稳定复现；根因在客户端浏览器 WebGL 初始化失败，不是 bundle 没更新
 - 当前 Protomaps 底图对用户已收成同域代理，但上游仍依赖公开 PMTiles 源和官方 basemaps-assets，不是本仓完整自托管
 - 正式域名当前通过现有 Cloudflare Tunnel 反向接到本机 `4173` 预览服务；Cloudflare Pages `tokyohouse-2xk.pages.dev` 已建成，后续可作为静态托管备选面
 
