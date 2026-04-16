@@ -11,6 +11,7 @@ npm run build >/dev/null
 
 pm2 delete "$APP_NAME" >/dev/null 2>&1 || true
 pm2 start npm --name "$APP_NAME" --cwd "$PROJECT_ROOT" -- run preview:tailnet >/dev/null
+pm2 save --force >/dev/null
 
 tailscale serve clear "https:${TAILNET_HTTPS_PORT}" >/dev/null 2>&1 || true
 tailscale serve --bg --yes --https "$TAILNET_HTTPS_PORT" "http://127.0.0.1:${LOCAL_PORT}" >/dev/null

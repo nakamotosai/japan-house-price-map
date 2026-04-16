@@ -242,17 +242,28 @@ https://tokyohouse.saaaai.com/
 
 内部 Tailnet 预览：
 
+当前宿主自恢复链：
+
+- `pm2-ubuntu.service`
+- `pm2 resurrect -> ~/.pm2/dump.pm2`
+- `japan-house-price-map-preview -> 127.0.0.1:4173`
+- `tailscale serve https:8443 -> http://127.0.0.1:4173`
+
 启动：
 
 ```bash
 ./scripts/start_tailnet_preview.sh
 ```
 
+当前启动脚本会同步把 `japan-house-price-map-preview` 写入 PM2 dump，作为“这个项目现在应该自恢复”的真相源。
+
 停止：
 
 ```bash
 ./scripts/stop_tailnet_preview.sh
 ```
+
+当前停止脚本会同时把该进程从 PM2 dump 移除；如果是故障止血后要保持停用，以它为准。
 
 当前 Tailnet 预览地址：
 
