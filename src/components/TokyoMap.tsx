@@ -2,8 +2,8 @@ import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import type { Map as MapLibreMap, MapMouseEvent } from 'maplibre-gl'
 import {
   ensureMapDataLayers,
-  getKantoBounds,
-  getKantoCenter,
+  getTokyoCenter,
+  getTokyoFocusBounds,
   setModeOverlays,
   STATION_INTERACTIVE_LAYER_IDS,
   syncAreaLayers,
@@ -38,12 +38,12 @@ type TokyoMapProps = {
   onViewportChange: (viewport: MapViewport) => void
 }
 
-const DEFAULT_KANTO_ZOOM = 8.35
+const DEFAULT_TOKYO_ZOOM = 11.6
 const WEBGL_ERROR_PATTERN = /(Failed to initialize WebGL|webglcontextcreationerror|WebGL)/i
 
-const KANTO_MAX_BOUNDS: [[number, number], [number, number]] = [
-  [getKantoBounds().west, getKantoBounds().south],
-  [getKantoBounds().east, getKantoBounds().north],
+const TOKYO_MAX_BOUNDS: [[number, number], [number, number]] = [
+  [getTokyoFocusBounds().west, getTokyoFocusBounds().south],
+  [getTokyoFocusBounds().east, getTokyoFocusBounds().north],
 ]
 
 function getMapInitErrorMessage(error: unknown) {
@@ -215,14 +215,15 @@ export function TokyoMap(props: TokyoMapProps) {
           const map = new maplibre.Map({
             container: containerRef.current,
             style: TOKYO_MAP_STYLE,
-            center: getKantoCenter(),
-            zoom: DEFAULT_KANTO_ZOOM,
-            minZoom: 7.8,
+            center: getTokyoCenter(),
+            zoom: DEFAULT_TOKYO_ZOOM,
+            minZoom: 10.4,
             maxZoom: 16.5,
-            maxBounds: KANTO_MAX_BOUNDS,
+            maxBounds: TOKYO_MAX_BOUNDS,
             pitchWithRotate: false,
             dragRotate: false,
             attributionControl: false,
+            fadeDuration: 0,
             localIdeographFontFamily: '"Noto Sans JP", "Noto Sans SC", sans-serif',
           })
 
@@ -362,8 +363,8 @@ export function TokyoMap(props: TokyoMapProps) {
     }
 
     map.flyTo({
-      center: getKantoCenter(),
-      zoom: DEFAULT_KANTO_ZOOM,
+      center: getTokyoCenter(),
+      zoom: DEFAULT_TOKYO_ZOOM,
       speed: 0.7,
       essential: true,
     })

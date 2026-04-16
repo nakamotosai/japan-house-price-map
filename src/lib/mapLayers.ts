@@ -17,6 +17,12 @@ import type {
 import { buildTokyoBasemapStyle } from './protomapsStyle'
 
 const TOKYO_CENTER: [number, number] = [139.767125, 35.681236]
+const TOKYO_FOCUS_BOUNDS = {
+  west: 139.18,
+  south: 35.52,
+  east: 139.96,
+  north: 35.84,
+} as const
 const KANTO_CENTER: [number, number] = [139.74, 35.86]
 const KANTO_BOUNDS = {
   west: 138.4,
@@ -57,6 +63,10 @@ export const TOKYO_MAP_STYLE = buildTokyoBasemapStyle()
 
 export function getTokyoCenter() {
   return TOKYO_CENTER
+}
+
+export function getTokyoFocusBounds() {
+  return TOKYO_FOCUS_BOUNDS
 }
 
 export function getKantoCenter() {

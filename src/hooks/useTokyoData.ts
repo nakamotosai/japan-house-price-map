@@ -47,6 +47,7 @@ const CHUNK_CACHE_LIMIT = 180
 const DETAIL_CACHE_LIMIT = 20
 const AREA_CATALOG_CACHE_LIMIT = 12
 const PREFETCH_DETAIL_SHARD_LIMIT = 4
+const PERSISTENT_RUNTIME_CACHE = { persistent: true } as const
 
 type OverlayModeId = 'schools' | 'convenience' | 'hazard' | 'population'
 type ChunkPayload = PointLayerFeature[] | AreaLayerFeature[] | string[]
@@ -198,6 +199,7 @@ function chunkKey(mode: OverlayModeId, manifestPath: string, chunkIds: string[])
 async function getChunkManifestCached(
   cache: Map<string, ChunkManifest>,
   path: string,
+  cacheVersion: string | null,
   signal: AbortSignal,
 ) {
   const cached = cache.get(path)
@@ -206,7 +208,10 @@ async function getChunkManifestCached(
     return cached
   }
 
-  const manifest = await loadChunkManifest(path, undefined, signal)
+  const manifest = await loadChunkManifest(path, undefined, signal, {
+    ...PERSISTENT_RUNTIME_CACHE,
+    cacheVersion,
+  })
   touchCacheEntry(cache, path, manifest, MANIFEST_CACHE_LIMIT)
   return manifest
 }
@@ -214,6 +219,7 @@ async function getChunkManifestCached(
 async function getDetailShardCached(
   cache: Map<string, StationDetailShard>,
   shardId: string,
+  cacheVersion: string | null,
   signal: AbortSignal,
 ) {
   const cached = cache.get(shardId)
@@ -226,6 +232,10 @@ async function getDetailShardCached(
     `/data/tokyo/runtime/stations/details/${shardId}.json`,
     undefined,
     signal,
+    {
+      ...PERSISTENT_RUNTIME_CACHE,
+      cacheVersion,
+    },
   )
   touchCacheEntry(cache, shardId, shard, DETAIL_CACHE_LIMIT)
   return shard
@@ -235,6 +245,7 @@ async function getChunkPayloadCached(
   cache: Map<string, ChunkPayload>,
   path: string,
   kind: 'point' | 'area',
+  cacheVersion: string | null,
   signal: AbortSignal,
 ) {
   const cached = cache.get(path)
@@ -245,8 +256,14 @@ async function getChunkPayloadCached(
 
   const payload =
     kind === 'point'
-      ? await loadPointChunk(path, undefined, signal)
-      : await loadAreaChunk(path, undefined, signal)
+      ? await loadPointChunk(path, undefined, signal, {
+          ...PERSISTENT_RUNTIME_CACHE,
+          cacheVersion,
+        })
+      : await loadAreaChunk(path, undefined, signal, {
+          ...PERSISTENT_RUNTIME_CACHE,
+          cacheVersion,
+        })
 
   touchCacheEntry(cache, path, payload, CHUNK_CACHE_LIMIT)
   return payload
@@ -255,6 +272,7 @@ async function getChunkPayloadCached(
 async function getAreaCatalogCached(
   cache: Map<string, AreaCatalog>,
   path: string,
+  cacheVersion: string | null,
   signal: AbortSignal,
 ) {
   const cached = cache.get(path)
@@ -263,7 +281,10 @@ async function getAreaCatalogCached(
     return cached
   }
 
-  const catalog = await loadAreaCatalog(path, undefined, signal)
+  const catalog = await loadAreaCatalog(path, undefined, signal, {
+    ...PERSISTENT_RUNTIME_CACHE,
+    cacheVersion,
+  })
   touchCacheEntry(cache, path, catalog, AREA_CATALOG_CACHE_LIMIT)
   return catalog
 }
@@ -271,6 +292,7 @@ async function getAreaCatalogCached(
 async function getAreaChunkRefsCached(
   cache: Map<string, ChunkPayload>,
   path: string,
+  cacheVersion: string | null,
   signal: AbortSignal,
 ) {
   const cached = cache.get(path)
@@ -279,7 +301,10 @@ async function getAreaChunkRefsCached(
     return cached as string[]
   }
 
-  const payload = await loadAreaChunkRefs(path, undefined, signal)
+  const payload = await loadAreaChunkRefs(path, undefined, signal, {
+    ...PERSISTENT_RUNTIME_CACHE,
+    cacheVersion,
+  })
   touchCacheEntry(cache, path, payload, CHUNK_CACHE_LIMIT)
   return payload
 }
@@ -344,16 +369,27 @@ export function useTokyoData(args: UseTokyoDataArgs): TokyoDataState {
       try {
         const runtimeIndex = await loadRuntimeIndex(undefined, controller.signal)
         const [bases, detailManifest, stationsMeta] = await Promise.all([
-          loadStationBases(runtimeIndex.stations.basePath, undefined, controller.signal),
+          loadStationBases(runtimeIndex.stations.basePath, undefined, controller.signal, {
+            ...PERSISTENT_RUNTIME_CACHE,
+            cacheVersion: runtimeIndex.generatedAt,
+          }),
           loadStationDetailManifest(
             runtimeIndex.stations.detailsManifestPath,
             undefined,
             controller.signal,
+            {
+              ...PERSISTENT_RUNTIME_CACHE,
+              cacheVersion: runtimeIndex.generatedAt,
+            },
           ),
           loadTokyoStationsMeta(
             runtimeIndex.metadataPath ?? '/data/tokyo/stations.meta.json',
             undefined,
             controller.signal,
+            {
+              ...PERSISTENT_RUNTIME_CACHE,
+              cacheVersion: runtimeIndex.generatedAt,
+            },
           ),
         ])
 
@@ -407,6 +443,7 @@ export function useTokyoData(args: UseTokyoDataArgs): TokyoDataState {
           await getDetailShardCached(
             detailShardCacheRef.current,
             shardId,
+            runtimeGeneratedAt,
             controller.signal,
           )
           prefetchedShardIdsRef.current.add(shardId)
@@ -428,7 +465,7 @@ export function useTokyoData(args: UseTokyoDataArgs): TokyoDataState {
         window.clearTimeout(timeoutId)
       }
     }
-  }, [stationBases, status])
+  }, [runtimeGeneratedAt, stationBases, status])
 
   useEffect(() => {
     if (status !== 'ready') {
@@ -469,6 +506,7 @@ export function useTokyoData(args: UseTokyoDataArgs): TokyoDataState {
         const shard = await getDetailShardCached(
           detailShardCacheRef.current,
           shardId,
+          runtimeGeneratedAt,
           controller.signal,
         )
 
@@ -500,7 +538,7 @@ export function useTokyoData(args: UseTokyoDataArgs): TokyoDataState {
     return () => {
       controller.abort()
     }
-  }, [selectedStationId, status])
+  }, [runtimeGeneratedAt, selectedStationId, status])
 
   useEffect(() => {
     if (status !== 'ready' || !viewport || !OVERLAY_MODE_IDS.has(activeMode)) {
@@ -523,6 +561,7 @@ export function useTokyoData(args: UseTokyoDataArgs): TokyoDataState {
         const manifest = await getChunkManifestCached(
           manifestCacheRef.current,
           activeManifestRef.path,
+          runtimeGeneratedAt,
           controller.signal,
         )
         const paddedViewport = padBounds(
@@ -566,6 +605,7 @@ export function useTokyoData(args: UseTokyoDataArgs): TokyoDataState {
                   getAreaChunkRefsCached(
                     chunkCacheRef.current,
                     chunk.path,
+                    runtimeGeneratedAt,
                     controller.signal,
                   ),
                 ),
@@ -576,6 +616,7 @@ export function useTokyoData(args: UseTokyoDataArgs): TokyoDataState {
                     chunkCacheRef.current,
                     chunk.path,
                     manifest.kind,
+                    runtimeGeneratedAt,
                     controller.signal,
                   ),
                 ),
@@ -590,6 +631,7 @@ export function useTokyoData(args: UseTokyoDataArgs): TokyoDataState {
           const catalog = await getAreaCatalogCached(
             areaCatalogCacheRef.current,
             manifest.catalogPath,
+            runtimeGeneratedAt,
             controller.signal,
           )
           resolvedPayload = dedupeIds(payloads.flat() as string[])
@@ -640,7 +682,7 @@ export function useTokyoData(args: UseTokyoDataArgs): TokyoDataState {
     return () => {
       controller.abort()
     }
-  }, [activeMode, status, viewport])
+  }, [activeMode, runtimeGeneratedAt, status, viewport])
 
   return useMemo(() => {
     const effectiveOverlayStatus = OVERLAY_MODE_IDS.has(activeMode)

@@ -6,13 +6,13 @@
 
 ## 当前状态
 
-- 状态：`Tokyo V1.10 WebGL failure surface + Protomaps same-origin delivery 已收口`
-- 当前版本：`单页东京地图 + 7 模式 + Protomaps white 浅色底图 + 关东范围底图框架 + 东京数据不扩城 + Protomaps 同域代理交付 + WebGL 初始化失败显式提示 + manifest/catalog runtime + V1.5 站点分享增强 + V1.6 MapLibre 脱主包 / 灾害三灾种收口 + V1.7 PMTiles protocol / basemap sprite-glyph / canvas 验收补强 + Cloudflare 正式域名 + Tailnet 预览`
+- 状态：`Tokyo V1.11 Tokyo-first viewport + runtime persistent cache + faster first paint 已收口`
+- 当前版本：`单页东京地图 + 7 模式 + Protomaps white 浅色底图 + 东京默认视角 + 东京数据不扩城 + Protomaps 同域代理交付 + WebGL 初始化失败显式提示 + manifest/catalog runtime + runtime 版本化缓存 + 资源缓存头 + Cloudflare 正式域名 + Tailnet 预览`
 - 当前可用能力：
   - 直接进入东京地图，不做独立首页
   - Google Maps 风格启发的左侧边栏、左上搜索栏和顶部模式按钮
   - 左上菜单按钮已经变成真实入口：
-    - 重置关东视角
+    - 重置东京视角
     - 打开数据说明
     - 展开/收起图例
     - 菜单内切换 7 个模式
@@ -38,7 +38,12 @@
   - 底图 glyphs / sprite 走同域 `/vendor/protomaps/fonts/...` 与 `/vendor/protomaps/sprites/v4/white`
   - 当前 `runtime/` 目录约 `15M`，`public/vendor/maplibre/` 约 `1.1M`
   - `schools / convenience` 已补低缩放 `overview` 聚合层
-  - 默认关东视角下 `schools / convenience / hazard / population` 都会先命中更粗的 `summary` 层，而不是误打 `detail`
+  - 默认首屏改成东京皇居附近视角，不再先把用户丢到关东远景
+  - 已访问过的 runtime manifest / chunk / station detail shard 会按版本化 URL 进入浏览器持久缓存；刷新后优先复用缓存，不再每次全量重拉
+  - 预览静态服务已补 `Cache-Control`：
+    - `runtime/index.json` 走 `no-cache`
+    - 版本化 runtime 数据走长期缓存
+    - 构建产物与地图运行时会被预热和缓存
   - 页面内说明弹窗已回写真实口径、来源、年份、覆盖范围和当前边界
   - 移动端模式区已收成单行横向带，不再多行挤压地图
   - 移动端图例默认折叠，默认先把地图让出来
@@ -58,7 +63,7 @@
 - 正式底图：`Protomaps white`
 - 当前浏览器底图入口：`/vendor/protomaps/openstreetmap-v4.pmtiles`
 - 当前上游底图源：`https://data.source.coop/protomaps/openstreetmap/v4.pmtiles`
-- 当前地图边界：`关东范围`
+- 当前地图边界：`东京默认视角 + 东京范围优先`
 - 当前数据边界：`东京`
 - 当前标签与样式资产：
   - glyphs：`/vendor/protomaps/fonts/{fontstack}/{range}.pbf`
@@ -162,17 +167,17 @@
 
 ## 当前前台行为
 
-- 默认进入关东范围视角：`zoom 8.35`
+- 默认进入东京皇居附近视角：`center 139.767125,35.681236 / zoom 11.6`
 - 默认底图是 `Protomaps white` 浅色主题
 - 默认房产均价模式继续优先显示大站和核心价格 badge
 - 左上菜单按钮现在会打开地图菜单，不再是死控件
 - 直达链接支持把当前 `mode + station` 保留在 URL 里
 - `schools / convenience`
-  - 默认关东视角先用 `summary`
+  - 默认东京视角先用 `summary`
   - `11.9+` 先切到 `overview`
   - 放大到 `12.8+` 才切 `detail`
 - `hazard / population`
-  - 默认关东视角先用 `summary`
+  - 默认东京视角先用 `summary`
   - `11.8+` 先切到 `overview`
   - 放大到 `12.3+` 才切 `detail`
   - 会额外补一次对应 level 的 `catalog.json`，chunk 本体只传 feature id

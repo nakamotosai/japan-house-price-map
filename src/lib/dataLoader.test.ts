@@ -89,6 +89,30 @@ describe('dataLoader', () => {
     expect(areaChunkRefs[0]).toBe('hazard-1')
   })
 
+  it('appends runtime version to persistent runtime resources', async () => {
+    let requestedResource = ''
+    const fetcher = async (resource: string) => {
+      requestedResource = resource
+      return {
+        ok: true,
+        status: 200,
+        url: resource,
+        json: async () => [{ id: 'tokyo' }],
+      } as Response
+    }
+
+    await loadStationBases(
+      '/data/tokyo/runtime/stations.base.json',
+      fetcher,
+      undefined,
+      { cacheVersion: '2026-04-16T00:00:00Z', persistent: true },
+    )
+
+    expect(requestedResource).toBe(
+      '/data/tokyo/runtime/stations.base.json?v=2026-04-16T00%3A00%3A00Z',
+    )
+  })
+
   it('throws when a runtime resource fails to load', async () => {
     await expect(loadRuntimeIndex(createFetcher({}, false))).rejects.toThrow(
       'failed_to_load:/data/tokyo/runtime/index.json:500',

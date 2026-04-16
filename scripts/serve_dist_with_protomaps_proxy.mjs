@@ -58,6 +58,41 @@ function applyCacheHeaders(res, headers) {
   }
 }
 
+function hasImmutableAssetName(pathname) {
+  return /\/assets\/.+-[A-Za-z0-9_-]{8,}\./.test(pathname)
+}
+
+function getStaticCacheControl(pathname, searchParams) {
+  if (pathname === '/' || pathname.endsWith('.html')) {
+    return 'no-cache'
+  }
+
+  if (pathname === '/data/tokyo/runtime/index.json') {
+    return 'no-cache'
+  }
+
+  if (hasImmutableAssetName(pathname)) {
+    return 'public, max-age=31536000, immutable'
+  }
+
+  if (
+    pathname.startsWith('/data/tokyo/runtime/')
+    || pathname === '/data/tokyo/stations.meta.json'
+  ) {
+    if (searchParams.has('v')) {
+      return 'public, max-age=31536000, immutable'
+    }
+
+    return 'public, max-age=300, stale-while-revalidate=86400'
+  }
+
+  if (pathname.startsWith('/vendor/maplibre/')) {
+    return 'public, max-age=604800, stale-while-revalidate=2592000'
+  }
+
+  return 'public, max-age=3600, stale-while-revalidate=86400'
+}
+
 function resolveProtomapsTarget(pathname) {
   if (pathname === '/vendor/protomaps/openstreetmap-v4.pmtiles') {
     return PROTOMAPS_PM_TILES_URL
@@ -99,6 +134,9 @@ async function proxyProtomapsRequest(req, res, targetUrl) {
 
   res.statusCode = upstream.status
   applyCacheHeaders(res, upstream.headers)
+  if (!res.hasHeader('Cache-Control')) {
+    res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800')
+  }
   res.setHeader('Access-Control-Allow-Origin', '*')
 
   if (req.method === 'HEAD' || !upstream.body) {
@@ -136,7 +174,8 @@ async function resolveStaticFile(pathname) {
   return indexPath
 }
 
-async function serveStaticFile(req, res, pathname) {
+async function serveStaticFile(req, res, requestUrl) {
+  const pathname = requestUrl.pathname
   const filePath = await resolveStaticFile(pathname)
   if (!filePath) {
     sendPlainText(res, 404, 'Not Found')
@@ -149,6 +188,7 @@ async function serveStaticFile(req, res, pathname) {
 
   res.writeHead(200, {
     'Content-Length': fileStat.size,
+    'Cache-Control': getStaticCacheControl(pathname, requestUrl.searchParams),
     'Content-Type': contentType,
   })
 
@@ -180,7 +220,7 @@ const server = createServer(async (req, res) => {
       return
     }
 
-    await serveStaticFile(req, res, requestUrl.pathname)
+    await serveStaticFile(req, res, requestUrl)
   } catch (error) {
     const message = error instanceof Error ? error.message : 'unknown_error'
     sendPlainText(res, 502, `proxy_failed:${message}`)
