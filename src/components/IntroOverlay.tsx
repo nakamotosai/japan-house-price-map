@@ -81,7 +81,7 @@ export function IntroOverlay(props: IntroOverlayProps) {
           <div className="intro-overlay__stats">
             <article>
               <strong>{TOKYO_SITE_RELEASE.scopeLabel}</strong>
-              <span>当前只做东京，不扩到其他城市。</span>
+              <span>底图先给关东范围，当前数据仍只做东京，不扩到其他城市。</span>
             </article>
             <article>
               <strong>{metadata?.stationCount ?? '--'} 个车站</strong>
@@ -104,7 +104,7 @@ export function IntroOverlay(props: IntroOverlayProps) {
             </article>
             <article>
               <strong>当前边界</strong>
-              <p>这是东京工具页，不是内容站，不做首页叙事，不做房源页，也不做 AI。</p>
+              <p>这是东京数据工具页。底图先给关东范围，不做首页叙事，不做房源页，也不做 AI。</p>
             </article>
             <article>
               <strong>为什么有总览层</strong>

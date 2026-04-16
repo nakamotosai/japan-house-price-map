@@ -2,7 +2,8 @@ import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import type { Map as MapLibreMap, MapMouseEvent } from 'maplibre-gl'
 import {
   ensureMapDataLayers,
-  getTokyoCenter,
+  getKantoBounds,
+  getKantoCenter,
   setModeOverlays,
   STATION_INTERACTIVE_LAYER_IDS,
   syncAreaLayers,
@@ -37,7 +38,12 @@ type TokyoMapProps = {
   onViewportChange: (viewport: MapViewport) => void
 }
 
-const DEFAULT_TOKYO_ZOOM = 11.55
+const DEFAULT_KANTO_ZOOM = 8.35
+
+const KANTO_MAX_BOUNDS: [[number, number], [number, number]] = [
+  [getKantoBounds().west, getKantoBounds().south],
+  [getKantoBounds().east, getKantoBounds().north],
+]
 
 export function TokyoMap(props: TokyoMapProps) {
   const {
@@ -160,10 +166,11 @@ export function TokyoMap(props: TokyoMapProps) {
       const map = new maplibre.Map({
         container: containerRef.current,
         style: TOKYO_MAP_STYLE,
-        center: getTokyoCenter(),
-        zoom: DEFAULT_TOKYO_ZOOM,
-        minZoom: 9,
+        center: getKantoCenter(),
+        zoom: DEFAULT_KANTO_ZOOM,
+        minZoom: 7.8,
         maxZoom: 16.5,
+        maxBounds: KANTO_MAX_BOUNDS,
         pitchWithRotate: false,
         dragRotate: false,
         attributionControl: false,
@@ -293,8 +300,8 @@ export function TokyoMap(props: TokyoMapProps) {
     }
 
     map.flyTo({
-      center: getTokyoCenter(),
-      zoom: DEFAULT_TOKYO_ZOOM,
+      center: getKantoCenter(),
+      zoom: DEFAULT_KANTO_ZOOM,
       speed: 0.7,
       essential: true,
     })

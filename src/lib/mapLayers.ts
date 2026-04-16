@@ -17,6 +17,13 @@ import type {
 import { buildTokyoBasemapStyle } from './protomapsStyle'
 
 const TOKYO_CENTER: [number, number] = [139.767125, 35.681236]
+const KANTO_CENTER: [number, number] = [139.74, 35.86]
+const KANTO_BOUNDS = {
+  west: 138.4,
+  south: 34.85,
+  east: 140.95,
+  north: 36.55,
+} as const
 
 const STATION_SOURCE_ID = 'stations-source'
 const SCHOOL_SOURCE_ID = 'schools-source'
@@ -50,6 +57,14 @@ export const TOKYO_MAP_STYLE = buildTokyoBasemapStyle()
 
 export function getTokyoCenter() {
   return TOKYO_CENTER
+}
+
+export function getKantoCenter() {
+  return KANTO_CENTER
+}
+
+export function getKantoBounds() {
+  return KANTO_BOUNDS
 }
 
 function emptyFeatureCollection<G extends Geometry = Geometry>(): FeatureCollection<G, GeoJsonProperties> {

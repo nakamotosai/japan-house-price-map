@@ -1,9 +1,9 @@
 import type { ModeId } from '../types'
 
 export const TOKYO_SITE_RELEASE = {
-  versionLabel: 'Tokyo V1.7',
-  shortVersionLabel: 'V1.7',
-  scopeLabel: '东京工具版',
+  versionLabel: 'Tokyo V1.8',
+  shortVersionLabel: 'V1.8',
+  scopeLabel: '关东视角版',
   runtimeLabel: 'MapLibre + Protomaps + manifest/catalog runtime',
 }
 

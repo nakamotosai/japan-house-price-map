@@ -51,7 +51,7 @@ export function MapMenu(props: MapMenuProps) {
 
         <div className="map-menu__actions">
           <button className="map-menu__action" onClick={onResetView} type="button">
-            重置东京视角
+            重置关东视角
           </button>
           <button className="map-menu__action" onClick={onOpenIntro} type="button">
             打开数据说明

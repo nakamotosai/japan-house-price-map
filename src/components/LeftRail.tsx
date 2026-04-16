@@ -35,7 +35,7 @@ export function LeftRail(props: LeftRailProps) {
         <span className="left-rail__label">菜单</span>
       </button>
 
-      <button aria-label="重置东京视角" className="left-rail__button" onClick={onResetView} type="button">
+      <button aria-label="重置关东视角" className="left-rail__button" onClick={onResetView} type="button">
         <span className="left-rail__value">{stationCount}</span>
         <span className="left-rail__label">站点</span>
       </button>

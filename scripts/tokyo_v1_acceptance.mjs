@@ -444,6 +444,32 @@ async function waitForMapRenderComplete(client, timeoutMs = 20000) {
   )
 }
 
+async function readMapViewport(client) {
+  return evaluate(
+    client,
+    `(() => {
+      const map = window.__TOKYO_MAP__
+      if (!map) {
+        return null
+      }
+      const bounds = map.getBounds()
+      return {
+        zoom: Number(map.getZoom().toFixed(2)),
+        center: {
+          lng: Number(map.getCenter().lng.toFixed(4)),
+          lat: Number(map.getCenter().lat.toFixed(4)),
+        },
+        bounds: {
+          west: Number(bounds.getWest().toFixed(4)),
+          south: Number(bounds.getSouth().toFixed(4)),
+          east: Number(bounds.getEast().toFixed(4)),
+          north: Number(bounds.getNorth().toFixed(4)),
+        },
+      }
+    })()`,
+  )
+}
+
 async function navigateAndWait(client, url) {
   await client.send('Page.navigate', { url })
   await waitForMapReady(client)
@@ -563,6 +589,7 @@ async function main() {
       throw new Error('protomaps_basemap_requests_missing')
     }
     await waitForMapRenderComplete(client)
+    const defaultViewport = await readMapViewport(client)
 
     const modeResults = []
     modeResults.push(await collectModeResult(client, requestLog, MODE_CASES[0], artifactDir, false))
@@ -712,6 +739,7 @@ async function main() {
       failedRequests,
     }
     const interactionSummary = {
+      defaultViewport,
       stationPanelClosedByBlankClick: stationPanelClosed,
       shareButtonVisible,
       introOpened,

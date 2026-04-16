@@ -6,13 +6,13 @@
 
 ## 当前状态
 
-- 状态：`Tokyo V1.7 Protomaps basemap switch 已收口`
-- 当前版本：`单页东京地图 + 7 模式 + Protomaps white 浅色底图 + manifest/catalog runtime + V1.5 站点分享增强 + V1.6 MapLibre 脱主包 / 灾害三灾种收口 + V1.7 PMTiles protocol / basemap sprite-glyph / canvas 验收补强 + Cloudflare 正式域名 + Tailnet 预览`
+- 状态：`Tokyo V1.8 Kanto frame + Protomaps basemap 已收口`
+- 当前版本：`单页东京地图 + 7 模式 + Protomaps white 浅色底图 + 关东范围底图框架 + 东京数据不扩城 + manifest/catalog runtime + V1.5 站点分享增强 + V1.6 MapLibre 脱主包 / 灾害三灾种收口 + V1.7 PMTiles protocol / basemap sprite-glyph / canvas 验收补强 + Cloudflare 正式域名 + Tailnet 预览`
 - 当前可用能力：
   - 直接进入东京地图，不做独立首页
   - Google Maps 风格启发的左侧边栏、左上搜索栏和顶部模式按钮
   - 左上菜单按钮已经变成真实入口：
-    - 重置东京视角
+    - 重置关东视角
     - 打开数据说明
     - 展开/收起图例
     - 菜单内切换 7 个模式
@@ -47,7 +47,7 @@
   - URL 现在支持 `?mode=<mode>&station=<stationId>` 直达和分享
   - 站点面板现在有“分享这站”入口，优先 Web Share，失败时回退复制链接
   - 7 个模式的图例脚注和固定验收报告都已补成可读文本
-  - UI 可见 `Tokyo V1.7` 和数据更新时间
+  - UI 可见 `Tokyo V1.8` 和数据更新时间
   - 固定前台验收现在会额外产出 `console / network / interaction / live screenshot / map canvas screenshot`
   - 固定 Tailnet HTTPS 预览入口可直接从 Windows 访问
 
@@ -56,6 +56,8 @@
 - 渲染层：`MapLibre GL`
 - 正式底图：`Protomaps white`
 - 当前底图源：`https://data.source.coop/protomaps/openstreetmap/v4.pmtiles`
+- 当前地图边界：`关东范围`
+- 当前数据边界：`东京`
 - 当前标签与样式资产：
   - glyphs：`https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf`
   - sprite：`https://protomaps.github.io/basemaps-assets/sprites/v4/white`
@@ -154,7 +156,7 @@
 
 ## 当前前台行为
 
-- 默认进入东京核心视角：`zoom 11.55`
+- 默认进入关东范围视角：`zoom 8.35`
 - 默认底图是 `Protomaps white` 浅色主题
 - 默认房产均价模式继续优先显示大站和核心价格 badge
 - 左上菜单按钮现在会打开地图菜单，不再是死控件
@@ -173,7 +175,7 @@
 - 图例继续自动收起，但 7 个模式都能显示稳定脚注和当前层级命中状态
 - 移动端模式区固定为单行横向滚动，不再堆成多行按钮墙
 - 移动端默认先显示折叠图例，需要时再展开
-- 左侧边栏底部可看到 `Tokyo V1.7` 与数据更新时间简写
+- 左侧边栏底部可看到 `Tokyo V1.8` 与数据更新时间简写
 
 ## 运行与构建
 
@@ -304,6 +306,7 @@ https://vps-jp.tail4b5213.ts.net:8443/
     - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T042356Z/network-report.json`
     - `/home/ubuntu/codex/日本房价地图/.artifacts/tokyo-v1-acceptance/2026-04-16T042356Z/interaction-summary.json`
   - 验收报告确认：
+    - `interaction-summary.json` 已记录默认视角，当前默认缩放已从东京核心近景降到关东范围
     - `desktop-price-canvas.png` 与 `live-default-canvas.png` 已给出 WebGL map canvas 真相图，不再只依赖 headless 页面截图
     - `network-report.json` 已确认 Protomaps 底图请求：
       - `https://data.source.coop/protomaps/openstreetmap/v4.pmtiles`
@@ -331,6 +334,7 @@ https://vps-jp.tail4b5213.ts.net:8443/
 ## 当前边界
 
 - 当前只做东京，不扩到其他城市
+- 当前地图只能在关东范围内拖拽，不再把用户带到无关区域
 - 站点是核心锚点，不做房源级列表
 - 灾害模式当前正式整合 `洪水浸水 + 液状化 + 土砂災害`，但还没接 `高潮 / 津波 / 内水`
 - 便利度模式当前只是“医疗 + 公共服务”的第一版官方代理指标
